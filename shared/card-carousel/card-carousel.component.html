@@ -1,0 +1,32 @@
+<p-carousel 
+  [value]="cards"
+  [numVisible]="3"
+  [numScroll]="1"
+  [circular]="true"
+  [autoplayInterval]="3000"
+  [responsiveOptions]="[
+    { breakpoint: '1200px', numVisible: 2, numScroll: 1 },
+    { breakpoint: '960px', numVisible: 1, numScroll: 1 }
+  ]"
+  [showIndicators]="true"
+  indicatorStyleClass="custom-indicator"
+  styleClass="carousel-container"
+>
+  <ng-template pTemplate="item" let-card>
+    <div class="carousel-card">
+      <img [src]="card.image" alt="Card image" class="card-image" />
+      <div class="card-info">
+        <h4>{{ card.lessonTitle }}</h4>
+        <p>Instructor: {{ card.instructor }}</p>
+        <p>Course: {{ card.courseName }}</p>
+        <p>Year: {{ card.academicYear }}</p>
+        <div class="rating">
+          <i *ngFor="let star of [].constructor(5); let i = index"
+             class="pi"
+             [ngClass]="i < card.rating ? 'pi-star-fill' : 'pi-star'"
+          ></i>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</p-carousel>
