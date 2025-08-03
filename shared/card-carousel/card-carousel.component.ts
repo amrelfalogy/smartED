@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 export interface CarouselCard {
   image: string;
@@ -14,11 +14,11 @@ export interface CarouselCard {
   templateUrl: './card-carousel.component.html',
   styleUrls: ['./card-carousel.component.css']
 })
-export class CardCarouselComponent {
+export class CardCarouselComponent implements OnInit {
 
   @Input() cards: CarouselCard[] = [];
 
-   ngOnInit() {
+  ngOnInit() {
     console.log('Cards received by carousel:', this.cards);
   }
 }

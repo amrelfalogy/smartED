@@ -16,7 +16,7 @@ import { HomeModule } from './features/home/home.module';
   imports: [
     BrowserModule,
     AppRoutingModule,
-    CarouselModule,
+    
     HomeModule
   ],
   providers: [],
