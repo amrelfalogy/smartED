@@ -1,6 +1,10 @@
 .carousel-container {
   width: 100%;
+  max-width: 100%;
   min-height: 340px;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .carousel-card {
@@ -48,4 +52,76 @@
 
 .p-carousel-indicators .custom-indicator.p-highlight {
   background: #304a6f;
+}
+
+/* Fix carousel content positioning and prevent overflow */
+:host ::ng-deep .p-carousel {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+:host ::ng-deep .p-carousel .p-carousel-content {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+:host ::ng-deep .p-carousel .p-carousel-content .p-carousel-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+:host ::ng-deep .p-carousel .p-carousel-content .p-carousel-container .p-carousel-items-content {
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+
+:host ::ng-deep .p-carousel .p-carousel-content .p-carousel-container .p-carousel-items-content .p-carousel-items-container {
+  display: flex;
+  position: relative;
+  transition: transform 0.5s ease;
+}
+
+/* Ensure cards maintain proper spacing and sizing */
+:host ::ng-deep .p-carousel .p-carousel-item {
+  flex: 0 0 auto;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+/* Fix navigation button positioning */
+:host ::ng-deep .p-carousel .p-carousel-prev,
+:host ::ng-deep .p-carousel .p-carousel-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+:host ::ng-deep .p-carousel .p-carousel-prev {
+  left: 10px;
+}
+
+:host ::ng-deep .p-carousel .p-carousel-next {
+  right: 10px;
+}
+
+:host ::ng-deep .p-carousel .p-carousel-prev:hover,
+:host ::ng-deep .p-carousel .p-carousel-next:hover {
+  background: #304a6f;
+  color: white;
 }
