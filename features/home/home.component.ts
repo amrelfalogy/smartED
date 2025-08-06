@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CarouselCard } from '../../shared/card-carousel/card-carousel.component';
+import { Course, Instructor } from 'src/app/core/models/entities.model';
 
 @Component({
   selector: 'app-home',
@@ -7,46 +7,94 @@ import { CarouselCard } from '../../shared/card-carousel/card-carousel.component
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
-  cards: CarouselCard[] = [
+  courses: Course[] = [
     {
-      image: 'assets/imgs/Model2.png',
+      id: 1,
+      image: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       instructor: 'أ. محمد علي',
-      lessonTitle: 'درس البرمجة الأول',
-      courseName: 'مقدمة في البرمجة',
-      academicYear: '2 ثانوي',
+      subject: 'مقدمة في البرمجة',
+      academicYear: 'الثالث الثانوي',
+      instructorImg: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       rating: 4
     },
     {
-      image: 'assets/imgs/Model2.png',
+      id: 2,
+      image: 'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg',
       instructor: 'أ. محمد علي',
-      lessonTitle: 'أساسيات التصميم',
-      courseName: 'التصميم الجرافيكي',
-      academicYear: '3 ثانوي',
+      subject: 'التصميم الجرافيكي',
+      academicYear: 'الثالث الثانوي',
+      instructorImg: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       rating: 3
     },
     {
-      image: 'assets/imgs/Model2.png',
+      id: 3,
+      image: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       instructor: 'أ. محمد علي',
-      lessonTitle: 'مقدمة في التسويق',
-      courseName: 'التسويق الرقمي',
-      academicYear: '2 ثانوي',
+      subject: 'التسويق الرقمي',
+      academicYear: 'الثالث الثانوي',
+      instructorImg: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       rating: 5
     },
     {
-      image: 'assets/imgs/Model2.png',
+      id: 4,
+      image: 'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg',
       instructor: 'أ. محمد علي',
-      lessonTitle: 'الفيزياء الحديثة',
-      courseName: 'فيزياء متقدمة',
-      academicYear: '3 ثانوي',
+      subject: 'فيزياء متقدمة',
+      academicYear: 'الثالث الثانوي',
+      instructorImg: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       rating: 2
     },
     {
-      image: 'assets/imgs/Model2.png',
+      id: 5,
+      image: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       instructor: 'أ. محمد علي',
-      lessonTitle: 'الأحياء المتقدمة',
-      courseName: 'علم الأحياء',
-      academicYear: '2 ثانوي',
+      subject: 'علم الأحياء',
+      academicYear: 'الثالث الثانوي',
+      instructorImg: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       rating: 3
+    }
+  ];
+
+  instructors: Instructor[] = [
+    {
+      id: 1,
+      name: 'د. أحمد محمد الشريف',
+      photo: 'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg',
+      specialization: 'علوم الحاسوب والذكاء الاصطناعي',
+      experience: 8,
+      rating: 5,
+      bio: 'أستاذ مساعد في قسم علوم الحاسوب مع خبرة واسعة في الذكاء الاصطناعي',
+      department: 'كلية الحاسوب والمعلومات'
+    },
+    {
+      id: 2,
+      name: 'د. فاطمة علي النجار',
+      photo: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
+      specialization: 'الرياضيات التطبيقية',
+      experience: 12,
+      rating: 5,
+      bio: 'أستاذ مشارك في قسم الرياضيات مع تخصص في التحليل العددي',
+      department: 'كلية العلوم'
+    },
+    {
+      id: 3,
+      name: 'د. خالد حسن المطيري',
+      photo: 'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg',
+      specialization: 'الفيزياء النظرية',
+      experience: 15,
+      rating: 4,
+      bio: 'أستاذ في قسم الفيزياء مع بحوث في فيزياء الجسيمات',
+      department: 'كلية العلوم'
+    },
+    {
+      id: 4,
+      name: 'د. مريم سالم الزهراني',
+      photo: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
+      specialization: 'التاريخ الإسلامي والحضارة',
+      experience: 10,
+      rating: 5,
+      bio: 'أستاذ مساعد في قسم التاريخ مع تخصص في الحضارة الإسلامية',
+      department: 'كلية الآداب'
     }
   ];
 }

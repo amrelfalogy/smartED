@@ -1,3 +1,40 @@
+.home-section {
+  position: relative;
+  margin-top: 120px;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 0 20px;
+  direction: rtl;
+}
+.section-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+.section-hint {
+  font-size: 14px;
+  color: var(--secondary-color);
+}
+.section-btn {
+  background-color: inherit;
+  border-radius: 6px;
+  border: solid 1px var(--secondary-color);
+  color: var(--secondary-color);
+  font-size: 16px;
+  height: 100%;
+  padding: 10px 20px;
+  transition: background 0.2s, color 0.2s;
+}
+.section-btn:hover {
+  background-color: var(--primary-color);
+  color: var(--light-color);
+}
+
+
 .carousel-container {
   width: 100%;
   min-height: 380px;

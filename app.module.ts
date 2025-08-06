@@ -7,16 +7,17 @@ import { LayoutComponent } from './layout/layout/layout.component';
 import { HomeComponent } from './features/home/home.component';
 import { CarouselModule } from 'primeng/carousel';
 import { HomeModule } from './features/home/home.module';
+import { CourseCatalogComponent } from './features/courses/course-catalog/course-catalog.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LayoutComponent,
+    CourseCatalogComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule,
-    
+    AppRoutingModule,    
     HomeModule
   ],
   providers: [],

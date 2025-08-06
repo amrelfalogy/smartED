@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardCarouselComponent } from './card-carousel/card-carousel.component'; 
 import { CarouselModule } from 'primeng/carousel';
+import { RouterModule } from '@angular/router';
 
 @NgModule({
   declarations: [
@@ -9,7 +10,8 @@ import { CarouselModule } from 'primeng/carousel';
   ],
   imports: [
     CommonModule,
-    CarouselModule
+    CarouselModule,
+    RouterModule  
   ],
   exports: [
     CardCarouselComponent

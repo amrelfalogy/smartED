@@ -56,13 +56,69 @@
         </div>
     </div>
  <section class="home-section">
-  <div class="d-flex justify-content-between align-items-center mb-4" style="padding: 0 50px;">
-    <div>
-      <h2 class="section-title">أحدث الكورسات</h2>
-      <p class="section-hint">الكورسات لكل تخصص</p>
-    </div>
-    <a href="#" class="btn section-btn">عرض الكل</a>
-  </div>
+ 
+    <!-- Courses Carousel -->
+   <app-card-carousel 
+    [items]="courses" 
+    sectionTitle="أحدث الكورسات"
+    sectionHint="الكورسات لكل تخصص"
+    viewAllText="عرض الكل"
+    viewAllLink="/courses">
+    <ng-template #cardTemplate let-course>
+      <div class="course-card-content">
+        <img [src]="course.image" alt="Course image" class="card-image" />
+        <div class="card-info course-info">
+          <!-- Instructor info first -->
+          <div class="instructor-info">
+            <img [src]="course.instructorImg || 'assets/imgs/default-instructor.png'" 
+                alt="Instructor photo" 
+                class="instructor-avatar" />
+            <span class="instructor-name">{{ course.instructor }}</span>
+          </div>
+          
+          <!-- Course title -->
+          <h4>{{ course.subject }}</h4>
+          
+          <!-- Other course details -->
+          <p class="academic-year">{{ course.academicYear }}</p>
+          <div class="course-stats">
+          </div>
+          <div class="rating">
+            <i *ngFor="let star of [].constructor(5); let i = index"
+              class="pi"
+              [ngClass]="i < course.rating ? 'pi-star-fill' : 'pi-star'"
+            ></i>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </app-card-carousel>
 
-  <app-card-carousel [cards]="cards"></app-card-carousel>
+  <!-- Instructors Carousel -->
+  <app-card-carousel 
+    [items]="instructors" 
+    sectionTitle="أعضاء هيئة التدريس المميزون"
+    sectionHint="نخبة من أفضل المدرسين والأكاديميين"
+    viewAllText="عرض جميع المدرسين"
+    viewAllLink="/instructors">
+    <ng-template #cardTemplate let-instructor>
+      <div class="instructor-card-content">
+        <div class="instructor-photo-container">
+          <img [src]="instructor.photo" alt="Instructor photo" class="card-image" />
+        </div>
+        <div class="card-info card-info">
+          <h4>{{ instructor.name }}</h4>
+          <p class="specialization">{{ instructor.specialization }}</p>
+          <p class="department">{{ instructor.department }}</p>
+          
+          <div class="rating">
+            <i *ngFor="let star of [].constructor(5); let i = index"
+               class="pi"
+               [ngClass]="i < instructor.rating ? 'pi-star-fill' : 'pi-star'"
+            ></i>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </app-card-carousel>
 </section>

@@ -1,24 +1,20 @@
-import { Component, Input, OnInit } from '@angular/core';
-
-export interface CarouselCard {
-  image: string;
-  instructor: string;
-  lessonTitle: string;
-  courseName: string;
-  academicYear: string;
-  rating: number;
-}
+import { Component, Input, OnInit, TemplateRef, ContentChild } from '@angular/core';
 
 @Component({
   selector: 'app-card-carousel',
   templateUrl: './card-carousel.component.html',
   styleUrls: ['./card-carousel.component.css']
 })
-export class CardCarouselComponent implements OnInit {
+export class CardCarouselComponent<item = any> implements OnInit {
 
-  @Input() cards: CarouselCard[] = [];
+  @Input() items: item[] = [];
+  @Input() sectionTitle: string = '';
+  @Input() sectionHint: string = '';
+  @Input() viewAllText: string = '';
+  @Input() viewAllLink: string = ''; 
+  @ContentChild('cardTemplate') cardTemplate!: TemplateRef<any>;
 
   ngOnInit() {
-    console.log('Cards received by carousel:', this.cards);
+    console.log('Items received by carousel:', this.items);
   }
 }

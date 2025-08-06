@@ -1,0 +1,66 @@
+<div class="course-catalog-container">
+  <div class="filters-bar">
+    <span class="filters-label">تصفية حسب:</span>
+    <button
+      class="filter-btn"
+      [class.active]="selectedStage === 'ثانوية'"
+      (click)="selectStage('ثانوية')"
+    >
+      الثانوية
+    </button>
+    <button
+      class="filter-btn"
+      [class.active]="selectedStage === 'اعدادية'"
+      (click)="selectStage('اعدادية')"
+    >
+      الإعدادية
+    </button>
+    <button *ngIf="selectedStage || selectedAcademicYear" class="filter-btn reset" (click)="resetFilters()">
+      إعادة تعيين
+    </button>
+  </div>
+
+  <div class="grades-bar" *ngIf="selectedStage">
+    <span class="grades-label">السنة الدراسية:</span>
+    <ng-container *ngFor="let grade of getGradesForStage()">
+      <button
+        class="grade-btn"
+        [class.active]="selectedAcademicYear === getAcademicYearLabel(grade)"
+        (click)="selectGrade(grade)"
+      >
+        {{ getAcademicYearLabel(grade) }}
+      </button>
+    </ng-container>
+  </div>
+
+  <div class="courses-grid" *ngIf="filteredCourses.length > 0; else noCoursesMsg">
+    <div
+      class="course-card"
+      *ngFor="let course of filteredCourses"
+      tabindex="0"
+      (click)="viewCourse(course)"
+    >
+      <img [src]="course.image" alt="Course image" class="card-img" />
+      <div class="card-body">
+        <div class="subject-name">{{ course.subject }}</div>
+        <div class="teacher-name">المعلم: {{ course.instructor }}</div>
+        <div class="academic-year">{{ course.academicYear }}</div>
+        <div class="card-footer">
+          <span class="rating">
+            <span class="rating-num">{{ course.rating }}</span>
+          </span>
+          <span class="duration" *ngIf="course.duration">{{ course.duration }}</span>
+          <span class="students-count" *ngIf="course.studentsCount">
+            <i class="pi pi-users"></i> {{ course.studentsCount }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noCoursesMsg>
+    <div class="no-courses-msg">
+      لا توجد كورسات متاحة للمرحلة أو السنة المختارة حالياً.
+    </div>
+  </ng-template>
+</div>
