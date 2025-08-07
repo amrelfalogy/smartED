@@ -21,7 +21,7 @@ export class HomeComponent {
       id: 2,
       image: 'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg',
       instructor: 'أ. محمد علي',
-      subject: 'التصميم الجرافيكي',
+      subject: 'الكيمياء العضوية ',
       academicYear: 'الثالث الثانوي',
       instructorImg: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       rating: 3
@@ -30,7 +30,7 @@ export class HomeComponent {
       id: 3,
       image: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       instructor: 'أ. محمد علي',
-      subject: 'التسويق الرقمي',
+      subject: 'اللغة الانجليزية ',
       academicYear: 'الثالث الثانوي',
       instructorImg: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       rating: 5
@@ -78,7 +78,7 @@ export class HomeComponent {
     },
     {
       id: 3,
-      name: 'د. خالد حسن المطيري',
+      name: 'د. خالد حسن المطري',
       photo: 'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg',
       specialization: 'الفيزياء النظرية',
       experience: 15,
@@ -88,7 +88,7 @@ export class HomeComponent {
     },
     {
       id: 4,
-      name: 'د. مريم سالم الزهراني',
+      name: 'د. مريم الزهراني',
       photo: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
       specialization: 'التاريخ الإسلامي والحضارة',
       experience: 10,
