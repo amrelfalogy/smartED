@@ -1,0 +1,33 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  th, td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+  }
+  th {
+    background: #f7f7f7;
+    font-weight: 600;
+  }
+  tr:hover {
+    background: #f1f9ff;
+  }
+  button {
+    margin-right: 0.5rem;
+    &.danger {
+      color: #fff;
+      background: #d32f2f;
+      border: none;
+      padding: 0.3rem 0.7rem;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+  }
+}

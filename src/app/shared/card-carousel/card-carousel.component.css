@@ -1,0 +1,201 @@
+.home-section {
+  position: relative;
+  margin-top: 120px;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 0 20px;
+  direction: rtl;
+}
+.section-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+.section-hint {
+  font-size: 14px;
+  color: var(--secondary-color);
+}
+.section-btn {
+  background-color: inherit;
+  border-radius: 6px;
+  border: solid 1px var(--secondary-color);
+  color: var(--secondary-color);
+  font-size: 16px;
+  height: 100%;
+  padding: 10px 20px;
+  transition: background 0.2s, color 0.2s;
+}
+.section-btn:hover {
+  background-color: var(--primary-color);
+  color: var(--light-color);
+}
+
+
+.carousel-container {
+  width: 100%;
+  min-height: 380px;
+  padding: 0 5px;
+}
+
+.carousel-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  padding: 0;
+  text-align: start;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  margin: 0 12px; /* Space between cards */
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.carousel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.card-image {
+  width: 100%; /* Full width of the card */
+  height: 180px;
+  object-fit: cover;
+  border-radius: 0; /* No border radius to fill card edge to edge */
+  margin-bottom: 0;
+}
+
+.card-info {
+  padding: 1.5rem;
+  direction: rtl; /* RTL for Arabic text */
+  text-align: start;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-info h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--dark-color);
+  line-height: 1.4;
+}
+
+.card-info p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--gray-color);
+  line-height: 1.3;
+}
+
+.rating {
+  margin-top: auto; /* Push rating to bottom */
+  display: flex;
+  gap: 2px;
+  justify-content: flex-start;
+}
+
+.rating .pi {
+  color: #F59E42;
+  font-size: 1rem;
+}
+
+/* CORRECT Rounded Pill Indicators */
+::ng-deep .carousel-container .p-carousel-indicators {
+  padding: 1rem 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+::ng-deep .carousel-container .p-carousel-indicators .p-carousel-indicator {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+::ng-deep .carousel-container .p-carousel-indicators .p-carousel-indicator .custom-indicator {
+  background: #d1d5db;
+  border-radius: 20px; /* Rounded pill shape */
+  width: 28px;
+  height: 8px;
+  display: block;
+  transition: all 0.4s ease;
+  cursor: pointer;
+}
+
+::ng-deep .carousel-container .p-carousel-indicators .p-carousel-indicator:hover .custom-indicator {
+  background: #9ca3af;
+  transform: scale(1.1);
+}
+
+::ng-deep .carousel-container .p-carousel-indicators .p-carousel-indicator.p-highlight .custom-indicator {
+  background: var(--primary-color);
+  width: 40px; /* Wider when active */
+  transform: scale(1.05);
+}
+
+/* Enhanced Navigation Buttons */
+::ng-deep .carousel-container .p-carousel-prev,
+::ng-deep .carousel-container .p-carousel-next {
+  background: var(--primary-color) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 12px rgba(48, 74, 111, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+::ng-deep .carousel-container .p-carousel-prev:hover,
+::ng-deep .carousel-container .p-carousel-next:hover {
+  background: var(--secondary-color) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 6px 16px rgba(48, 74, 111, 0.3) !important;
+}
+
+::ng-deep .carousel-container .p-carousel-prev:disabled,
+::ng-deep .carousel-container .p-carousel-next:disabled {
+  background: #e5e7eb !important;
+  color: #9ca3af !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .carousel-card {
+    margin: 0 8px;
+  }
+  
+  .card-info {
+    padding: 1rem;
+  }
+  
+  .card-info h4 {
+    font-size: 1.1rem;
+  }
+  
+  .card-image {
+    height: 140px;
+  }
+  
+  ::ng-deep .carousel-container .p-carousel-indicators .p-carousel-indicator .custom-indicator {
+    width: 24px;
+    height: 6px;
+  }
+  
+  ::ng-deep .carousel-container .p-carousel-indicators .p-carousel-indicator.p-highlight .custom-indicator {
+    width: 32px;
+  }
+}

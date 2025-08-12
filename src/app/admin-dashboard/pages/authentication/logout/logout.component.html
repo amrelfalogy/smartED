@@ -1,0 +1,35 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-body">
+      <div class="logout-container">
+        <div class="logout-icon">
+          <i class="fas fa-sign-out-alt" *ngIf="!isLoading"></i>
+          <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+        </div>
+        
+        <h2>{{ message }}</h2>
+        
+        <div class="logout-animation" *ngIf="isLoading">
+          <div class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+        
+        <div class="success-message" *ngIf="!isLoading">
+          <i class="fas fa-check-circle"></i>
+          <p>شكراً لاستخدام منصتنا التعليمية</p>
+        </div>
+        
+        <button 
+          class="redirect-btn" 
+          (click)="redirectToLogin()"
+          *ngIf="!isLoading"
+        >
+          العودة لتسجيل الدخول
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

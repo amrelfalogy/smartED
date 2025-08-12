@@ -1,0 +1,33 @@
+<section class="home-section">
+  <div class="section-header">
+    <div class="section-info">
+      <h2 class="section-title">{{ sectionTitle }}</h2>
+      <p class="section-hint">{{ sectionHint }}</p>
+    </div>
+    <a [routerLink]="viewAllLink" class="btn section-btn">{{ viewAllText }}</a>
+  </div>
+
+<div class="carousel-wrapper" style="padding: 0 5px;">
+  <p-carousel 
+    [value]="items"
+    [numVisible]="3"
+    [numScroll]="1"
+    [circular]="true"
+    [showNavigators]="false"
+    [autoplayInterval]="5000"
+    [responsiveOptions]="[
+      { breakpoint: '1200px', numVisible: 2, numScroll: 1 },
+      { breakpoint: '960px', numVisible: 1, numScroll: 1 }
+    ]"
+    [showIndicators]="true"
+    indicatorStyleClass="custom-indicator"
+    styleClass="carousel-container"
+    dir="ltr"
+  >
+    <ng-template pTemplate="item" let-item>
+      <div class="carousel-card">
+        <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: item }"></ng-container>
+      </div>
+    </ng-template>
+  </p-carousel>
+</div>

@@ -18,6 +18,12 @@
     "@angular/platform-browser": "^16.2.0",
     "@angular/platform-browser-dynamic": "^16.2.0",
     "@angular/router": "^16.2.0",
+    "apexcharts": "^3.54.1",
+    "bootstrap": "^5.3.7",
+    "bootstrap-rtl": "^3.3.4",
+    "ng-apexcharts": "^1.7.2",
+    "primeicons": "^7.0.0",
+    "primeng": "^16.7.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.13.0"
