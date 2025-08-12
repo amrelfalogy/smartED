@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, LoginRequest } from 'src/app/core/services/auth.service';
 
 @Component({
@@ -18,6 +18,7 @@ export class AuthLoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService
   ) {}
 
@@ -55,7 +56,12 @@ export class AuthLoginComponent implements OnInit {
       this.authService.login(loginData).subscribe({
         next: (response) => {
           this.isLoading = false;
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+          if (returnUrl) {
+            this.router.navigateByUrl(returnUrl);
+          } else {
           this.redirectUser(response.user.role);
+          }
         },
         error: (error) => {
           this.isLoading = false;
