@@ -13,6 +13,12 @@ import { SalesReportChartComponent } from './shared/apexchart/sales-report-chart
 
 // Shared components
 import { CardComponent } from './shared/components/card/card.component';
+import { CoursesAdminListComponent } from './pages/courses-admin/courses-admin-list/courses-admin-list.component';
+import { CoursesAdminFormComponent } from './pages/courses-admin/courses-admin-form/courses-admin-form.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SubjectSectionComponent } from './pages/courses-admin/courses-admin-form/components/subject-section/subject-section.component';
+import { UnitsSectionComponent } from './pages/courses-admin/courses-admin-form/components/units-section/units-section.component';
+import { LessonsSectionComponent } from './pages/courses-admin/courses-admin-form/components/lessons-section/lessons-section.component';
 
 @NgModule({
   declarations: [
@@ -24,10 +30,17 @@ import { CardComponent } from './shared/components/card/card.component';
     AnalyticsChartComponent,
     SalesReportChartComponent,
     // Shared components
-    CardComponent
+    CardComponent,
+    CoursesAdminListComponent,
+    CoursesAdminFormComponent,
+    SubjectSectionComponent,
+    UnitsSectionComponent,
+    LessonsSectionComponent
   ],
   imports: [
     CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
     NgApexchartsModule
   ],
   exports: [
