@@ -2,8 +2,8 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angu
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Lesson } from 'src/app/core/models/course-complete.model';
-import { FileUploadService, FileUploadResponse, FileUploadProgress } from 'src/app/core/services/file-upload.service';
+import { Lesson } from '../../../../../core/models/course-complete.model';
+import { FileUploadService, FileUploadResponse, FileUploadProgress } from '../../../../../core/services/file-upload.service';
 
 @Component({
   selector: 'app-lessons-section',
