@@ -2,7 +2,8 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angu
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Lesson } from 'src/app/core/models/course-complete.model';
+import { Lesson } from '../../../../../core/models/course-complete.model';
+import { FileUploadService, FileUploadResponse, FileUploadProgress } from '../../../../../core/services/file-upload.service';
 
 @Component({
   selector: 'app-lessons-section',
@@ -108,7 +109,10 @@ export class LessonsSectionComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private fileUploadService: FileUploadService
+  ) {}
 
   ngOnInit(): void {
     this.initializeForm();
@@ -258,69 +262,78 @@ export class LessonsSectionComponent implements OnInit, OnDestroy {
     this.uploadProgress[contentType] = 0;
 
     try {
-      // Create FormData for actual upload (replace with your API call)
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('contentType', contentType);
-      formData.append('lessonId', this.lessonForm.get('id')?.value || '');
-      formData.append('unitId', this.unitId);
-
-      // Simulate upload progress (replace with actual API call)
-      const uploadResult = await this.simulateFileUpload(file, contentType);
+      let uploadObservable;
       
-      // Update form with uploaded file URL
-      const contentGroup = this.lessonForm.get('content') as FormGroup;
       switch (contentType) {
         case 'video':
-          contentGroup.patchValue({ videoUrl: uploadResult.url });
+          uploadObservable = this.fileUploadService.uploadVideo(file);
           break;
         case 'document':
-          contentGroup.patchValue({ documentUrl: uploadResult.url });
+          uploadObservable = this.fileUploadService.uploadDocument(file);
           break;
         case 'audio':
-          const attachments = contentGroup.get('attachments')?.value || [];
-          attachments.push({
-            type: 'audio',
-            url: uploadResult.url,
-            name: file.name,
-            size: file.size
-          });
-          contentGroup.patchValue({ attachments });
+          uploadObservable = this.fileUploadService.uploadDocument(file); // Audio files can use document upload
           break;
+        default:
+          throw new Error('Unsupported content type');
       }
 
-      // Show success message
-      this.showUploadSuccess(contentType, file.name);
+      uploadObservable
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (event) => {
+            if ('progress' in event) {
+              // Progress update
+              const progressEvent = event as FileUploadProgress;
+              this.uploadProgress[contentType] = progressEvent.progress;
+            } else {
+              // Upload completed
+              const response = event as FileUploadResponse;
+              this.handleUploadSuccess(response, contentType, file);
+              delete this.uploadProgress[contentType];
+            }
+          },
+          error: (error) => {
+            console.error('File upload failed:', error);
+            this.showUploadError(contentType, error);
+            delete this.uploadProgress[contentType];
+          }
+        });
 
     } catch (error) {
       console.error('File upload failed:', error);
       this.showUploadError(contentType, error);
-    } finally {
       delete this.uploadProgress[contentType];
     }
   }
 
-  private async simulateFileUpload(file: File, contentType: string): Promise<{url: string}> {
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        this.uploadProgress[contentType] += 10;
-        if (this.uploadProgress[contentType] >= 100) {
-          clearInterval(interval);
-          resolve({
-            url: `https://example.com/uploads/${contentType}/${file.name}`
-          });
-        }
-      }, 200);
+  private handleUploadSuccess(response: FileUploadResponse, contentType: string, file: File): void {
+    // Update form with uploaded file URL
+    const contentGroup = this.lessonForm.get('content') as FormGroup;
+    switch (contentType) {
+      case 'video':
+        contentGroup.patchValue({ videoUrl: response.url });
+        break;
+      case 'document':
+        contentGroup.patchValue({ documentUrl: response.url });
+        break;
+      case 'audio':
+        const attachments = contentGroup.get('attachments')?.value || [];
+        attachments.push({
+          type: 'audio',
+          url: response.url,
+          name: file.name,
+          size: file.size
+        });
+        contentGroup.patchValue({ attachments });
+        break;
+    }
 
-      // Simulate potential failure
-      setTimeout(() => {
-        if (Math.random() < 0.05) { // 5% chance of failure
-          clearInterval(interval);
-          reject(new Error('Upload failed'));
-        }
-      }, 1000);
-    });
+    // Show success message
+    this.showUploadSuccess(contentType, file.name);
   }
+
+
 
   private showUploadSuccess(contentType: string, fileName: string): void {
     const typeLabel = this.getContentTypeConfig(contentType)?.label || contentType;
@@ -337,10 +350,43 @@ export class LessonsSectionComponent implements OnInit, OnDestroy {
     const typeLabel = config?.label || contentType;
 
     if (confirm(`هل أنت متأكد من حذف ${typeLabel}؟`)) {
+      const contentGroup = this.lessonForm.get('content') as FormGroup;
+      let fileUrl: string | null = null;
+
+      // Get the file URL to delete from server
+      switch (contentType) {
+        case 'video':
+          fileUrl = contentGroup.get('videoUrl')?.value;
+          break;
+        case 'document':
+          fileUrl = contentGroup.get('documentUrl')?.value;
+          break;
+        case 'audio':
+          const attachments = contentGroup.get('attachments')?.value || [];
+          const audioAttachment = attachments.find((att: any) => att.type === 'audio');
+          fileUrl = audioAttachment?.url;
+          break;
+      }
+
+      // Delete from server if URL exists
+      if (fileUrl && fileUrl.startsWith('http')) {
+        this.fileUploadService.deleteFile(fileUrl)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              console.log(`${typeLabel} deleted successfully from server`);
+            },
+            error: (error) => {
+              console.error(`Failed to delete ${typeLabel} from server:`, error);
+              // Continue with local cleanup even if server deletion fails
+            }
+          });
+      }
+
+      // Clean up local state
       delete this.selectedFiles[contentType];
       delete this.uploadProgress[contentType];
 
-      const contentGroup = this.lessonForm.get('content') as FormGroup;
       switch (contentType) {
         case 'video':
           contentGroup.patchValue({ videoUrl: '' });
