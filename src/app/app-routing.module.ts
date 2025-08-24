@@ -1,99 +1,64 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { HomeComponent } from './features/home/home.component';
-import { CourseCatalogComponent } from './features/courses/course-catalog/course-catalog.component';
-import { CourseTypeComponent } from './features/courses/course-type/course-type.component';
-import { DashboardComponent } from './admin-dashboard/pages/dashboard/dashboard.component';
-import { CoursesAdminListComponent } from './admin-dashboard/pages/courses-admin/courses-admin-list/courses-admin-list.component';
-import { CoursesAdminFormComponent } from './admin-dashboard/pages/courses-admin/courses-admin-form/courses-admin-form.component';
+import { LayoutComponent } from './layout/layout/layout.component';
 import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
-  // ============ PUBLIC ROUTES ============
-  { path: '', component: HomeComponent },
-  { path: 'home', component: HomeComponent },
-
-  // ============ AUTHENTICATION ============
+  // Auth routes (no layout - standalone pages)
   {
     path: 'auth',
     loadChildren: () => import('./admin-dashboard/pages/authentication/auth.module').then(m => m.AuthModule)
   },
 
-  // ============ PROTECTED USER ROUTES ============
-  { 
-    path: 'courses', 
-    component: CourseCatalogComponent,
-    canActivate: [AuthGuard]
-  },
-  { 
-    path: 'course-type', 
-    component: CourseTypeComponent,
-    canActivate: [AuthGuard]
+  // Admin dashboard (has its own layout)
+  {
+    path: 'admin',
+    loadChildren: () => import('./admin-dashboard/dashboard.module').then(m => m.AdminDashboardModule),
+    canActivate: [AuthGuard],
+    data: { role: 'admin' }
   },
 
-  // ============ ADMIN DASHBOARD ROUTES ============
-  { 
-    path: 'admin-dashboard',
-    canActivate: [AuthGuard],
-    data: { role: 'admin' },
+  // Main application with public layout
+  {
+    path: '',
+    component: LayoutComponent,
     children: [
-      // Dashboard home
+      // Public routes
       { 
         path: '', 
-        component: DashboardComponent 
+        loadChildren: () => import('./features/home/home.module').then(m => m.HomeModule)
       },
       { 
-        path: 'dashboard', 
-        component: DashboardComponent 
+        path: 'home', 
+        loadChildren: () => import('./features/home/home.module').then(m => m.HomeModule)
       },
-      
-      // Course management
+
+      // Protected user routes
       { 
         path: 'courses', 
-        component: CoursesAdminListComponent 
-      },
-      { 
-        path: 'courses/new', 
-        component: CoursesAdminFormComponent 
-      },
-      { 
-        path: 'courses/:id/edit', 
-        component: CoursesAdminFormComponent 
-      },
-      { 
-        path: 'courses/:id/view', 
-        component: CoursesAdminFormComponent,
-        data: { mode: 'view' }
-      },
+        loadChildren: () => import('./features/courses/courses.module').then(m => m.CoursesModule),
+        canActivate: [AuthGuard] 
+      }
     ]
   },
 
-  // ============ LEGACY ROUTES (for backward compatibility) ============
-  { 
-    path: 'dashboard', 
-    redirectTo: '/admin-dashboard/dashboard',
-    pathMatch: 'full'
-  },
-  { 
-    path: 'courses-adminList', 
-    redirectTo: '/admin-dashboard/courses',
-    pathMatch: 'full'
-  },
-  { 
-    path: 'courses-adminForm', 
-    redirectTo: '/admin-dashboard/courses/new',
-    pathMatch: 'full'
-  },
+  // Legacy redirects
+  { path: 'dashboard', redirectTo: '/admin/dashboard', pathMatch: 'full' },
+  { path: 'admin-dashboard', redirectTo: '/admin/dashboard', pathMatch: 'full' },
+  { path: 'courses-adminList', redirectTo: '/admin/courses', pathMatch: 'full' },
+  { path: 'courses-adminForm', redirectTo: '/admin/courses/new', pathMatch: 'full' },
 
-  // ============ WILDCARD ROUTE ============
+  // Wildcard
   { path: '**', redirectTo: '/home' }
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes, {
-    enableTracing: false, // Set to true for debugging
-    scrollPositionRestoration: 'top'
+    enableTracing: false,
+    scrollPositionRestoration: 'top',
+    onSameUrlNavigation: 'reload',
+    anchorScrolling: 'enabled'
   })],
   exports: [RouterModule]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

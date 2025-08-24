@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, LoginRequest } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-auth-login',
   templateUrl: './auth-login.component.html',
-  styleUrls: ['./auth-login.component.css']
+  styleUrls: ['./auth-login.component.scss']
 })
 export class AuthLoginComponent implements OnInit {
   loginForm!: FormGroup;
@@ -15,9 +15,17 @@ export class AuthLoginComponent implements OnInit {
   isLoading = false;
   loginError = '';
 
+  SignInOptions = [
+    {
+      image: 'assets/imgs/google.svg',
+      name: 'Google'
+    }
+  ];
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService
   ) {}
 
@@ -55,7 +63,12 @@ export class AuthLoginComponent implements OnInit {
       this.authService.login(loginData).subscribe({
         next: (response) => {
           this.isLoading = false;
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+          if (returnUrl) {
+            this.router.navigateByUrl(returnUrl);
+          } else {
           this.redirectUser(response.user.role);
+          }
         },
         error: (error) => {
           this.isLoading = false;
@@ -67,13 +80,18 @@ export class AuthLoginComponent implements OnInit {
     }
   }
 
+  loginWithGoogle(): void {
+    // Implement Google login functionality here
+    console.log('Google login clicked');
+  }
+
   private redirectUser(userRole: string): void {
     switch (userRole) {
       case 'admin':
-        this.router.navigate(['/admin-dashboard/dashboard']);
+        this.router.navigate(['/admin/dashboard']);
         break;
       case 'support':
-        this.router.navigate(['/admin-dashboard/dashboard']);
+        this.router.navigate(['/admin/dashboard']);
         break;
       default:
         this.router.navigate(['/courses']);

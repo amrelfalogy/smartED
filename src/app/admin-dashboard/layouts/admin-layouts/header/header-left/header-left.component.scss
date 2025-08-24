@@ -1,0 +1,39 @@
+.pc-h-item {
+  .pc-head-link {
+    position: relative;
+    z-index: 1050; // Ensure it's above sidebar
+    
+    &.mobile-toggle {
+      &.active {
+        background: #dc3545;
+        color: white;
+        
+        &:hover {
+          background: #c82333;
+        }
+      }
+    }
+    
+    &.active {
+      background: #007bff;
+      color: white;
+      
+      &:hover {
+        background: #0056b3;
+      }
+    }
+  }
+}
+
+// Ensure mobile toggle is always visible
+@media (max-width: 1023px) {
+  .pc-h-item.pc-sidebar-popup {
+    position: relative;
+    z-index: 1050;
+    
+    .pc-head-link {
+      position: relative;
+      z-index: 1050;
+    }
+  }
+}

@@ -1,0 +1,17 @@
+<li *ngIf="item.url && !item.external" [ngClass]="item.classes!" [routerLinkActive]="['active']">
+  <a [target]="item.target ? '_blank' : '_self'" [routerLink]="[item.url]" (click)="closeOtherMenu($event)">
+    <span *ngIf="item.icon" class="coded-micon">
+      <i [class]="item.icon"></i>
+    </span>
+    <span class="coded-mtext">{{ item.title }}</span>
+  </a>
+</li>
+
+<li *ngIf="item.url && item.external" [ngClass]="item.classes!">
+  <a [target]="item.target ? '_blank' : '_self'" [href]="item.url">
+    <span *ngIf="item.icon" class="coded-micon">
+      <i [class]="item.icon"></i>
+    </span>
+    <span class="coded-mtext">{{ item.title }}</span>
+  </a>
+</li>

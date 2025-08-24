@@ -1,0 +1,16 @@
+<li data-username="sidebar collapse" class="nav-item coded-hasmenu" [routerLinkActive]="['active']">
+  <a [routerLinkActive]="['active']" (click)="navCollapse($event)">
+    <span *ngIf="item.icon" class="coded-micon">
+      <i [class]="item.icon"></i>
+    </span>
+    <span class="coded-mtext">
+      {{ item.title }}
+    </span>
+  </a>
+  <ul class="coded-submenu" [routerLinkActive]="['active']" [ngClass]="item.classes!">
+    <ng-container *ngFor="let childItem of item.children">
+      <app-sidebar-item *ngIf="childItem.type === 'item'" [item]="childItem"></app-sidebar-item>
+      <app-sidebar-collapse *ngIf="childItem.type === 'collapse'" [item]="childItem"></app-sidebar-collapse>
+    </ng-container>
+  </ul>
+</li>

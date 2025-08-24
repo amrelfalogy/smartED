@@ -1,202 +1,207 @@
-<div class="auth-container">
-  <div class="auth-card">
-    <div class="auth-header">
-      <div class="logo-section">
-        <img src="assets/imgs/logo.png" alt="Logo" class="auth-logo" />
-        <h1>إنشاء حساب جديد</h1>
-        <p>انضم إلى منصتنا التعليمية</p>
+<div class="auth-main">
+  <div class="auth-wrapper v3">
+    <div class="auth-form">
+      <div class="auth-header">
+        <a [routerLink]="['/home']" ><img src="assets/imgs/logo2.png" alt="logo img" style="height: 60px;" /></a>
       </div>
-    </div>
+      <div class="card my-5">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-end mb-4">
+            <h3 class="mb-0"><b>إنشاء حساب جديد</b></h3>
+            <a [routerLink]="['/auth/login']" class="link-primary">لديك حساب بالفعل؟</a>
+          </div>
 
-    <div class="auth-body">
-      <!-- Account Type Selection -->
-      <div class="account-type-section">
-        <h3>نوع الحساب</h3>
-        <div class="account-types">
-          <div 
-            class="account-type-card"
-            [class.selected]="selectedAccountType === 'student'"
-            (click)="selectAccountType('student')"
-          >
-            <h4>طالب</h4>
-          </div>
-          
-          <div 
-            class="account-type-card"
-            [class.selected]="selectedAccountType === 'admin'"
-            (click)="selectAccountType('admin')"
-          >
-            <h4>مدير</h4>
-          </div>
-          
-          <div 
-            class="account-type-card"
-            [class.selected]="selectedAccountType === 'support'"
-            (click)="selectAccountType('support')"
-          >
-            <h4>دعم فني</h4>
-          </div>
-        </div>
-      </div>
-
-      <!-- Registration Form -->
-      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
-        <!-- Personal Information -->
-        <div class="form-section">
-          <h4 class="section-title">المعلومات الشخصية</h4>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="firstName">الاسم الأول *</label>
-              <input
-                type="text"
-                id="firstName"
-                formControlName="firstName"
-                class="form-control"
-                [class.error]="isFieldInvalid('firstName')"
-                placeholder="أدخل الاسم الأول"
-              />
-              <div class="error-message" *ngIf="isFieldInvalid('firstName')">
-                {{ getFieldError('firstName') }}
+          <!-- Registration Form -->
+          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <!-- Name Fields -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <label class="form-label" for="firstName">الاسم الأول*</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="firstName" 
+                    formControlName="firstName"
+                    placeholder="الاسم الأول"
+                    [class.is-invalid]="isFieldInvalid('firstName')"
+                  />
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('firstName')">
+                    {{ getFieldError('firstName') }}
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <label class="form-label" for="lastName">الاسم الأخير*</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="lastName" 
+                    formControlName="lastName"
+                    placeholder="الاسم الأخير"
+                    [class.is-invalid]="isFieldInvalid('lastName')"
+                  />
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('lastName')">
+                    {{ getFieldError('lastName') }}
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <div class="form-group">
-              <label for="lastName">الاسم الأخير *</label>
-              <input
-                type="text"
-                id="lastName"
-                formControlName="lastName"
-                class="form-control"
-                [class.error]="isFieldInvalid('lastName')"
-                placeholder="أدخل الاسم الأخير"
+
+            <!-- Phone Field -->
+            <div class="form-group mb-3">
+              <label class="form-label" for="phone">رقم الهاتف*</label>
+              <input 
+                type="tel" 
+                class="form-control" 
+                id="phone" 
+                formControlName="phone"
+                placeholder="01xxxxxxxxx"
+                [class.is-invalid]="isFieldInvalid('phone')"
               />
-              <div class="error-message" *ngIf="isFieldInvalid('lastName')">
-                {{ getFieldError('lastName') }}
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('phone')">
+                {{ getFieldError('phone') }}
               </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="email">البريد الإلكتروني *</label>
-            <input
-              type="email"
-              id="email"
-              formControlName="email"
-              class="form-control"
-              [class.error]="isFieldInvalid('email')"
-              placeholder="example@email.com"
-            />
-            <div class="error-message" *ngIf="isFieldInvalid('email')">
-              {{ getFieldError('email') }}
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="phone">رقم الهاتف *</label>
-            <input
-              type="tel"
-              id="phone"
-              formControlName="phone"
-              class="form-control"
-              [class.error]="isFieldInvalid('phone')"
-              placeholder="01xxxxxxxxx"
-            />
-            <div class="error-message" *ngIf="isFieldInvalid('phone')">
-              {{ getFieldError('phone') }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Security Information -->
-        <div class="form-section">
-          <h4 class="section-title">معلومات الأمان</h4>
-          
-          <div class="form-group">
-            <label for="password">كلمة المرور *</label>
-            <div class="password-input">
-              <input
-                [type]="showPassword ? 'text' : 'password'"
-                id="password"
-                formControlName="password"
-                class="form-control"
-                [class.error]="isFieldInvalid('password')"
-                placeholder="أدخل كلمة مرور قوية"
+            <!-- Email Field -->
+            <div class="form-group mb-3">
+              <label class="form-label" for="emailAddress">البريد الإلكتروني*</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                id="emailAddress" 
+                formControlName="email"
+                placeholder="example@email.com"
+                [class.is-invalid]="isFieldInvalid('email')"
               />
-              <button
-                type="button"
-                class="password-toggle"
-                (click)="togglePassword()"
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">
+                {{ getFieldError('email') }}
+              </div>
+            </div>
+
+            <!-- Password Fields -->
+            <div class="form-group mb-3">
+              <label class="form-label" for="password">كلمة المرور*</label>
+              <div class="input-group">
+                <input 
+                  [type]="showPassword ? 'text' : 'password'" 
+                  class="form-control" 
+                  id="password" 
+                  formControlName="password"
+                  placeholder="كلمة المرور"
+                  [class.is-invalid]="isFieldInvalid('password')"
+                />
+                <button 
+                  type="button" 
+                  class="btn btn-outline-secondary"
+                  (click)="togglePassword()"
+                >
+                  <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('password')">
+                {{ getFieldError('password') }}
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label class="form-label" for="confirmPassword">تأكيد كلمة المرور*</label>
+              <input 
+                type="password" 
+                class="form-control" 
+                id="confirmPassword" 
+                formControlName="confirmPassword"
+                placeholder="تأكيد كلمة المرور"
+                [class.is-invalid]="isFieldInvalid('confirmPassword') || registerForm.hasError('passwordMismatch')"
+              />
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('confirmPassword')">
+                {{ getFieldError('confirmPassword') }}
+              </div>
+              <div class="invalid-feedback" *ngIf="registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched">
+                كلمات المرور غير متطابقة
+              </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="form-check mb-3">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="agreeToTerms" 
+                formControlName="agreeToTerms"
+                [class.is-invalid]="isFieldInvalid('agreeToTerms')"
+              />
+              <label class="form-check-label" for="agreeToTerms">
+                أوافق على 
+                <a href="javascript:" class="text-primary">الشروط والأحكام</a>
+                و
+                <a href="javascript:" class="text-primary">سياسة الخصوصية</a>
+              </label>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('agreeToTerms')">
+                {{ getFieldError('agreeToTerms') }}
+              </div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="alert alert-danger" *ngIf="registerError">
+              <i class="fas fa-exclamation-circle me-2"></i>
+              {{ registerError }}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid mt-3">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="registerForm.invalid || isLoading"
               >
-                <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                <span *ngIf="!isLoading">إنشاء الحساب</span>
+                <span *ngIf="isLoading">
+                  <i class="fas fa-spinner fa-spin me-2"></i>
+                  جاري الإنشاء...
+                </span>
               </button>
             </div>
-            <div class="error-message" *ngIf="isFieldInvalid('password')">
-              {{ getFieldError('password') }}
+          </form>
+
+          <!-- Social Registration -->
+          <div class="saprator mt-3">
+            <span>أو سجل باستخدام</span>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <div class="d-grid">
+                <button 
+                  type="button" 
+                  class="btn mt-2 btn-light-primary bg-light text-muted"
+                  (click)="registerWithGoogle()"
+                >
+                  <img src="{{ SignUpOptions[0].image }}" alt="google img" />
+                  <span class="d-none d-sm-inline-block ms-2">{{ SignUpOptions[0].name }}</span>
+                </button>
+              </div>
             </div>
           </div>
-
-          <div class="form-group">
-            <label for="confirmPassword">تأكيد كلمة المرور *</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              formControlName="confirmPassword"
-              class="form-control"
-              [class.error]="isFieldInvalid('confirmPassword')"
-              placeholder="أعد إدخال كلمة المرور"
-            />
-            <div class="error-message" *ngIf="isFieldInvalid('confirmPassword')">
-              {{ getFieldError('confirmPassword') }}
-            </div>
-          </div>
         </div>
+      </div>
 
-        <!-- Registration Error -->
-        <div class="register-error" *ngIf="registerError">
-          <i class="fas fa-exclamation-circle"></i>
-          {{ registerError }}
+      <!-- Footer -->
+      <div class="auth-footer row">
+        <div class="col my-1">
+          <p class="m-0">
+            حقوق الطبع والنشر ©
+            <a href="#" target="_blank">منصة التعلم الإلكتروني</a>
+          </p>
         </div>
-
-        <!-- Terms and Conditions -->
-        <div class="form-group checkbox-group">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              formControlName="agreeToTerms"
-              class="checkbox-input"
-            />
-            <span class="checkbox-custom"></span>
-            <span class="checkbox-text">
-              أوافق على <a href="#" class="terms-link">الشروط والأحكام</a>
-            </span>
-          </label>
-          <div class="error-message" *ngIf="isFieldInvalid('agreeToTerms')">
-            {{ getFieldError('agreeToTerms') }}
-          </div>
+        <div class="col-auto my-1">
+          <ul class="list-inline footer-link mb-0">
+            <li class="list-inline-item"><a href="#" target="_blank">الرئيسية</a></li>
+            <li class="list-inline-item"><a href="#" target="_blank">سياسة الخصوصية</a></li>
+            <li class="list-inline-item"><a href="#" target="_blank">اتصل بنا</a></li>
+          </ul>
         </div>
-
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="submit-btn"
-          [disabled]="registerForm.invalid || isLoading"
-          [class.loading]="isLoading"
-        >
-          <span *ngIf="!isLoading">إنشاء الحساب</span>
-          <span *ngIf="isLoading">
-            <i class="fas fa-spinner fa-spin"></i>
-            جاري الإنشاء...
-          </span>
-        </button>
-      </form>
-
-      <!-- Login Link -->
-      <div class="auth-footer">
-        <p>
-          لديك حساب بالفعل؟
-          <a routerLink="/auth/login" class="auth-link">تسجيل الدخول</a>
-        </p>
       </div>
     </div>
   </div>

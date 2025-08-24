@@ -37,8 +37,11 @@ export class SubjectService {
 
   // Create subject - matches backend structure
   createSubject(subject: Omit<Subject, 'id'>): Observable<Subject> {
-    return this.http.post<Subject>(`${this.baseUrl}`, subject)
-      .pipe(catchError(this.handleError));
+    return this.http.post<{ message: string; subject: Subject }>(`${this.baseUrl}`, subject)
+      .pipe(
+        map(res => res.subject),
+        catchError(this.handleError)
+      );
   }
 
   // Update subject

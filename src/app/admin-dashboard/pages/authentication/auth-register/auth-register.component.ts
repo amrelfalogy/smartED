@@ -6,7 +6,7 @@ import { AuthService, RegisterRequest } from 'src/app/core/services/auth.service
 @Component({
   selector: 'app-auth-register',
   templateUrl: './auth-register.component.html',
-  styleUrls: ['./auth-register.component.css']
+  styleUrls: ['./auth-register.component.scss']
 })
 export class AuthRegisterComponent implements OnInit {
   registerForm!: FormGroup;
@@ -14,6 +14,14 @@ export class AuthRegisterComponent implements OnInit {
   showPassword = false;
   isLoading = false;
   registerError = '';
+
+  // Social registration options
+  SignUpOptions = [
+    {
+      image: 'assets/imgs/google.svg',
+      name: 'Google'
+    }
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -43,10 +51,7 @@ export class AuthRegisterComponent implements OnInit {
     return password === confirmPassword ? null : { passwordMismatch: true };
   }
 
-  selectAccountType(type: 'student' | 'admin' | 'support'): void {
-    this.selectedAccountType = type;
-    this.registerError = '';
-  }
+  
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
@@ -83,12 +88,21 @@ export class AuthRegisterComponent implements OnInit {
     }
   }
 
+  registerWithGoogle(): void {
+    // Implement Google registration functionality here
+    console.log('Google registration clicked');
+    // You can integrate with Google OAuth here
+  }
+
   private getErrorMessage(error: any): string {
     if (error.error?.message) {
       return error.error.message;
     }
     if (error.status === 409) {
       return 'البريد الإلكتروني مستخدم بالفعل';
+    }
+    if (error.status === 0) {
+      return 'لا يمكن الاتصال بالخادم';
     }
     return 'حدث خطأ أثناء إنشاء الحساب';
   }
@@ -113,7 +127,6 @@ export class AuthRegisterComponent implements OnInit {
     if (field.errors['email']) return 'البريد الإلكتروني غير صحيح';
     if (field.errors['minlength']) return `الحد الأدنى ${field.errors['minlength'].requiredLength} أحرف`;
     if (field.errors['pattern']) return 'رقم الهاتف غير صحيح';
-    if (field.errors['passwordMismatch']) return 'كلمات المرور غير متطابقة';
     if (field.errors['requiredTrue']) return 'يجب الموافقة على الشروط والأحكام';
 
     return 'خطأ في البيانات';

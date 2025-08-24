@@ -1,0 +1,93 @@
+<ul class="list-unstyled">
+  
+  <!-- User Profile -->
+  <li class="dropdown pc-h-item header-user-profile" [class.show]="showUserDropdown">
+    <a 
+      href="javascript:" 
+      class=" dropdown-toggle arrow-none me-0 user-profile-trigger" 
+      (click)="toggleUserDropdown()"
+      title="الملف الشخصي"
+    >
+      <div class="user-avatar me-2">
+        <span class="user-initials">{{ getUserInitials() }}</span>
+        <div class="user-status online"></div>
+      </div>
+      <div class="user-info d-none d-md-block">
+        <span class="user-name">{{ getUserDisplayName() }}</span>
+        <small class="user-role">{{ getUserRole() }}</small>
+      </div>
+      <i class="pi pi-chevron-down ms-2 chevron-icon" [class.rotated]="showUserDropdown"></i>
+    </a>
+    
+    <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown" [class.show]="showUserDropdown">
+      <!-- User Info Header -->
+      <div class="dropdown-header user-profile-header">
+        <div class="d-flex align-items-center">
+          <div class="flex-shrink-0">
+            <div class="user-avatar-large">
+              <span class="user-initials-large">{{ getUserInitials() }}</span>
+              <div class="user-status-large online"></div>
+            </div>
+          </div>
+          <div class="flex-grow-1 ms-3 text-start">
+            <h6 class="user-display-name mb-1">{{ getUserDisplayName() }}</h6>
+            <p class="user-email mb-1">{{ currentUser?.email || 'لا يوجد بريد إلكتروني' }}</p>
+            <span class="badge user-role-badge">{{ getUserRole() }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Menu Items -->
+      <div class="dropdown-body">
+        <a href="javascript:" class="dropdown-item profile-menu-item" (click)="navigateToProfile()">
+          <div class="menu-icon bg-primary">
+            <i class="pi pi-user"></i>
+          </div>
+          <div class="menu-content">
+            <span class="menu-title">الملف الشخصي</span>
+            <small class="menu-description">عرض معلوماتك الشخصية</small>
+          </div>
+          <i class="pi pi-chevron-left menu-arrow"></i>
+        </a>
+        
+        <a href="javascript:" class="dropdown-item profile-menu-item" (click)="editProfile()">
+          <div class="menu-icon bg-warning">
+            <i class="pi pi-pencil"></i>
+          </div>
+          <div class="menu-content">
+            <span class="menu-title">تعديل الملف الشخصي</span>
+            <small class="menu-description">تحديث بياناتك الشخصية</small>
+          </div>
+          <i class="pi pi-chevron-left menu-arrow"></i>
+        </a>
+        
+        <a href="javascript:" class="dropdown-item profile-menu-item" (click)="navigateToSettings()">
+          <div class="menu-icon bg-info">
+            <i class="pi pi-cog"></i>
+          </div>
+          <div class="menu-content">
+            <span class="menu-title">الإعدادات</span>
+            <small class="menu-description">إدارة إعدادات الحساب</small>
+          </div>
+          <i class="pi pi-chevron-left menu-arrow"></i>
+        </a>
+        
+        <div class="dropdown-divider"></div>
+        
+        <a href="javascript:" class="dropdown-item profile-menu-item logout-item" (click)="logout()" [class.disabled]="isLoggingOut">
+          <div class="menu-icon bg-danger">
+            <i class="pi pi-sign-out" *ngIf="!isLoggingOut"></i>
+            <i class="pi pi-spin pi-spinner" *ngIf="isLoggingOut"></i>
+          </div>
+          <div class="menu-content">
+            <span class="menu-title text-danger">{{ isLoggingOut ? 'جاري تسجيل الخروج...' : 'تسجيل الخروج' }}</span>
+            <small class="menu-description">الخروج من النظام</small>
+          </div>
+        </a>
+      </div>
+    </div>
+  </li>
+</ul>
+
+<!-- Backdrop for closing dropdown -->
+<div class="dropdown-backdrop" *ngIf="showUserDropdown" (click)="closeDropdown()"></div>

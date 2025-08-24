@@ -5,6 +5,9 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 // Dashboard pages
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 
+import { AdminLayoutComponent } from './layouts/admin-layouts/admin-layout/admin-layout.component';
+
+
 // Chart components
 import { MonthlyBarChartComponent } from './shared/apexchart/monthly-bar-chart/monthly-bar-chart.component'
 import { IncomeOverviewChartComponent } from './shared/apexchart/income-overview-chart/income-overview-chart.component';
@@ -19,11 +22,24 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SubjectSectionComponent } from './pages/courses-admin/courses-admin-form/components/subject-section/subject-section.component';
 import { UnitsSectionComponent } from './pages/courses-admin/courses-admin-form/components/units-section/units-section.component';
 import { LessonsSectionComponent } from './pages/courses-admin/courses-admin-form/components/lessons-section/lessons-section.component';
+import { RouterModule } from '@angular/router';
+
+
+import { SidebarModule } from './layouts/admin-layouts/sidebar/sidebar.module';
+
+import { DashboardRoutingModule } from './dashboard-routing.module';
+import { HeaderComponent } from './layouts/admin-layouts/header/header.component';
+import { HeaderRightComponent } from './layouts/admin-layouts/header/header-right/header-right.component';
+import { HeaderLeftComponent } from './layouts/admin-layouts/header/header-left/header-left.component';
+
 
 @NgModule({
   declarations: [
     // Pages
     DashboardComponent,
+    AdminLayoutComponent,
+    HeaderComponent,
+
     // Chart components
     MonthlyBarChartComponent,
     IncomeOverviewChartComponent,
@@ -35,16 +51,19 @@ import { LessonsSectionComponent } from './pages/courses-admin/courses-admin-for
     CoursesAdminFormComponent,
     SubjectSectionComponent,
     UnitsSectionComponent,
-    LessonsSectionComponent
+    LessonsSectionComponent,
+    HeaderRightComponent,
+    HeaderLeftComponent,
+    
   ],
   imports: [
     CommonModule,
+    RouterModule,
     FormsModule,
     ReactiveFormsModule,
-    NgApexchartsModule
+    NgApexchartsModule,
+    DashboardRoutingModule,
+    SidebarModule
   ],
-  exports: [
-    DashboardComponent
-  ]
 })
 export class AdminDashboardModule { }

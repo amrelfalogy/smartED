@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { AuthService } from 'src/app/core/services/auth.service';
+import { AuthService, User } from 'src/app/core/services/auth.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
 export class LayoutComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   isLoggingOut = false;
-  currentUser: any = null;
+  currentUser: User | null = null;
   showUserDropdown = false;
   private authSubscription!: Subscription;
   private userSubscription!: Subscription;
@@ -22,9 +22,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    console.log('LayoutComponent: Initializing...');
+    
     // Subscribe to authentication status
     this.authSubscription = this.authService.isAuthenticated$.subscribe(
       isAuth => {
+        console.log('LayoutComponent: Auth status changed:', isAuth);
         this.isLoggedIn = isAuth;
         if (!isAuth) {
           this.currentUser = null;
@@ -36,20 +39,19 @@ export class LayoutComponent implements OnInit, OnDestroy {
     // Subscribe to current user
     this.userSubscription = this.authService.currentUser$.subscribe(
       user => {
+        console.log('LayoutComponent: User data changed:', user);
         this.currentUser = user;
       }
     );
 
-    // Check initial auth status
+    // Check initial auth state
     this.isLoggedIn = this.authService.isLoggedIn();
-    if (this.isLoggedIn && !this.currentUser) {
-      this.authService.getProfile().subscribe({
-        error: () => {
-          // If profile fetch fails, logout user
-          this.authService['handleLogout']();
-        }
-      });
-    }
+    this.currentUser = this.authService.getCurrentUser();
+    
+    console.log('LayoutComponent: Initial state:', {
+      isLoggedIn: this.isLoggedIn,
+      currentUser: this.currentUser
+    });
   }
 
   ngOnDestroy(): void {
@@ -62,7 +64,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   getUserDisplayName(): string {
-    if (this.currentUser) {
+    if (this.currentUser && this.currentUser.firstName && this.currentUser.lastName) {
       return `${this.currentUser.firstName} ${this.currentUser.lastName}`;
     }
     return 'المستخدم';
@@ -82,42 +84,32 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   closeDropdown(): void {
-        this.showUserDropdown = false;
-  }
-
-  navigateToProfile(): void {
-    this.router.navigate(['/profile']);
-    this.closeDropdown();
+    this.showUserDropdown = false;
   }
 
   navigateToDashboard(): void {
-    if (this.currentUser?.role === 'admin') {
-      this.router.navigate(['/dashboard']);
+    if (this.currentUser?.role === 'admin' || this.currentUser?.role === 'support') {
+      this.router.navigate(['/admin/dashboard']);
     } else {
       this.router.navigate(['/home']);
     }
     this.closeDropdown();
   }
 
-    // Direct logout without navigation to logout component
   logout(): void {
     if (this.isLoggingOut) return;
     
     this.isLoggingOut = true;
     this.closeDropdown();
 
-    // Show loading state
-    const originalText = 'تسجيل الخروج';
-    
     this.authService.logout().subscribe({
       next: () => {
         this.isLoggingOut = false;
         this.router.navigate(['/home']);
       },
-      error: () => {
+      error: (error) => {
+        console.error('Logout error:', error);
         this.isLoggingOut = false;
-        // Force logout even if API call fails
-        this.authService['handleLogout']();
         this.router.navigate(['/home']);
       }
     });
@@ -129,5 +121,10 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
   register(): void {
     this.router.navigate(['/auth/register']);
+  }
+
+  // Helper method to check if user has admin access
+  canAccessAdmin(): boolean {
+    return this.currentUser?.role === 'admin' || this.currentUser?.role === 'support';
   }
 }

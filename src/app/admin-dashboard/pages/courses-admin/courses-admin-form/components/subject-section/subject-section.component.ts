@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Subject as CourseSubject } from 'src/app/core/models/course-complete.model';
+import { FileUploadService, FileUploadProgress, FileUploadResponse } from 'src/app/core/services/file-upload.service';
 
 @Component({
   selector: 'app-subject-section',
@@ -18,39 +19,25 @@ export class SubjectSectionComponent implements OnInit, OnDestroy {
   selectedImage: File | null = null;
   imagePreview: string | null = null;
   isUploading = false;
+  uploadProgress: number = 0;
 
   difficultyOptions = [
-    { 
-      value: 'beginner', 
-      label: 'مبتدئ', 
-      icon: 'star', 
-      color: '#4caf50',
-      description: 'مناسب للطلاب المبتدئين'
-    },
-    { 
-      value: 'intermediate', 
-      label: 'متوسط', 
-      icon: 'star_half', 
-      color: '#ff9800',
-      description: 'يتطلب معرفة أساسية مسبقة'
-    },
-    { 
-      value: 'advanced', 
-      label: 'متقدم', 
-      icon: 'star_rate', 
-      color: '#f44336',
-      description: 'للطلاب المتقدمين فقط'
-    }
+    { value: 'beginner', label: 'مبتدئ', icon: 'star', color: '#4caf50', description: 'مناسب للطلاب المبتدئين' },
+    { value: 'intermediate', label: 'متوسط', icon: 'star_half', color: '#ff9800', description: 'يتطلب معرفة أساسية مسبقة' },
+    { value: 'advanced', label: 'متقدم', icon: 'star_rate', color: '#f44336', description: 'للطلاب المتقدمين فقط' }
   ];
 
   durationOptions = [
-    '1 شهر', '2 شهر', '3 شهور', '4 شهور', 
+    '1 شهر', '2 شهر', '3 شهور', '4 شهور',
     '6 شهور', '9 شهور', '1 سنة', 'مخصص'
   ];
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private fileUploadService: FileUploadService
+  ) {}
 
   ngOnInit(): void {
     this.initializeForm();
@@ -64,16 +51,8 @@ export class SubjectSectionComponent implements OnInit, OnDestroy {
 
   private initializeForm(): void {
     this.subjectForm = this.fb.group({
-      name: [this.subjectData?.name || '', [
-        Validators.required,
-        Validators.minLength(3),
-        Validators.maxLength(100)
-      ]],
-      description: [this.subjectData?.description || '', [
-        Validators.required,
-        Validators.minLength(10),
-        Validators.maxLength(1000)
-      ]],
+      name: [this.subjectData?.name || '', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+      description: [this.subjectData?.description || '', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]],
       difficulty: [this.subjectData?.difficulty || 'beginner', Validators.required],
       duration: [this.subjectData?.duration || '', Validators.required],
       imageUrl: [this.subjectData?.imageUrl || ''],
@@ -104,60 +83,66 @@ export class SubjectSectionComponent implements OnInit, OnDestroy {
   onImageSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('يرجى اختيار ملف صورة صحيح');
         return;
       }
-
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('حجم الصورة يجب أن يكون أقل من 5 ميجابايت');
         return;
       }
-
       this.selectedImage = file;
-      this.previewImage(file);
       this.uploadImage(file);
     }
   }
 
-  previewImage(file: File): void {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      this.imagePreview = e.target?.result as string;
-      this.subjectForm.patchValue({ imageUrl: this.imagePreview });
-    };
-    reader.readAsDataURL(file);
-  }
-
-  async uploadImage(file: File): Promise<void> {
+  uploadImage(file: File): void {
     this.isUploading = true;
-    
-    try {
-      // Here you would implement actual file upload to your backend
-      const formData = new FormData();
-      formData.append('image', file);
-      
-      // Simulate upload for now - replace with actual upload service
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const uploadedUrl = `https://example.com/uploads/${file.name}`;
-      
-      this.subjectForm.patchValue({ imageUrl: uploadedUrl });
-      this.imagePreview = uploadedUrl;
-      
-    } catch (error) {
-      console.error('Image upload failed:', error);
-      alert('فشل في رفع الصورة. يرجى المحاولة مرة أخرى.');
-    } finally {
-      this.isUploading = false;
-    }
+    this.uploadProgress = 0;
+
+    this.fileUploadService.uploadImage(file).subscribe({
+      next: (event) => {
+        if ('progress' in event) {
+          this.uploadProgress = event.progress;
+        } else if ('url' in event) {
+          // Success: set preview and form value
+          this.imagePreview = event.url;
+          this.subjectForm.patchValue({ imageUrl: event.url });
+          this.isUploading = false;
+          this.uploadProgress = 0;
+        }
+      },
+      error: (error) => {
+        console.error('Image upload failed:', error);
+        alert('فشل في رفع الصورة. يرجى المحاولة مرة أخرى.');
+        this.isUploading = false;
+        this.uploadProgress = 0;
+      }
+    });
   }
 
   removeImage(): void {
-    this.selectedImage = null;
-    this.imagePreview = null;
-    this.subjectForm.patchValue({ imageUrl: '' });
+    // Optionally call deleteFile if backend removes images
+    if (this.imagePreview) {
+      this.fileUploadService.deleteFile(this.imagePreview).subscribe({
+        next: () => {
+          this.selectedImage = null;
+          this.imagePreview = null;
+          this.subjectForm.patchValue({ imageUrl: '' });
+        },
+        error: () => {
+          alert('تعذر حذف الصورة من الخادم');
+          // Still remove locally
+          this.selectedImage = null;
+          this.imagePreview = null;
+          this.subjectForm.patchValue({ imageUrl: '' });
+        }
+      });
+    } else {
+      this.selectedImage = null;
+      this.imagePreview = null;
+      this.subjectForm.patchValue({ imageUrl: '' });
+    }
   }
 
   // Validation helpers

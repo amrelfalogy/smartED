@@ -1,1 +1,18 @@
-<p>header works!</p>
+<header class="pc-header" [ngClass]="{
+  'sidebar-collapsed': navCollapsed && !isMobile
+}">
+  <div class="header-wrapper" style="direction: ltr;">
+    <div class="pc-mob-drp">
+      <app-header-left 
+        [navCollapsed]="navCollapsed"
+        [navCollapsedMob]="navCollapsedMob"
+        [isMobile]="isMobile"
+        (NavCollapse)="onDesktopToggle()" 
+        (NavCollapsedMob)="onMobileToggle()">
+      </app-header-left>
+    </div>
+    <div>
+      <app-header-right></app-header-right>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,7 @@
+<li class="nav-item coded-menu-caption">
+  <label>{{ item.title }}</label>
+</li>
+<ng-container *ngFor="let childItem of item.children; trackBy: trackByFn">
+  <app-sidebar-collapse *ngIf="childItem.type === 'collapse'" [item]="childItem"></app-sidebar-collapse>
+  <app-sidebar-item *ngIf="childItem.type === 'item'" [item]="childItem"></app-sidebar-item>
+</ng-container>

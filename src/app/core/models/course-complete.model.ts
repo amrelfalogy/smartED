@@ -22,6 +22,7 @@ export interface Subject {
 export interface Unit {
   id?: string;
   name: string;
+  title: string; 
   description: string;
   subjectId: string;
   order: number;
@@ -80,4 +81,28 @@ export interface FormStep {
   isCompleted: boolean;
   isValid: boolean;
   hasErrors: boolean;
+}
+
+export interface Instructor {
+  id: number;
+  name: string;
+  photo: string;
+  specialization: string;
+  experience: number;
+  rating: number;
+  bio?: string;
+  department?: string;
+}
+
+export interface Course {
+  id: number;
+  image: string;
+  instructor: string;  // Instructor
+  instructorImg?: string; // Optional image for instructor
+  subject: string; //Type Subject commented till db integration
+  academicYear: string;
+  rating: number;
+  description?: string;
+  duration?: string;
+  studentsCount?: number;
 }

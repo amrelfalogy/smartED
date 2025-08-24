@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg">
   <div class="container">
-    <a class="navbar-brand d-flex align-items-center" routerLink="home">
+    <a class="navbar-brand d-flex align-items-center" [routerLink]="['/home']">
       <img src="assets/imgs/logo2.png" alt="Logo" style="height: 80px; width: auto;">
     </a>
     
@@ -12,10 +12,10 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav m-auto">
         <li class="nav-item">
-          <a class="nav-link active" aria-current="page" routerLink="home">الرئيســية</a>
+          <a class="nav-link" [routerLink]="['/home']" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">الرئيســية</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="courses">الكورســات</a>
+          <a class="nav-link" [routerLink]="['/courses']" routerLinkActive="active">الكورســات</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="#">المعلميــن</a>
@@ -35,7 +35,7 @@
         </div>
 
         <!-- Logged In - User Menu -->
-        <div class="user-menu-container" *ngIf="isLoggedIn">
+        <div class="user-menu-container" *ngIf="isLoggedIn && currentUser">
           <div class="user-menu" (click)="toggleUserDropdown()">
             <div class="user-avatar">
               {{ getUserInitials() }}
@@ -53,35 +53,35 @@
                 </div>
                 <div class="user-details">
                   <div class="user-name">{{ getUserDisplayName() }}</div>
-                  <div class="user-email">{{ currentUser?.email }}</div>
+                  <div class="user-email">{{ currentUser.email || 'لا يوجد بريد إلكتروني' }}</div>
                 </div>
               </div>
             </div>
             
             <ul>
-              <li class="dropdown-item" (click)="navigateToProfile()">
-                <a >
+              <li class="dropdown-item">
+                <a>
                   <i class="fas fa-user me-3"></i>
                   الملف الشخصي
                 </a>
               </li>
               
-              <li class="dropdown-item" (click)="navigateToDashboard()" *ngIf="currentUser?.role === 'admin'">
-                <a >
+              <li class="dropdown-item" (click)="navigateToDashboard()" *ngIf="canAccessAdmin()">
+                <a>
                   <i class="fas fa-tachometer-alt me-3"></i>
                   لوحة التحكم
                 </a>
               </li>
 
-              <li class="dropdown-item" href="#">
-                <a >
+              <li class="dropdown-item">
+                <a>
                   <i class="fas fa-cog me-3"></i>
                   الإعدادات
                 </a>
               </li>
 
-              <li class="dropdown-item" href="#">
-                <a >
+              <li class="dropdown-item">
+                <a>
                   <i class="fas fa-question-circle me-3"></i>
                   المساعدة
                 </a>
@@ -98,6 +98,14 @@
               </li>
             </ul>
           </div>
+        </div>
+
+        <!-- Loading state when logged in but no user data yet -->
+        <div class="user-loading" *ngIf="isLoggedIn && !currentUser">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span class="ms-2">جاري التحميل...</span>
         </div>
       </div>
     </div>

@@ -47,7 +47,7 @@
             <div class="unit-number">{{ i + 1 }}</div>
             <div class="unit-details">
               <h4 class="unit-title">
-                {{ unitForm.get('name')?.value || 'وحدة جديدة' }}
+                {{ unitForm.get('title')?.value || 'وحدة جديدة' }}
               </h4>
               <p class="unit-description">
                 {{ unitForm.get('description')?.value || 'لا يوجد وصف' }}
@@ -126,6 +126,24 @@
               </div>
             </div>
             
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  عنوان الوحدة <span class="required">*</span>
+                </label>
+                <input 
+                  type="text"
+                  class="form-control"
+                  formControlName="title"
+                  [class.is-invalid]="isUnitFieldInvalid(i, 'title')"
+                  placeholder="أدخل عنوان الوحدة (يظهر في قوائم الدورات)"
+                >
+                <div class="invalid-feedback" *ngIf="isUnitFieldInvalid(i, 'title')">
+                  {{ getFieldError(unitForm.get('title')) }}
+                </div>
+              </div>
+            </div>
+
             <div class="col-md-6">
               <div class="form-group">
                 <label class="form-label">ترتيب الوحدة</label>

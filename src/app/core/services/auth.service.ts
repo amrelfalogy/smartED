@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 export interface LoginRequest {
@@ -24,6 +24,7 @@ export interface AuthResponse {
   token: string;
   user: User;
 }
+
 export interface User {
   id: string;
   email: string;
@@ -39,6 +40,7 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
 }
+
 export interface UpdateProfileRequest {
   firstName: string;
   lastName: string;
@@ -60,40 +62,58 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
-
   constructor(
     private http: HttpClient,
     private router: Router
   ) {
-    this.checkAuthStatus();
+    this.initializeAuth();
+    this.setupInterceptorListener();
   }
 
   // ===== AUTHENTICATION =====
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, credentials)
       .pipe(
-        tap(response => this.handleAuthSuccess(response))
+        tap(response => this.handleAuthSuccess(response)),
+        catchError(error => {
+          console.error('Login error:', error);
+          return throwError(() => error);
+        })
       );
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/register`, userData)
       .pipe(
-        tap(response => this.handleAuthSuccess(response))
+        tap(response => this.handleAuthSuccess(response)),
+        catchError(error => {
+          console.error('Register error:', error);
+          return throwError(() => error);
+        })
       );
   }
 
   logout(): Observable<any> {
     return this.http.post(`${this.baseUrl}/auth/logout`, {})
       .pipe(
-        tap(() => this.handleLogout())
+        tap(() => this.handleLogout()),
+        catchError(error => {
+          // Even if logout API fails, clear local state
+          this.handleLogout();
+          return throwError(() => error);
+        })
       );
   }
 
   refreshToken(): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/refresh`, {})
       .pipe(
-        tap(response => this.handleAuthSuccess(response))
+        tap(response => this.handleAuthSuccess(response)),
+        catchError(error => {
+          console.error('Token refresh failed:', error);
+          this.handleLogout();
+          return throwError(() => error);
+        })
       );
   }
 
@@ -101,22 +121,39 @@ export class AuthService {
   getProfile(): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/auth/profile`)
       .pipe(
-        tap(user => this.currentUserSubject.next(user))
+        tap(user => {
+          this.currentUserSubject.next(user);
+          this.isAuthenticatedSubject.next(true);
+        }),
+        catchError(error => {
+          console.error('Profile fetch error:', error);
+          return throwError(() => error);
+        })
       );
   }
 
   updateProfile(profileData: UpdateProfileRequest): Observable<User> {
     return this.http.put<User>(`${this.baseUrl}/auth/profile`, profileData)
       .pipe(
-        tap(user => this.currentUserSubject.next(user))
+        tap(user => this.currentUserSubject.next(user)),
+        catchError(error => {
+          console.error('Profile update error:', error);
+          return throwError(() => error);
+        })
       );
   }
 
-   changePassword(passwordData: ChangePasswordRequest): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/change-password`, passwordData);
+  changePassword(passwordData: ChangePasswordRequest): Observable<any> {
+    return this.http.post(`${this.baseUrl}/auth/change-password`, passwordData)
+      .pipe(
+        catchError(error => {
+          console.error('Password change error:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
-   // ===== TOKEN MANAGEMENT =====
+  // ===== TOKEN MANAGEMENT =====
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }
@@ -129,7 +166,7 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
   }
 
-   // ===== UTILITY METHODS =====
+  // ===== UTILITY METHODS =====
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
@@ -143,7 +180,8 @@ export class AuthService {
     return user ? user.role : null;
   }
 
-   private handleAuthSuccess(response: AuthResponse): void {
+  // ===== PRIVATE METHODS =====
+  private handleAuthSuccess(response: AuthResponse): void {
     this.setToken(response.token);
     this.currentUserSubject.next(response.user);
     this.isAuthenticatedSubject.next(true);
@@ -153,17 +191,40 @@ export class AuthService {
     this.removeToken();
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
-    this.router.navigate(['/auth/login']);
   }
 
-  private checkAuthStatus(): void {
+  // Update initializeAuth method in auth.service.ts
+  private initializeAuth(): void {
     const token = this.getToken();
     if (token) {
+      // Set initial state as authenticated with token
       this.isAuthenticatedSubject.next(true);
-      // Optionally fetch user profile
+      
+      // Then verify with server
       this.getProfile().subscribe({
-        error: () => this.handleLogout()
+        next: (user) => {
+          console.log('User authenticated successfully');
+          this.currentUserSubject.next(user);
+          this.isAuthenticatedSubject.next(true);
+        },
+        error: (error) => {
+          console.log('Token invalid, clearing auth state', error);
+          this.handleLogout();
+          // Only redirect to login if we're not already there
+          if (!this.router.url.includes('/auth/')) {
+            this.router.navigate(['/auth/login']);
+          }
+        }
       });
+    } else {
+      this.handleLogout();
     }
+  }
+
+  // Listen for logout events from interceptor
+  private setupInterceptorListener(): void {
+    window.addEventListener('auth-logout', () => {
+      this.handleLogout();
+    });
   }
 }

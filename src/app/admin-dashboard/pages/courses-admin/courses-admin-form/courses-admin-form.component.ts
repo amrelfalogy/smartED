@@ -13,6 +13,7 @@ import { SubjectService } from 'src/app/core/services/subject.service';
 import { UnitService } from 'src/app/core/services/unit.service';
 import { LessonService } from 'src/app/core/services/lesson.service';
 import { AcademicYearService } from 'src/app/core/services/academic-year.service';
+import { AcademicYear, StudentYear } from 'src/app/core/models/academic-year.model';
 
 @Component({
   selector: 'app-courses-admin-form',
@@ -57,9 +58,10 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   successMsg: string | null = null;
 
   // Data for child components
-  academicYears: any[] = [];
-  selectedAcademicYear: any = null;
-  selectedStudentYear: any = null;
+  academicYears: AcademicYear[] = [];
+  studentYears: StudentYear[] = []; 
+  selectedAcademicYear: AcademicYear | null = null;
+  selectedStudentYear: StudentYear | null = null;
   
   private destroy$ = new Subject<void>();
 
@@ -82,11 +84,12 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private loadAcademicYears(): void {
-    this.academicYearService.getAll()
+    private loadAcademicYears(): void {
+    this.academicYearService.getAcademicYears()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (years) => {
+          console.log('Academic Years loaded:', years); 
           this.academicYears = years;
           if (years.length > 0) {
             this.selectedAcademicYear = years[0];
@@ -106,14 +109,22 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (studentYears) => {
+            this.studentYears = studentYears; // <-- store in property
             if (studentYears.length > 0) {
               this.selectedStudentYear = studentYears[0];
+            } else {
+              this.selectedStudentYear = null;
             }
           },
           error: (error) => {
+            this.studentYears = [];
+            this.selectedStudentYear = null;
             console.error('Error loading student years:', error);
           }
         });
+    } else {
+      this.studentYears = [];
+      this.selectedStudentYear = null;
     }
   }
 
@@ -239,21 +250,18 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     this.clearMessages();
   }
 
-  onAcademicYearChanged(academicYear: any): void {
-    this.selectedAcademicYear = academicYear;
+ onAcademicYearChanged(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const selectedId = target.value;
+    this.selectedAcademicYear = this.academicYears.find(ay => ay.id === selectedId) || null;
     this.loadStudentYears();
   }
 
-  onStudentYearChanged(event: Event): void {
-  const target = event.target as HTMLSelectElement;
-  const selectedId = target.value;
-  
-  if (selectedId && this.selectedAcademicYear?.studentYears) {
-    this.selectedStudentYear = this.selectedAcademicYear.studentYears.find((sy: any) => sy.id === selectedId) || null;
-  } else {
-    this.selectedStudentYear = null;
+   onStudentYearChanged(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const selectedId = target.value;
+    this.selectedStudentYear = this.studentYears.find(sy => sy.id === selectedId) || null;
   }
-}
 
   // Validation methods
   private isSubjectValid(subject: CourseSubject): boolean {
@@ -270,6 +278,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     return units.length > 0 && 
            units.every(unit => 
              unit.name?.trim() && 
+             unit.title?.trim() &&
              unit.description?.trim() &&
              unit.lessons && unit.lessons.length > 0 &&
              unit.lessons.every(lesson => this.isLessonValid(lesson))
@@ -317,8 +326,10 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
 
   // Save operations
   async saveCourse(): Promise<void> {
+     console.log('saveCourse called', this.courseData, this.formState);
     if (!this.formState.isValid) {
       this.errorMsg = 'يرجى استكمال جميع البيانات المطلوبة';
+          console.log('Form is not valid');
       return;
     }
 
@@ -327,14 +338,16 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
 
     try {
       if (this.isEdit) {
+        console.log('Updating existing course');
         await this.updateExistingCourse();
       } else {
+        console.log('Creating new course');
         await this.createNewCourse();
       }
       
       this.successMsg = 'تم حفظ الكورس بنجاح';
       this.formState.isDirty = false;
-      
+      console.log('Course saved successfully');
     } catch (error) {
       this.errorMsg = 'حدث خطأ أثناء حفظ الكورس';
       console.error('Error saving course:', error);
@@ -345,7 +358,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
 
   private async createNewCourse(): Promise<void> {
     const createdSubject = await this.subjectService.createSubject(this.courseData.subject).toPromise();
-    
+    console.log('Created subject:', createdSubject);
     if (!createdSubject?.id) {
       throw new Error('Subject creation failed');
     }
@@ -385,6 +398,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   private async createUnitWithLessons(unit: Unit, subjectId: string): Promise<void> {
     const unitData = {
       name: unit.name,
+      title: unit.title,
       description: unit.description,
       subjectId: subjectId,
       order: unit.order
@@ -427,9 +441,11 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   }
 
   async publishCourse(): Promise<void> {
+    console.log('publishCourse called');
     await this.saveCourse();
     
     if (this.successMsg && this.subjectId) {
+        console.log('Publishing course', this.subjectId);
       this.courseData.status = 'published';
       this.successMsg = 'تم نشر الكورس بنجاح';
       

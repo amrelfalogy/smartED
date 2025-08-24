@@ -105,6 +105,11 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
         Validators.minLength(3),
         Validators.maxLength(100)
       ]],
+       title: [unit?.title || '', [ 
+        Validators.required,
+        Validators.minLength(3),
+        Validators.maxLength(100)
+      ]],
       description: [unit?.description || '', [
         Validators.required, 
         Validators.minLength(10),

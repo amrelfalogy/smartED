@@ -1,0 +1,27 @@
+<ul class="list-unstyled">
+  <!-- Desktop Sidebar Toggle -->
+  <li class="pc-h-item pc-sidebar-collapse" *ngIf="!isMobile">
+    <a
+      href="javascript:"
+      title="انقر لطي/فتح القائمة الجانبية"
+      class="pc-head-link ms-0"
+      [ngClass]="{ 'active': navCollapsed }"
+      (click)="onDesktopToggle()"
+    >
+      <i class="pi" [ngClass]="getDesktopIcon()"></i>
+    </a>
+  </li>
+  
+  <!-- Mobile Sidebar Toggle -->
+  <li class="pc-h-item pc-sidebar-popup" *ngIf="isMobile">
+    <a 
+      href="javascript:" 
+      class="pc-head-link ms-0 mobile-toggle" 
+      [ngClass]="{ 'active': navCollapsedMob }"
+      (click)="onMobileToggle()"
+      title="فتح/إغلاق القائمة الجانبية"
+    >
+      <i class="pi" [ngClass]="getMobileIcon()"></i>
+    </a>
+  </li>
+</ul>

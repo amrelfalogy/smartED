@@ -87,7 +87,7 @@
     align-items: center;
     justify-content: center;
     width: 34px;
-    height: 34px;
+    height: 42px;
     border-radius: $border-radius;
     color: var(--pc-header-color);
     overflow: hidden;
@@ -461,5 +461,46 @@
         right: 0 !important;
       }
     }
+  }
+}
+// Add to your existing navbar.scss file
+
+// Desktop sidebar collapsed adjustments
+.pc-header.sidebar-collapsed {
+  left: 0; // Adjust based on your collapsed sidebar width
+}
+
+// Mobile responsive header
+@media (max-width: 1023px) {
+  .pc-header {
+    left: 0 !important;
+    
+    .pc-h-item.pc-sidebar-popup {
+      position: relative;
+      z-index: 1060; // Higher than sidebar
+      
+      .pc-head-link {
+        position: relative;
+        z-index: 1060;
+      }
+    }
+  }
+}
+
+// Sidebar states
+.pc-sidebar {
+ 
+  
+  &.mob-open {
+    transform: translateX(0);
+    z-index: 1050;
+  }
+}
+
+// Default sidebar for mobile (hidden)
+@media (max-width: 1023px) {
+  .pc-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

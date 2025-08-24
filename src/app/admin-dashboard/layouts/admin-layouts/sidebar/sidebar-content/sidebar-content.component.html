@@ -1,0 +1,27 @@
+<div style="height: calc(100vh - 49px)" class="sidebar-scroll">
+  <div class="navbar-content">
+    <ul class="nav coded-inner-navbar" (clickOutside)="fireOutClick()" (mouseleave)="navMob()">
+      <ng-container *ngFor="let item of navigations; trackBy: trackByFn">
+        <app-sidebar-group *ngIf="item.type === 'group'" [item]="item"></app-sidebar-group>
+      </ng-container>
+    </ul>
+    <div class="m-4 mb-0">
+      <div class="card nav-card">
+        <div class="card-body">
+          <div class="d-flex flex-column align-items-center">
+            <img src="assets/imgs/avatar/avatar-group.png" alt="user" class="img-fluid" />
+            <div class="m-t-20 text-center">
+              <h5 class="mb-0">Your App Pro</h5>
+              <span class="text-muted">Checkout pro features</span>
+            </div>
+            <div class="m-t-20 text-center">
+              <a href="#" target="_blank" class="btn btn-primary text-white">
+                Pro
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

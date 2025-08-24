@@ -1,1 +1,64 @@
-<p>admin-layout works!</p>
+<app-sidebar
+  class="pc-sidebar"
+  [ngClass]="{
+    'navbar-collapsed': navCollapsed && !isMobile(),
+    'mob-open': navCollapsedMob && isMobile()
+  }"
+/>
+
+<app-header 
+  [navCollapsed]="navCollapsed"
+  [navCollapsedMob]="navCollapsedMob"
+  [isMobile]="isMobile()"
+  (NavCollapse)="onDesktopToggle()"
+  (NavCollapsedMob)="onMobileToggle()"
+/>
+
+<div class="pc-container" [ngClass]="{
+  'sidebar-collapsed': navCollapsed && !isMobile(),
+  'mobile-sidebar-open': navCollapsedMob && isMobile()
+}">
+  <div class="coded-wrapper">
+    <div class="coded-content">
+      <div class="coded-inner-content">
+        <div class="main-body">
+          <div class="page-wrapper">
+            <router-outlet></router-outlet>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Mobile Overlay -->
+  <div 
+    class="pc-menu-overlay" 
+    [class.active]="navCollapsedMob && isMobile()"
+    (click)="closeMobileSidebar()"
+    [attr.aria-hidden]="!(navCollapsedMob && isMobile())"
+  ></div>
+</div>
+
+<footer class="pc-footer" [ngClass]="{
+  'sidebar-collapsed': navCollapsed && !isMobile()
+}">
+  <div class="footer-wrapper container-fluid">
+    <div class="row">
+      <div class="col my-1">
+        <p class="m-0">
+          Copyright &copy; 
+          <a href="https://yourcompany.com" target="_blank">Your Company</a>
+        </p>
+      </div>
+      <div class="col-auto my-1">
+        <ul class="list-inline footer-link mb-0">
+          <li class="list-inline-item"><a href="https://yourcompany.com/" target="_blank">Home</a></li>
+          <li class="list-inline-item">
+            <a href="https://yourcompany.com/privacy-policy/" target="_blank">Privacy Policy</a>
+          </li>
+          <li class="list-inline-item"><a href="https://yourcompany.com/contact/" target="_blank">Contact us</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>

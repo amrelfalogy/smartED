@@ -61,6 +61,7 @@
 
     <!-- Step 2: Units and Lessons -->
     <div *ngIf="formState.currentStep === 2" class="step-content">
+
       <!-- Academic Year Selection -->
       <div class="academic-selection" *ngIf="academicYears.length > 0">
         <div class="academic-header">
@@ -93,7 +94,7 @@
                 (change)="onStudentYearChanged($event)"
               >
                 <option value="">اختر صف الطلاب</option>
-                <option *ngFor="let studentYear of selectedAcademicYear.studentYears" [value]="studentYear.id">
+                <option *ngFor="let studentYear of studentYears" [value]="studentYear.id">
                   {{ studentYear.name }}
                 </option>
               </select>
@@ -101,12 +102,13 @@
           </div>
         </div>
       </div>
+   
 
       <app-units-section
         [units]="courseData.units"
         [subjectData]="courseData.subject"
-        [academicYearId]="selectedAcademicYear?.id"
-        [studentYearId]="selectedStudentYear?.id"
+        [academicYearId]="selectedAcademicYear?.id || ''"
+        [studentYearId]="selectedStudentYear?.id ?? ''"
         (unitsUpdated)="onUnitsUpdated($event)"
       ></app-units-section>
     </div>

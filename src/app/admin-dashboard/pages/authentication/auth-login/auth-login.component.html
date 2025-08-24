@@ -1,137 +1,133 @@
-<div class="auth-container">
-  <div class="auth-card">
-    <div class="auth-body">
-      <!-- Account Type Selection -->
-      <div class="account-type-section">
-        <h3>نوع الحساب</h3>
-        <div class="account-types">
-          <div 
-            class="account-type-card"
-            [class.selected]="selectedAccountType === 'student'"
-            (click)="selectAccountType('student')"
-          >
-            <h4>طالب</h4>
-          </div>
-          
-          <div 
-            class="account-type-card"
-            [class.selected]="selectedAccountType === 'admin'"
-            (click)="selectAccountType('admin')"
-          >
-            <h4>مدير</h4>
-          </div>
-          
-          <div 
-            class="account-type-card"
-            [class.selected]="selectedAccountType === 'support'"
-            (click)="selectAccountType('support')"
-          >
-            <h4>دعم فني</h4>
-          </div>
-        </div>
+<div class="auth-main">
+  <div class="auth-wrapper v3">
+    <div class="auth-form">
+      <div class="auth-header">
+        <a [routerLink]="['/home']"><img src="assets/imgs/logo2.png" alt="logo" style="height: 60px;" /></a>
       </div>
-
-      <!-- Login Form -->
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
-        <div class="form-section">
-          <div class="form-group">
-            <label for="email">البريد الإلكتروني أو رقم الهاتف *</label>
-            <input
-              type="text"
-              id="email"
-              formControlName="email"
-              class="form-control"
-              [class.error]="isFieldInvalid('email')"
-              placeholder="example@email.com أو 01xxxxxxxxx"
-            />
-            <div class="error-message" *ngIf="isFieldInvalid('email')">
-              {{ getFieldError('email') }}
-            </div>
+      <div class="card my-5">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-end mb-4">
+            <h3 class="mb-0"><b>تسجيل الدخول</b></h3>
+            <a [routerLink]="['/auth/register']" class="link-primary">ليس لديك حساب؟</a>
           </div>
 
-          <div class="form-group">
-            <label for="password">كلمة المرور *</label>
-            <div class="password-input">
-              <input
-                [type]="showPassword ? 'text' : 'password'"
-                id="password"
-                formControlName="password"
-                class="form-control"
-                [class.error]="isFieldInvalid('password')"
-                placeholder="أدخل كلمة المرور"
+          <!-- Login Form -->
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+            <!-- Email Field -->
+            <div class="form-group mb-3">
+              <label class="form-label" for="email">البريد الإلكتروني</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email" 
+                formControlName="email"
+                placeholder="example@email.com"
+                [class.is-invalid]="isFieldInvalid('email')"
               />
-              <button
-                type="button"
-                class="password-toggle"
-                (click)="togglePassword()"
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">
+                {{ getFieldError('email') }}
+              </div>
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group mb-3">
+              <label class="form-label" for="password">كلمة المرور</label>
+              <div class="input-group">
+                <input 
+                  [type]="showPassword ? 'text' : 'password'" 
+                  class="form-control" 
+                  id="password" 
+                  formControlName="password"
+                  placeholder="أدخل كلمة المرور"
+                  [class.is-invalid]="isFieldInvalid('password')"
+                />
+                <button 
+                  type="button" 
+                  class="btn btn-outline-secondary"
+                  (click)="togglePassword()"
+                >
+                  <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('password')">
+                {{ getFieldError('password') }}
+              </div>
+            </div>
+
+            <!-- Remember Me & Forgot Password -->
+            <div class="d-flex mt-1 justify-content-between">
+              <div class="form-check">
+                <input 
+                  class="form-check-input input-primary" 
+                  type="checkbox" 
+                  id="customCheckc1" 
+                  formControlName="rememberMe"
+                />
+                <label class="form-check-label text-muted" for="customCheckc1">تذكرني</label>
+              </div>
+              <h5 class="text-secondary f-w-400">
+                <a [routerLink]="['/auth/forgot-password']">نسيت كلمة المرور؟</a>
+              </h5>
+            </div>
+
+            <!-- Error Message -->
+            <div class="alert alert-danger mt-3" *ngIf="loginError">
+              <i class="fas fa-exclamation-circle me-2"></i>
+              {{ loginError }}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid mt-4">
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                [disabled]="loginForm.invalid || isLoading"
               >
-                <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                <span *ngIf="!isLoading">تسجيل الدخول</span>
+                <span *ngIf="isLoading">
+                  <i class="fas fa-spinner fa-spin me-2"></i>
+                  جاري تسجيل الدخول...
+                </span>
               </button>
             </div>
-            <div class="error-message" *ngIf="isFieldInvalid('password')">
-              {{ getFieldError('password') }}
+          </form>
+
+          <!-- Social Login -->
+          <div class="saprator mt-3">
+            <span>أو سجل الدخول باستخدام</span>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <div class="d-grid">
+                <button 
+                  type="button" 
+                  class="btn mt-2 btn-light-primary bg-light text-muted"
+                  (click)="loginWithGoogle()"
+                >
+                  <img src="{{ SignInOptions[0].image }}" alt="google img" />
+                  <span class="d-none d-sm-inline-block ms-2">{{ SignInOptions[0].name }}</span>
+                </button>
+              </div>
             </div>
           </div>
-
-          <!-- Remember Me & Forgot Password -->
-          <div class="form-options">
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                formControlName="rememberMe"
-                class="checkbox-input"
-              />
-              <span class="checkbox-custom"></span>
-              <span class="checkbox-text">تذكرني</span>
-            </label>
-            
-            <a routerLink="/auth/forgot-password" class="forgot-link">
-              نسيت كلمة المرور؟
-            </a>
-          </div>
-        </div>
-
-        <!-- Error Message -->
-        <div class="login-error" *ngIf="loginError">
-          <i class="fas fa-exclamation-circle"></i>
-          {{ loginError }}
-        </div>
-
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="submit-btn"
-          [disabled]="loginForm.invalid || isLoading"
-          [class.loading]="isLoading"
-        >
-          <span *ngIf="!isLoading">تسجيل الدخول</span>
-          <span *ngIf="isLoading">
-            <i class="fas fa-spinner fa-spin"></i>
-            جاري تسجيل الدخول...
-          </span>
-        </button>
-      </form>
-
-      <!-- Social Login -->
-      <div class="social-login">
-        <div class="divider">
-          <span>أو سجل الدخول باستخدام</span>
-        </div>
-        
-        <div class="social-buttons">
-          <button class="social-btn google-btn" >
-            <i class="fab fa-google"></i>
-            Google
-          </button>
         </div>
       </div>
 
-      <!-- Register Link -->
-      <div class="auth-footer">
-        <p>
-          ليس لديك حساب؟
-          <a routerLink="/auth/register" class="auth-link">إنشاء حساب جديد</a>
-        </p>
+      <!-- Footer -->
+      <div class="auth-footer row">
+        <div class="col my-1">
+          <p class="m-0">
+            حقوق الطبع والنشر ©
+            <a href="#" target="_blank">منصة التعلم الإلكتروني</a>
+          </p>
+        </div>
+        <div class="col-auto my-1">
+          <ul class="list-inline footer-link mb-0">
+            <li class="list-inline-item"><a href="#" target="_blank">الرئيسية</a></li>
+            <li class="list-inline-item"><a href="#" target="_blank">سياسة الخصوصية</a></li>
+            <li class="list-inline-item"><a href="#" target="_blank">اتصل بنا</a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>

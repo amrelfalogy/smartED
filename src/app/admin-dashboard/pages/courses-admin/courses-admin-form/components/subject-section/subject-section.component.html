@@ -115,51 +115,45 @@
       <small class="form-text">المدة التقديرية لإكمال جميع دروس المادة</small>
     </div>
 
-    <!-- Subject Image -->
-    <div class="form-group">
-      <label class="form-label">صورة المادة</label>
-      
+  <!-- Subject Image -->
+  <div class="form-group">
+    <label class="form-label">صورة المادة</label>
+
+    <div class="image-section">
       <!-- Image Preview -->
-      <div class="image-section">
-        <div class="image-preview" *ngIf="imagePreview">
-          <img [src]="imagePreview" alt="معاينة الصورة" class="preview-image">
-          <div class="image-overlay">
-            <button
-              type="button"
-              class="btn btn-danger btn-sm"
-              (click)="removeImage()"
-              title="حذف الصورة"
-            >
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Upload Area -->
-        <div class="upload-area" *ngIf="!imagePreview">
-          <div class="upload-content">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>اسحب الصورة هنا أو انقر للاختيار</p>
-            <small>JPG, PNG, GIF - حد أقصى 5 ميجابايت</small>
-          </div>
-          <input
-            type="file"
-            class="file-input"
-            accept="image/*"
-            (change)="onImageSelected($event)"
+      <div class="image-preview" *ngIf="imagePreview">
+        <img [src]="imagePreview" alt="معاينة الصورة" class="preview-image" />
+        <div class="image-overlay">
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            (click)="removeImage()"
+            title="حذف الصورة"
+            [disabled]="isUploading"
           >
-        </div>
-        
-        <!-- Upload Progress -->
-        <div class="upload-progress" *ngIf="isUploading">
-          <div class="progress-bar">
-            <div class="progress-fill"></div>
-          </div>
-          <p>جاري رفع الصورة...</p>
+            <i class="fas fa-trash"></i>
+          </button>
         </div>
       </div>
-      
-      <!-- Manual URL Input -->
+
+      <!-- Upload Area (shown only if no image and not uploading) -->
+      <div class="upload-area" *ngIf="!imagePreview && !isUploading">
+        <label class="upload-content" for="subject-image-upload">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>اسحب الصورة هنا أو انقر للاختيار</p>
+          <small>JPG, PNG, GIF - حد أقصى 5 ميجابايت</small>
+        </label>
+        <input
+          type="file"
+          id="subject-image-upload"
+          class="file-input"
+          accept="image/*"
+          (change)="onImageSelected($event)"
+          [disabled]="isUploading"
+          style="display: none"
+        />
+      </div>
+            <!-- Manual URL Input -->
       <div class="url-input-section" *ngIf="!imagePreview">
         <label for="imageUrl" class="form-label">أو أدخل رابط الصورة</label>
         <input
@@ -171,7 +165,21 @@
           (input)="imagePreview = $any($event.target).value"
         >
       </div>
+
+      <!-- Upload Progress (shown only during upload) -->
+      <div class="upload-progress" *ngIf="isUploading">
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            [style.width.%]="uploadProgress"
+          ></div>
+        </div>
+        <p>جاري رفع الصورة... {{ uploadProgress }}%</p>
+      </div>
     </div>
+  </div>
+      
+     
   </form>
 
   <!-- Form Status -->

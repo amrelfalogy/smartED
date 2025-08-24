@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { Course, Instructor } from 'src/app/core/models/entities.model';
+import { Course, Instructor } from 'src/app/core/models/course-complete.model';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
   courses: Course[] = [
