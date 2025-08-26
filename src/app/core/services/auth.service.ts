@@ -193,30 +193,30 @@ export class AuthService {
     this.isAuthenticatedSubject.next(false);
   }
 
-  // Update initializeAuth method in auth.service.ts
+  // Update auth.service.ts
   private initializeAuth(): void {
     const token = this.getToken();
+    console.log('Initializing auth, token exists:', !!token);
+    
     if (token) {
-      // Set initial state as authenticated with token
-      this.isAuthenticatedSubject.next(true);
-      
-      // Then verify with server
+      // Don't set authenticated state immediately - wait for profile verification
       this.getProfile().subscribe({
         next: (user) => {
-          console.log('User authenticated successfully');
+          console.log('Profile loaded successfully:', user);
           this.currentUserSubject.next(user);
           this.isAuthenticatedSubject.next(true);
         },
         error: (error) => {
-          console.log('Token invalid, clearing auth state', error);
+          console.log('Profile fetch failed, token invalid:', error);
           this.handleLogout();
-          // Only redirect to login if we're not already there
+          // Only redirect if not already on auth pages
           if (!this.router.url.includes('/auth/')) {
             this.router.navigate(['/auth/login']);
           }
         }
       });
     } else {
+      console.log('No token found, user not authenticated');
       this.handleLogout();
     }
   }
