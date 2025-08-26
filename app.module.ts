@@ -15,6 +15,7 @@ import { HeaderComponent } from './admin-dashboard/layouts/admin-layouts/header/
 import { SidebarComponent } from './admin-dashboard/layouts/admin-layouts/sidebar/sidebar.component';
 
 import { AdminDashboardModule } from './admin-dashboard/dashboard.module';
+import { StudentDashboardModule } from './student-dashboard/student-dashboard.module';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
@@ -36,7 +37,8 @@ import { AuthInterceptor } from './core/interceptors/auth.interceptor';
     AppRoutingModule,    
     HomeModule,
     BrowserAnimationsModule,
-    AdminDashboardModule
+    AdminDashboardModule,
+    StudentDashboardModule
   ],
   providers: [
     {

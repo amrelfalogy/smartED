@@ -1,0 +1,219 @@
+.student-sidebar {
+  width: 280px;
+  background: #2c3e50;
+  color: white;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  transition: width 0.3s ease;
+  z-index: 1000;
+  overflow-x: hidden;
+
+  &.collapsed {
+    width: 80px;
+
+    .sidebar-header .logo-text {
+      display: none;
+    }
+
+    .nav-label,
+    .nav-badge {
+      display: none;
+    }
+
+    .sidebar-footer {
+      display: none;
+    }
+  }
+
+  .sidebar-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .sidebar-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
+      }
+
+      .logo-text {
+        h5 {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 600;
+          color: white;
+        }
+
+        small {
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 12px;
+        }
+      }
+    }
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 20px 0;
+
+    .nav-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+
+      .nav-item {
+        margin-bottom: 4px;
+
+        .nav-link {
+          display: flex;
+          align-items: center;
+          padding: 12px 20px;
+          color: rgba(255, 255, 255, 0.8);
+          text-decoration: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          position: relative;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+          }
+
+          &.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            transform: translateX(5px);
+
+            &::before {
+              content: '';
+              position: absolute;
+              left: 0;
+              top: 0;
+              bottom: 0;
+              width: 4px;
+              background: #ecf0f1;
+            }
+          }
+
+          .nav-icon {
+            width: 24px;
+            text-align: center;
+            margin-right: 12px;
+            font-size: 16px;
+          }
+
+          .nav-label {
+            flex: 1;
+            font-weight: 500;
+            font-size: 14px;
+          }
+
+          .nav-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+
+  .sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .user-avatar {
+        position: relative;
+        width: 40px;
+        height: 40px;
+
+        img {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+
+        .avatar-placeholder {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          background: #3498db;
+          color: white;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 16px;
+        }
+      }
+
+      .user-info {
+        .user-name {
+          font-weight: 600;
+          color: white;
+          font-size: 14px;
+          margin-bottom: 2px;
+        }
+
+        .user-status {
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .student-sidebar {
+    left: -280px;
+    transition: left 0.3s ease;
+
+    &.show {
+      left: 0;
+    }
+
+    &.collapsed {
+      left: -80px;
+
+      &.show {
+        left: 0;
+        width: 280px;
+      }
+    }
+  }
+}

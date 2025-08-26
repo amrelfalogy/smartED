@@ -1,0 +1,52 @@
+<aside class="student-sidebar" [class.collapsed]="collapsed">
+  <div class="sidebar-content">
+    <!-- Logo Section -->
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <img src="assets/imgs/logo2.png" alt="SmartED" class="sidebar-logo">
+        <div class="logo-text" *ngIf="!collapsed">
+          <h5>SmartED</h5>
+          <small>منصة التعلم الذكي</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+      <ul class="nav-list">
+        <li class="nav-item" *ngFor="let item of navigationItems">
+          <a 
+            class="nav-link" 
+            [class.active]="isRouteActive(item.route)"
+            (click)="navigateTo(item.route)"
+            [title]="collapsed ? item.label : ''">
+            
+            <div class="nav-icon">
+              <i [class]="item.icon"></i>
+            </div>
+            
+            <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+            
+            <span class="nav-badge" *ngIf="item.badge && !collapsed">
+              {{ item.badge }}
+            </span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- User Section -->
+    <div class="sidebar-footer" *ngIf="!collapsed">
+      <div class="user-card">
+        <div class="user-avatar">
+          <img src="assets/imgs/avatar-placeholder.png" alt="المستخدم" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          <div class="avatar-placeholder">أ.م</div>
+        </div>
+        <div class="user-info">
+          <div class="user-name">أحمد محمد</div>
+          <div class="user-status">طالب نشط</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
