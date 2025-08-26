@@ -1,0 +1,152 @@
+<div class="course-details-page">
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>جاري تحميل تفاصيل الدورة...</p>
+    </div>
+  </div>
+
+  <!-- Course Details Content -->
+  <div class="course-content" *ngIf="!isLoading && course">
+    <!-- Course Header -->
+    <div class="course-header">
+      <button class="btn btn-ghost back-btn" (click)="goBack()">
+        <i class="fas fa-arrow-right me-2"></i>
+        العودة
+      </button>
+      
+      <div class="course-info">
+        <div class="course-image-container">
+          <img [src]="course.imageUrl" [alt]="course.name" class="course-image" onerror="this.src='assets/imgs/course-placeholder.jpg'">
+          <div class="course-overlay">
+            <div class="enrollment-status" [class]="enrollmentStatus">
+              <i class="fas fa-check-circle" *ngIf="enrollmentStatus === 'enrolled'"></i>
+              <i class="fas fa-lock" *ngIf="enrollmentStatus === 'not_enrolled'"></i>
+              <i class="fas fa-clock" *ngIf="enrollmentStatus === 'pending'"></i>
+              <span *ngIf="enrollmentStatus === 'enrolled'">مسجل</span>
+              <span *ngIf="enrollmentStatus === 'not_enrolled'">غير مسجل</span>
+              <span *ngIf="enrollmentStatus === 'pending'">في انتظار التأكيد</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="course-details">
+          <h1 class="course-title">{{ course.name }}</h1>
+          <p class="course-description">{{ course.description }}</p>
+          
+          <div class="course-meta">
+            <div class="meta-item">
+              <i class="fas fa-user-tie"></i>
+              <span>{{ course.instructorName }}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-clock"></i>
+              <span>{{ course.duration }}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-signal"></i>
+              <span class="difficulty-badge" [class]="'badge-' + getDifficultyColor(course.difficulty)">
+                {{ getDifficultyLabel(course.difficulty) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Course Units and Lessons -->
+    <div class="course-curriculum">
+      <div class="curriculum-header">
+        <h2 class="curriculum-title">
+          <i class="fas fa-list-ul me-2"></i>
+          محتوى الدورة
+        </h2>
+        <div class="curriculum-stats">
+          <span class="stat-item">
+            <i class="fas fa-folder"></i>
+            {{ units.length }} وحدة
+          </span>
+          <span class="stat-item">
+            <i class="fas fa-play-circle"></i>
+            {{ getTotalLessons() }} درس
+          </span>
+        </div>
+      </div>
+
+      <!-- Units List -->
+      <div class="units-list">
+        <div class="unit-card" *ngFor="let unit of units; let unitIndex = index">
+          <div class="unit-header">
+            <div class="unit-info">
+              <h3 class="unit-title">{{ unit.name }}</h3>
+              <p class="unit-description">{{ unit.description }}</p>
+            </div>
+            <div class="unit-stats">
+              <span class="lessons-count">{{ unit.lessons?.length || 0 }} دروس</span>
+            </div>
+          </div>
+          
+          <!-- Lessons List -->
+          <div class="lessons-list" *ngIf="unit.lessons && unit.lessons.length > 0">
+            <div class="lesson-item" 
+                 *ngFor="let lesson of unit.lessons; let lessonIndex = index"
+                 [class.locked]="!lesson.isFree && enrollmentStatus !== 'enrolled'"
+                 [class.free]="lesson.isFree">
+              
+              <div class="lesson-content" (click)="startLesson(lesson)">
+                <div class="lesson-icon">
+                  <i class="fas fa-play-circle" *ngIf="lesson.isFree || enrollmentStatus === 'enrolled'"></i>
+                  <i class="fas fa-lock" *ngIf="!lesson.isFree && enrollmentStatus !== 'enrolled'"></i>
+                </div>
+                
+                <div class="lesson-info">
+                  <h4 class="lesson-title">{{ lesson.title }}</h4>
+                  <p class="lesson-description">{{ lesson.description }}</p>
+                  
+                  <div class="lesson-meta">
+                    <span class="duration">
+                      <i class="fas fa-clock"></i>
+                      {{ formatDuration(lesson.duration) }}
+                    </span>
+                    <span class="difficulty" [class]="'difficulty-' + lesson.difficulty">
+                      <i class="fas fa-signal"></i>
+                      {{ getDifficultyLabel(lesson.difficulty) }}
+                    </span>
+                    <span class="type">
+                      <i class="fas fa-video"></i>
+                      مسجل
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="lesson-actions">
+                  <span class="free-badge" *ngIf="lesson.isFree">مجاني</span>
+                  <button class="btn btn-sm" 
+                          [class.btn-primary]="lesson.isFree || enrollmentStatus === 'enrolled'"
+                          [class.btn-outline-secondary]="!lesson.isFree && enrollmentStatus !== 'enrolled'"
+                          [disabled]="!lesson.isFree && enrollmentStatus !== 'enrolled'">
+                    <span *ngIf="lesson.isFree || enrollmentStatus === 'enrolled'">ابدأ</span>
+                    <span *ngIf="!lesson.isFree && enrollmentStatus !== 'enrolled'">مقفل</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enrollment CTA -->
+    <div class="enrollment-cta" *ngIf="enrollmentStatus === 'not_enrolled'">
+      <div class="cta-content">
+        <h3>هل أنت مستعد للبدء؟</h3>
+        <p>اشترك في الدورة للوصول إلى جميع الدروس والمواد التعليمية</p>
+        <button class="btn btn-primary btn-lg" (click)="showPaymentRequired()">
+          <i class="fas fa-credit-card me-2"></i>
+          سجل في الدورة
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

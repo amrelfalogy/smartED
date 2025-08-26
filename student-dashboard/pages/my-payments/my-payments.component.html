@@ -1,0 +1,223 @@
+<div class="payments-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">
+      <i class="fas fa-credit-card me-3"></i>
+      إدارة المدفوعات
+    </h1>
+    <p class="page-description">
+      عرض وإدارة مدفوعاتك وحالات الاشتراك
+    </p>
+  </div>
+
+  <!-- Payment Stats -->
+  <div class="stats-section">
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="stat-card">
+          <div class="stat-icon success">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ stats.lastPayments }}</h3>
+            <p class="stat-label">آخر المدفوعات الناجحة</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="stat-card">
+          <div class="stat-icon warning">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ stats.pendingPayments }}</h3>
+            <p class="stat-label">مدفوعات في انتظار التأكيد</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Payment History -->
+    <div class="col-lg-6 mb-4">
+      <div class="content-card">
+        <div class="card-header">
+          <h5 class="card-title">
+            <i class="fas fa-history me-2"></i>
+            تاريخ المدفوعات
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="payment-history">
+            <div class="payment-item" *ngFor="let payment of paymentHistory">
+              <div class="payment-info">
+                <h6 class="payment-course">{{ payment.course }}</h6>
+                <p class="payment-details">
+                  {{ payment.amount }} {{ payment.currency }} - {{ payment.method }}
+                </p>
+                <small class="payment-date">{{ formatDate(payment.date) }}</small>
+              </div>
+              <div class="payment-status">
+                <span class="status-badge" [class]="'badge-' + getStatusColor(payment.status)">
+                  {{ getStatusLabel(payment.status) }}
+                </span>
+                <small class="payment-ref" *ngIf="payment.reference">
+                  {{ payment.reference }}
+                </small>
+              </div>
+            </div>
+
+            <div class="empty-state" *ngIf="paymentHistory.length === 0">
+              <i class="fas fa-receipt"></i>
+              <p>لا توجد مدفوعات بعد</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Form -->
+    <div class="col-lg-6 mb-4">
+      <div class="content-card">
+        <div class="card-header">
+          <h5 class="card-title">
+            <i class="fas fa-plus me-2"></i>
+            دفعة جديدة
+          </h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+            <!-- Subscription Type -->
+            <div class="form-group mb-3">
+              <label class="form-label">نوع الاشتراك</label>
+              <select class="form-select" formControlName="subscriptionType">
+                <option value="">اختر نوع الاشتراك</option>
+                <option *ngFor="let type of subscriptionTypes" [value]="type.value">
+                  {{ type.label }} - {{ type.price }} جنيه
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="paymentForm.get('subscriptionType')?.touched && paymentForm.get('subscriptionType')?.errors">
+                يرجى اختيار نوع الاشتراك
+              </div>
+            </div>
+
+            <!-- Course Type -->
+            <div class="form-group mb-3">
+              <label class="form-label">نوع الدورة</label>
+              <div class="course-type-options">
+                <div class="course-type-option" *ngFor="let type of courseTypes">
+                  <input type="radio" 
+                         [id]="'courseType-' + type.value" 
+                         [value]="type.value" 
+                         formControlName="courseType"
+                         class="course-type-radio">
+                  <label [for]="'courseType-' + type.value" class="course-type-label">
+                    <div class="option-title">{{ type.label }}</div>
+                    <div class="option-description">{{ type.description }}</div>
+                  </label>
+                </div>
+              </div>
+              <div class="invalid-feedback" *ngIf="paymentForm.get('courseType')?.touched && paymentForm.get('courseType')?.errors">
+                يرجى اختيار نوع الدورة
+              </div>
+            </div>
+
+            <!-- Course Selection -->
+            <div class="form-group mb-3">
+              <label class="form-label">الدورة</label>
+              <select class="form-select" formControlName="course">
+                <option value="">اختر الدورة</option>
+                <option value="math">أساسيات الرياضيات</option>
+                <option value="physics">فيزياء الميكانيكا</option>
+                <option value="chemistry">الكيمياء العضوية</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="paymentForm.get('course')?.touched && paymentForm.get('course')?.errors">
+                يرجى اختيار الدورة
+              </div>
+            </div>
+
+            <!-- Amount -->
+            <div class="form-group mb-3">
+              <label class="form-label">المبلغ</label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="amount" readonly>
+                <span class="input-group-text">جنيه</span>
+              </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="form-group mb-3">
+              <label class="form-label">طريقة الدفع</label>
+              <div class="payment-methods">
+                <div class="payment-method" *ngFor="let method of paymentMethods">
+                  <input type="radio" 
+                         [id]="'method-' + method.value" 
+                         [value]="method.value" 
+                         formControlName="paymentMethod"
+                         class="payment-method-radio">
+                  <label [for]="'method-' + method.value" class="payment-method-label">
+                    <i [class]="method.icon"></i>
+                    {{ method.label }}
+                  </label>
+                </div>
+              </div>
+              <div class="invalid-feedback" *ngIf="paymentForm.get('paymentMethod')?.touched && paymentForm.get('paymentMethod')?.errors">
+                يرجى اختيار طريقة الدفع
+              </div>
+            </div>
+
+            <!-- Transaction Reference -->
+            <div class="form-group mb-3">
+              <label class="form-label">رقم المرجع (اختياري)</label>
+              <input type="text" class="form-control" formControlName="transactionReference" placeholder="أدخل رقم المرجع إن وجد">
+            </div>
+
+            <!-- File Upload -->
+            <div class="form-group mb-3">
+              <label class="form-label">إيصال الدفع *</label>
+              <div class="file-upload-area">
+                <input type="file" 
+                       id="receipt-upload" 
+                       accept="image/*,.pdf" 
+                       (change)="onFileSelected($event)"
+                       class="file-input">
+                <label for="receipt-upload" class="file-upload-label">
+                  <i class="fas fa-cloud-upload-alt"></i>
+                  <span *ngIf="!selectedFile">اختر الملف أو اسحبه هنا</span>
+                  <span *ngIf="selectedFile" class="selected-file">{{ selectedFile.name }}</span>
+                </label>
+              </div>
+              <small class="form-text">يُقبل: JPG, PNG, PDF (الحد الأقصى: 5MB)</small>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" 
+                    class="btn btn-primary w-100" 
+                    [disabled]="isSubmitting || !paymentForm.valid || !selectedFile">
+              <i class="fas fa-spinner fa-spin me-2" *ngIf="isSubmitting"></i>
+              <i class="fas fa-paper-plane me-2" *ngIf="!isSubmitting"></i>
+              {{ isSubmitting ? 'جاري الإرسال...' : 'إرسال طلب الدفع' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Instructions -->
+  <div class="instructions-section">
+    <div class="content-card">
+      <div class="card-header">
+        <h5 class="card-title">
+          <i class="fas fa-info-circle me-2"></i>
+          تعليمات الدفع
+        </h5>
+      </div>
+      <div class="card-body">
+        <pre class="instructions-text">{{ paymentInstructions }}</pre>
+      </div>
+    </div>
+  </div>
+</div>
