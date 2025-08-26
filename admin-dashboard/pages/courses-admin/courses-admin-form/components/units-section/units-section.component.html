@@ -1,0 +1,397 @@
+<div class="units-section">
+  <!-- Section Header -->
+  <div class="section-header">
+    <div class="header-content">
+      <h3>الوحدات والدروس</h3>
+      <p class="section-description">
+        قم بإنشاء الوحدات التعليمية وإضافة الدروس لكل وحدة
+      </p>
+    </div>
+    
+    <div class="section-stats">
+      <div class="stat-item">
+        <i class="fas fa-layer-group"></i>
+        <span>{{ unitsFormArray.length }}</span>
+        <small>وحدة</small>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-play-circle"></i>
+        <span>{{ getTotalLessons() }}</span>
+        <small>درس</small>
+      </div>
+      <div class="stat-item">
+        <i class="fas fa-clock"></i>
+        <span>{{ formatDuration(getTotalDuration()) }}</span>
+        <small>المدة الإجمالية</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Container -->
+  <form [formGroup]="unitsForm" class="units-form">
+    
+    <!-- Units Container -->
+    <div class="units-container" formArrayName="units" *ngIf="unitsFormArray.length > 0">
+      
+      <!-- Unit Card -->
+      <div 
+        *ngFor="let unitForm of unitsFormArray.controls; let i = index" 
+        [formGroupName]="i"
+        class="unit-card"
+        [class.expanded]="expandedUnit === i"
+      >
+        
+        <!-- Unit Header -->
+        <div class="unit-header" (click)="toggleUnitExpansion(i)">
+          <div class="unit-info">
+            <div class="unit-number">{{ i + 1 }}</div>
+            <div class="unit-details">
+              <h4 class="unit-title">
+                {{ unitForm.get('name')?.value || 'وحدة جديدة' }}
+              </h4>
+              <p class="unit-description">
+                {{ unitForm.get('description')?.value || 'لا يوجد وصف' }}
+              </p>
+              <div class="unit-meta">
+                <span class="lessons-count">
+                  <i class="fas fa-video"></i>
+                  {{ getLessonsFormArray(i).length }} دروس
+                </span>
+                <span class="unit-duration">
+                  <i class="fas fa-clock"></i>
+                  {{ formatDuration(getUnitDuration(i)) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="unit-actions" (click)="$event.stopPropagation()">
+            <!-- Reorder Buttons -->
+            <button 
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              (click)="moveUnitUp(i)"
+              [disabled]="!canMoveUnitUp(i)"
+              title="تحريك للأعلى"
+            >
+              <i class="fas fa-arrow-up"></i>
+            </button>
+            
+            <button 
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              (click)="moveUnitDown(i)"
+              [disabled]="!canMoveUnitDown(i)"
+              title="تحريك للأسفل"
+            >
+              <i class="fas fa-arrow-down"></i>
+            </button>
+
+            <!-- Delete Button -->
+            <button 
+              type="button"
+              class="btn btn-sm btn-outline-danger"
+              (click)="removeUnit(i)"
+              [disabled]="unitsFormArray.length <= 1"
+              title="حذف الوحدة"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+
+            <!-- Expand Icon -->
+            <i class="fas fa-chevron-down expand-icon"></i>
+          </div>
+        </div>
+
+        <!-- Unit Content (Expandable) -->
+        <div class="unit-content" *ngIf="expandedUnit === i">
+          
+          <!-- Unit Form Fields -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">
+                  اسم الوحدة <span class="required">*</span>
+                </label>
+                <input 
+                  type="text"
+                  class="form-control"
+                  formControlName="name"
+                  [class.is-invalid]="isUnitFieldInvalid(i, 'name')"
+                  placeholder="أدخل اسم الوحدة"
+                >
+                <div class="invalid-feedback" *ngIf="isUnitFieldInvalid(i, 'name')">
+                  {{ getFieldError(unitForm.get('name')) }}
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label">ترتيب الوحدة</label>
+                <input 
+                  type="number"
+                  class="form-control"
+                  formControlName="order"
+                  min="1"
+                  readonly
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              وصف الوحدة <span class="required">*</span>
+            </label>
+            <textarea 
+              class="form-control"
+              formControlName="description"
+              [class.is-invalid]="isUnitFieldInvalid(i, 'description')"
+              placeholder="أدخل وصف مفصل للوحدة"
+              rows="3"
+            ></textarea>
+            <div class="invalid-feedback" *ngIf="isUnitFieldInvalid(i, 'description')">
+              {{ getFieldError(unitForm.get('description')) }}
+            </div>
+          </div>
+
+          <!-- Lessons Section -->
+          <div class="lessons-section">
+            <div class="lessons-header">
+              <h5>دروس الوحدة</h5>
+              <button 
+                type="button"
+                class="btn btn-primary btn-sm"
+                (click)="addLesson(i)"
+              >
+                <i class="fas fa-plus"></i>
+                إضافة درس
+              </button>
+            </div>
+
+            <!-- Lessons Container -->
+            <div class="lessons-container" formArrayName="lessons">
+              
+              <!-- Lesson Card -->
+              <div 
+                *ngFor="let lessonForm of getLessonsFormArray(i).controls; let j = index"
+                [formGroupName]="j"
+                class="lesson-card"
+              >
+                <div class="lesson-header">
+                  <div class="lesson-number">{{ j + 1 }}</div>
+                  
+                  <div class="lesson-info">
+                    <input 
+                      type="text"
+                      class="lesson-title-input form-control"
+                      formControlName="title"
+                      (input)="onLessonTitleChange(i, j)"
+                      [class.is-invalid]="isLessonFieldInvalid(i, j, 'title')"
+                      placeholder="عنوان الدرس"
+                    >
+                  </div>
+
+                  <div class="lesson-actions">
+                    <!-- Lesson Reorder Buttons -->
+                    <button 
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="moveLessonUp(i, j)"
+                      [disabled]="!canMoveLessonUp(i, j)"
+                      title="تحريك للأعلى"
+                    >
+                      <i class="fas fa-chevron-up"></i>
+                    </button>
+                    
+                    <button 
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="moveLessonDown(i, j)"
+                      [disabled]="!canMoveLessonDown(i, j)"
+                      title="تحريك للأسفل"
+                    >
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
+
+                    <!-- Delete Lesson -->
+                    <button 
+                      type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="removeLesson(i, j)"
+                      [disabled]="getLessonsFormArray(i).length <= 1"
+                      title="حذف الدرس"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Lesson Content -->
+                <div class="lesson-content">
+                  
+                  <!-- Hidden Fields -->
+                  <input type="hidden" formControlName="name">
+                  <input type="hidden" formControlName="lectureId">
+                  <input type="hidden" formControlName="academicYearId">
+                  <input type="hidden" formControlName="studentYearId">
+                  <input type="hidden" formControlName="order">
+
+                  <!-- Lesson Description -->
+                  <div class="form-group">
+                    <label class="form-label">وصف الدرس</label>
+                    <textarea 
+                      class="form-control"
+                      formControlName="description"
+                      [class.is-invalid]="isLessonFieldInvalid(i, j, 'description')"
+                      placeholder="وصف مختصر للدرس"
+                      rows="2"
+                    ></textarea>
+                  </div>
+
+                  <!-- Row for Duration and Types -->
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label class="form-label">المدة (دقائق)</label>
+                        <input 
+                          type="number"
+                          class="form-control"
+                          [value]="getDurationInMinutes(lessonForm.get('duration')?.value || 0)"
+                          (input)="updateLessonDuration(i, j, $event)"
+                          min="1"
+                          max="240"
+                          placeholder="30"
+                        >
+                      </div>
+                    </div>
+
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label class="form-label">نوع الدرس</label>
+                        <select class="form-select" formControlName="lessonType">
+                          <option *ngFor="let type of lessonTypes" [value]="type.value">
+                            {{ type.label }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label class="form-label">نوع الجلسة</label>
+                        <select class="form-select" formControlName="sessionType">
+                          <option *ngFor="let type of sessionTypes" [value]="type.value">
+                            {{ type.label }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="col-md-3">
+                      <div class="form-group">
+                        <label class="form-label">المستوى</label>
+                        <select class="form-select" formControlName="difficulty">
+                          <option *ngFor="let level of difficultyOptions" [value]="level.value">
+                            {{ level.label }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Lesson Options -->
+                  <div class="lesson-options">
+                    <div class="form-check">
+                      <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        formControlName="isFree"
+                        id="isFree_{{ i }}_{{ j }}"
+                      >
+                      <label class="form-check-label" for="isFree_{{ i }}_{{ j }}">
+                        درس مجاني
+                      </label>
+                    </div>
+
+                    <div class="form-check">
+                      <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        formControlName="isActive"
+                        id="isActive_{{ i }}_{{ j }}"
+                      >
+                      <label class="form-check-label" for="isActive_{{ i }}_{{ j }}">
+                        درس نشط
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Validation Errors -->
+                  <div class="invalid-feedback" 
+                       *ngIf="isLessonFieldInvalid(i, j, 'title')" 
+                       style="display: block;">
+                    {{ getFieldError(lessonForm.get('title')) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty Lessons State -->
+              <div class="empty-lessons" *ngIf="getLessonsFormArray(i).length === 0">
+                <div class="empty-content">
+                  <i class="fas fa-video"></i>
+                  <p>لا توجد دروس في هذه الوحدة</p>
+                  <button 
+                    type="button"
+                    class="btn btn-primary"
+                    (click)="addLesson(i)"
+                  >
+                    إضافة أول درس
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty Units State -->
+    <div class="empty-units" *ngIf="unitsFormArray.length === 0">
+      <div class="empty-content">
+        <i class="fas fa-layer-group"></i>
+        <h4>لا توجد وحدات</h4>
+        <p>ابدأ بإنشاء أول وحدة تعليمية</p>
+        <button 
+          type="button"
+          class="btn btn-primary btn-lg"
+          (click)="addUnit()"
+        >
+          <i class="fas fa-plus"></i>
+          إنشاء وحدة جديدة
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Unit Section -->
+    <div class="add-unit-section" *ngIf="unitsFormArray.length > 0">
+      <button 
+        type="button"
+        class="btn btn-outline-primary"
+        (click)="addUnit()"
+      >
+        <i class="fas fa-plus"></i>
+        إضافة وحدة جديدة
+      </button>
+    </div>
+  </form>
+
+  <!-- Form Status -->
+  <div class="form-status">
+    <div class="status-indicator" [class.valid]="isFormValid">
+      <i class="fas" [class.fa-check-circle]="isFormValid" [class.fa-exclamation-circle]="!isFormValid"></i>
+      <span>{{ isFormValid ? 'تم إنجاز الوحدات والدروس' : 'يرجى إكمال جميع الوحدات والدروس' }}</span>
+    </div>
+  </div>
+</div>

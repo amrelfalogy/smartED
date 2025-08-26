@@ -1,0 +1,138 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-body">
+      <!-- Account Type Selection -->
+      <div class="account-type-section">
+        <h3>نوع الحساب</h3>
+        <div class="account-types">
+          <div 
+            class="account-type-card"
+            [class.selected]="selectedAccountType === 'student'"
+            (click)="selectAccountType('student')"
+          >
+            <h4>طالب</h4>
+          </div>
+          
+          <div 
+            class="account-type-card"
+            [class.selected]="selectedAccountType === 'admin'"
+            (click)="selectAccountType('admin')"
+          >
+            <h4>مدير</h4>
+          </div>
+          
+          <div 
+            class="account-type-card"
+            [class.selected]="selectedAccountType === 'support'"
+            (click)="selectAccountType('support')"
+          >
+            <h4>دعم فني</h4>
+          </div>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+        <div class="form-section">
+          <div class="form-group">
+            <label for="email">البريد الإلكتروني أو رقم الهاتف *</label>
+            <input
+              type="text"
+              id="email"
+              formControlName="email"
+              class="form-control"
+              [class.error]="isFieldInvalid('email')"
+              placeholder="example@email.com أو 01xxxxxxxxx"
+            />
+            <div class="error-message" *ngIf="isFieldInvalid('email')">
+              {{ getFieldError('email') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">كلمة المرور *</label>
+            <div class="password-input">
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                formControlName="password"
+                class="form-control"
+                [class.error]="isFieldInvalid('password')"
+                placeholder="أدخل كلمة المرور"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePassword()"
+              >
+                <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+            </div>
+            <div class="error-message" *ngIf="isFieldInvalid('password')">
+              {{ getFieldError('password') }}
+            </div>
+          </div>
+
+          <!-- Remember Me & Forgot Password -->
+          <div class="form-options">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                formControlName="rememberMe"
+                class="checkbox-input"
+              />
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-text">تذكرني</span>
+            </label>
+            
+            <a routerLink="/auth/forgot-password" class="forgot-link">
+              نسيت كلمة المرور؟
+            </a>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="login-error" *ngIf="loginError">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ loginError }}
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="loginForm.invalid || isLoading"
+          [class.loading]="isLoading"
+        >
+          <span *ngIf="!isLoading">تسجيل الدخول</span>
+          <span *ngIf="isLoading">
+            <i class="fas fa-spinner fa-spin"></i>
+            جاري تسجيل الدخول...
+          </span>
+        </button>
+      </form>
+
+      <!-- Social Login -->
+      <div class="social-login">
+        <div class="divider">
+          <span>أو سجل الدخول باستخدام</span>
+        </div>
+        
+        <div class="social-buttons">
+          <button class="social-btn google-btn" >
+            <i class="fab fa-google"></i>
+            Google
+          </button>
+        </div>
+      </div>
+
+      <!-- Register Link -->
+      <div class="auth-footer">
+        <p>
+          ليس لديك حساب؟
+          <a routerLink="/auth/register" class="auth-link">إنشاء حساب جديد</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
