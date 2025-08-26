@@ -8,6 +8,16 @@ import { CoursesAdminListComponent } from './admin-dashboard/pages/courses-admin
 import { CoursesAdminFormComponent } from './admin-dashboard/pages/courses-admin/courses-admin-form/courses-admin-form.component';
 import { AuthGuard } from './core/guards/auth.guard';
 
+// Student Dashboard Components
+import { StudentLayoutComponent } from './student-dashboard/layouts/student-layouts/student-layout/student-layout.component';
+import { StudentDashboardComponent } from './student-dashboard/pages/dashboard/dashboard.component';
+import { AllCoursesComponent } from './student-dashboard/pages/all-courses/all-courses.component';
+import { CourseTypeSelectionComponent } from './student-dashboard/pages/course-type-selection/course-type-selection.component';
+import { CourseDetailsComponent } from './student-dashboard/pages/course-details/course-details.component';
+import { LessonDetailsComponent } from './student-dashboard/pages/lesson-details/lesson-details.component';
+import { MyPaymentsComponent } from './student-dashboard/pages/my-payments/my-payments.component';
+import { MyCoursesComponent } from './student-dashboard/pages/my-courses/my-courses.component';
+
 const routes: Routes = [
   // ============ PUBLIC ROUTES ============
   { path: '', component: HomeComponent },
@@ -64,6 +74,53 @@ const routes: Routes = [
         path: 'courses/:id/view', 
         component: CoursesAdminFormComponent,
         data: { mode: 'view' }
+      },
+    ]
+  },
+
+  // ============ STUDENT DASHBOARD ROUTES ============
+  { 
+    path: 'student-dashboard',
+    component: StudentLayoutComponent,
+    canActivate: [AuthGuard],
+    data: { role: 'student' },
+    children: [
+      // Dashboard home
+      { 
+        path: '', 
+        component: StudentDashboardComponent 
+      },
+      { 
+        path: 'dashboard', 
+        component: StudentDashboardComponent 
+      },
+      
+      // Course browsing and selection
+      { 
+        path: 'all-courses', 
+        component: AllCoursesComponent 
+      },
+      { 
+        path: 'course-type-selection', 
+        component: CourseTypeSelectionComponent 
+      },
+      { 
+        path: 'course-details/:id', 
+        component: CourseDetailsComponent 
+      },
+      { 
+        path: 'lesson-details/:id', 
+        component: LessonDetailsComponent 
+      },
+      
+      // My content and payments
+      { 
+        path: 'my-courses', 
+        component: MyCoursesComponent 
+      },
+      { 
+        path: 'my-payments', 
+        component: MyPaymentsComponent 
       },
     ]
   },

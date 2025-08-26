@@ -1,0 +1,201 @@
+<div class="student-dashboard">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1 class="welcome-title">مرحباً، أحمد محمد</h1>
+      <p class="welcome-subtitle">تابع تقدمك في التعلم واستمر في رحلتك التعليمية</p>
+    </div>
+    <div class="welcome-actions">
+      <button class="btn btn-primary" (click)="navigateToAllCourses()">
+        <i class="fas fa-search me-2"></i>
+        تصفح الدورات
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-section">
+    <div class="row">
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card">
+          <div class="stat-icon enrolled">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ stats.enrolledCourses }}</h3>
+            <p class="stat-label">دورة مسجل بها</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card">
+          <div class="stat-icon completed">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ stats.completedLessons }}</h3>
+            <p class="stat-label">درس مكتمل</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card">
+          <div class="stat-icon pending">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ stats.pendingPayments }}</h3>
+            <p class="stat-label">دفعة معلقة</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 mb-4">
+        <div class="stat-card">
+          <div class="stat-icon progress">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">{{ stats.totalProgress }}%</h3>
+            <p class="stat-label">معدل التقدم</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="main-content">
+    <div class="row">
+      <!-- Recent Activity -->
+      <div class="col-lg-8 mb-4">
+        <div class="content-card">
+          <div class="card-header">
+            <h5 class="card-title">
+              <i class="fas fa-history me-2"></i>
+              النشاط الأخير
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="activity-list">
+              <div class="activity-item" *ngFor="let activity of recentActivities">
+                <div class="activity-icon" [class]="'bg-' + activity.color">
+                  <i [class]="activity.icon"></i>
+                </div>
+                <div class="activity-content">
+                  <h6 class="activity-title">{{ activity.title }}</h6>
+                  <p class="activity-description">{{ activity.description }}</p>
+                  <small class="activity-time">{{ getTimeAgo(activity.timestamp) }}</small>
+                </div>
+              </div>
+            </div>
+            
+            <div class="activity-footer">
+              <a href="#" class="view-all-link">عرض جميع الأنشطة</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="col-lg-4 mb-4">
+        <div class="content-card">
+          <div class="card-header">
+            <h5 class="card-title">
+              <i class="fas fa-bolt me-2"></i>
+              إجراءات سريعة
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="quick-actions">
+              <button class="quick-action-btn" (click)="navigateToMyCourses()">
+                <div class="action-icon">
+                  <i class="fas fa-play"></i>
+                </div>
+                <div class="action-content">
+                  <h6>متابعة التعلم</h6>
+                  <p>استكمل آخر درس توقفت عنده</p>
+                </div>
+              </button>
+
+              <button class="quick-action-btn" (click)="navigateToPayments()">
+                <div class="action-icon">
+                  <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="action-content">
+                  <h6>إدارة المدفوعات</h6>
+                  <p>عرض وإدارة مدفوعاتك</p>
+                </div>
+              </button>
+
+              <button class="quick-action-btn" (click)="navigateToAllCourses()">
+                <div class="action-icon">
+                  <i class="fas fa-search"></i>
+                </div>
+                <div class="action-content">
+                  <h6>استكشاف دورات جديدة</h6>
+                  <p>تصفح المزيد من الدورات المتاحة</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="row">
+      <div class="col-12">
+        <div class="content-card">
+          <div class="card-header">
+            <h5 class="card-title">
+              <i class="fas fa-chart-bar me-2"></i>
+              نظرة عامة على التقدم
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="progress-overview">
+              <div class="progress-item">
+                <div class="progress-info">
+                  <span class="course-name">الرياضيات - الجبر الخطي</span>
+                  <span class="progress-percentage">85%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 85%"></div>
+                </div>
+              </div>
+
+              <div class="progress-item">
+                <div class="progress-info">
+                  <span class="course-name">الفيزياء - الميكانيكا</span>
+                  <span class="progress-percentage">62%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 62%"></div>
+                </div>
+              </div>
+
+              <div class="progress-item">
+                <div class="progress-info">
+                  <span class="course-name">الكيمياء - العضوية</span>
+                  <span class="progress-percentage">34%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 34%"></div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="progress-footer">
+              <button class="btn btn-outline-primary" (click)="navigateToMyCourses()">
+                عرض جميع الدورات
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,215 @@
+<div class="all-courses-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-graduation-cap me-3"></i>
+        جميع الدورات المتاحة
+      </h1>
+      <p class="page-description">
+        استكشف مجموعة واسعة من الدورات التعليمية في مختلف المجالات
+      </p>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-container">
+      <div class="row">
+        <!-- Search -->
+        <div class="col-lg-4 col-md-6 mb-3">
+          <div class="filter-group">
+            <label class="filter-label">البحث</label>
+            <div class="search-input">
+              <i class="fas fa-search search-icon"></i>
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="ابحث عن دورة..."
+                [(ngModel)]="filter.search"
+                (input)="applyFilters()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Subject Filter -->
+        <div class="col-lg-2 col-md-6 mb-3">
+          <div class="filter-group">
+            <label class="filter-label">المادة</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="filter.subject"
+              (change)="applyFilters()">
+              <option value="">جميع المواد</option>
+              <option *ngFor="let subject of subjects" [value]="subject">{{ subject }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Difficulty Filter -->
+        <div class="col-lg-2 col-md-6 mb-3">
+          <div class="filter-group">
+            <label class="filter-label">المستوى</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="filter.difficulty"
+              (change)="applyFilters()">
+              <option value="">جميع المستويات</option>
+              <option *ngFor="let difficulty of difficulties" [value]="difficulty">{{ difficulty }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Instructor Filter -->
+        <div class="col-lg-2 col-md-6 mb-3">
+          <div class="filter-group">
+            <label class="filter-label">المدرس</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="filter.instructor"
+              (change)="applyFilters()">
+              <option value="">جميع المدرسين</option>
+              <option *ngFor="let instructor of instructors" [value]="instructor">{{ instructor }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="col-lg-2 col-md-6 mb-3">
+          <div class="filter-actions">
+            <button 
+              type="button" 
+              class="btn btn-outline-secondary me-2"
+              (click)="clearFilters()">
+              <i class="fas fa-undo"></i>
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-outline-primary"
+              (click)="toggleViewMode()">
+              <i class="fas" [class.fa-th]="viewMode === 'list'" [class.fa-list]="viewMode === 'grid'"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section">
+    <!-- Results Header -->
+    <div class="results-header">
+      <div class="results-info">
+        <span class="results-count">{{ filteredCourses.length }} دورة متاحة</span>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading">
+      <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>جاري تحميل الدورات...</p>
+      </div>
+    </div>
+
+    <!-- Courses Grid View -->
+    <div class="courses-grid" *ngIf="!isLoading && viewMode === 'grid'">
+      <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4" *ngFor="let course of filteredCourses">
+          <div class="course-card" (click)="selectCourse(course)">
+            <div class="course-image">
+              <img [src]="course.imageUrl" [alt]="course.name" onerror="this.src='assets/imgs/course-placeholder.jpg'">
+              <div class="course-overlay">
+                <button class="btn btn-primary">
+                  <i class="fas fa-play me-2"></i>
+                  عرض التفاصيل
+                </button>
+              </div>
+            </div>
+            
+            <div class="course-content">
+              <div class="course-meta">
+                <span class="difficulty-badge" [class]="'badge-' + getDifficultyColor(course.difficulty)">
+                  {{ getDifficultyLabel(course.difficulty) }}
+                </span>
+              </div>
+              
+              <h5 class="course-title">{{ course.name }}</h5>
+              <p class="course-description">{{ course.description | slice:0:100 }}...</p>
+              
+              <div class="course-info">
+                <div class="info-item">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ course.duration }}</span>
+                </div>
+                <div class="info-item">
+                  <i class="fas fa-users"></i>
+                  <span>{{ course.studentsCount }} طالب</span>
+                </div>
+              </div>
+              
+              <div class="course-instructor">
+                <i class="fas fa-user-tie"></i>
+                <span>{{ course.instructorName }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Courses List View -->
+    <div class="courses-list" *ngIf="!isLoading && viewMode === 'list'">
+      <div class="course-list-item" *ngFor="let course of filteredCourses" (click)="selectCourse(course)">
+        <div class="list-item-image">
+          <img [src]="course.imageUrl" [alt]="course.name" onerror="this.src='assets/imgs/course-placeholder.jpg'">
+        </div>
+        
+        <div class="list-item-content">
+          <div class="list-item-header">
+            <h5 class="course-title">{{ course.name }}</h5>
+            <span class="difficulty-badge" [class]="'badge-' + getDifficultyColor(course.difficulty)">
+              {{ getDifficultyLabel(course.difficulty) }}
+            </span>
+          </div>
+          
+          <p class="course-description">{{ course.description }}</p>
+          
+          <div class="course-details">
+            <div class="detail-item">
+              <i class="fas fa-user-tie"></i>
+              <span>{{ course.instructorName }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-clock"></i>
+              <span>{{ course.duration }}</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-users"></i>
+              <span>{{ course.studentsCount }} طالب</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="list-item-actions">
+          <button class="btn btn-primary">
+            <i class="fas fa-arrow-left me-2"></i>
+            عرض التفاصيل
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading && filteredCourses.length === 0">
+      <div class="empty-content">
+        <i class="fas fa-search"></i>
+        <h4>لم نجد أي دورات</h4>
+        <p>جرب تغيير معايير البحث أو المرشحات</p>
+        <button class="btn btn-primary" (click)="clearFilters()">
+          مسح جميع المرشحات
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

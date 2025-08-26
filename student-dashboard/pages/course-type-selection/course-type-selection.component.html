@@ -1,0 +1,118 @@
+<div class="course-type-selection">
+  <!-- Header Section -->
+  <div class="page-header">
+    <button class="btn btn-ghost back-btn" (click)="goBack()">
+      <i class="fas fa-arrow-right me-2"></i>
+      العودة للدورات
+    </button>
+    
+    <div class="header-content">
+      <h1 class="main-title">اختر طريقة التعلم التي تريد أن تبدأ رحلتك معها</h1>
+      
+      <div class="course-info" *ngIf="course">
+        <div class="course-card">
+          <img [src]="course.imageUrl" [alt]="course.name" class="course-image" onerror="this.src='assets/imgs/course-placeholder.jpg'">
+          <div class="course-details">
+            <h3 class="course-name">{{ course.name }}</h3>
+            <p class="course-description">{{ course.description }}</p>
+            <div class="course-meta">
+              <span class="meta-item">
+                <i class="fas fa-user-tie"></i>
+                {{ course.instructorName }}
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-clock"></i>
+                {{ course.duration }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course Types Section -->
+  <div class="course-types-section">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-4 col-md-6 mb-4" *ngFor="let type of courseTypes">
+          <div class="course-type-card" 
+               [class.disabled]="type.isDisabled"
+               [class]="'type-' + type.color"
+               (click)="selectCourseType(type)">
+            
+            <!-- Card Header -->
+            <div class="card-header">
+              <div class="type-icon">
+                <i [class]="type.icon"></i>
+              </div>
+              <div class="type-info">
+                <h4 class="type-title">{{ type.title }}</h4>
+                <p class="type-subtitle">{{ type.subtitle }}</p>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="card-body">
+              <p class="type-description">{{ type.description }}</p>
+              
+              <ul class="features-list">
+                <li *ngFor="let feature of type.features">
+                  <i class="fas fa-check"></i>
+                  {{ feature }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="card-footer">
+              <div class="pricing" *ngIf="!type.isDisabled && type.price > 0">
+                <span class="price">{{ type.price }}</span>
+                <span class="currency">{{ type.currency }}</span>
+              </div>
+              
+              <button class="btn action-btn" 
+                      [class.btn-primary]="type.color === 'primary' && !type.isDisabled"
+                      [class.btn-success]="type.color === 'success' && !type.isDisabled"
+                      [class.btn-secondary]="type.color === 'secondary' || type.isDisabled"
+                      [disabled]="type.isDisabled">
+                {{ type.buttonText }}
+                <i class="fas fa-arrow-left ms-2" *ngIf="!type.isDisabled"></i>
+              </button>
+            </div>
+
+            <!-- Disabled Overlay -->
+            <div class="disabled-overlay" *ngIf="type.isDisabled">
+              <div class="overlay-content">
+                <i class="fas fa-lock"></i>
+                <span>قريباً</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Section -->
+  <div class="help-section">
+    <div class="container">
+      <div class="help-card">
+        <div class="help-content">
+          <h5>تحتاج مساعدة في الاختيار؟</h5>
+          <p>تواصل معنا للحصول على استشارة مجانية لاختيار الطريقة الأنسب لك</p>
+        </div>
+        <div class="help-actions">
+          <button class="btn btn-outline-primary">
+            <i class="fas fa-phone me-2"></i>
+            اتصل بنا
+          </button>
+          <button class="btn btn-outline-secondary">
+            <i class="fas fa-comments me-2"></i>
+            دردشة مباشرة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

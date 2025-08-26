@@ -1,0 +1,341 @@
+.student-dashboard {
+  padding: 24px;
+  background: #f8f9fa;
+  min-height: 100vh;
+
+  .welcome-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 32px;
+    border-radius: 12px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .welcome-content {
+      .welcome-title {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .welcome-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin: 0;
+      }
+    }
+
+    .welcome-actions {
+      .btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: translateY(-2px);
+        }
+      }
+    }
+  }
+
+  .stats-section {
+    margin-bottom: 32px;
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: translateY(-4px);
+      }
+
+      .stat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+
+        &.enrolled {
+          background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        &.completed {
+          background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+
+        &.pending {
+          background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        &.progress {
+          background: linear-gradient(135deg, #a8edea, #fed6e3);
+        }
+      }
+
+      .stat-content {
+        .stat-number {
+          font-size: 32px;
+          font-weight: 700;
+          margin: 0 0 4px 0;
+          color: #2c3e50;
+        }
+
+        .stat-label {
+          color: #6c757d;
+          margin: 0;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .content-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e9ecef;
+      background: #f8f9fa;
+
+      .card-title {
+        margin: 0;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+  }
+
+  .activity-list {
+    .activity-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid #f8f9fa;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 16px;
+
+        &.bg-success {
+          background: #28a745;
+        }
+
+        &.bg-primary {
+          background: #007bff;
+        }
+
+        &.bg-info {
+          background: #17a2b8;
+        }
+      }
+
+      .activity-content {
+        flex: 1;
+
+        .activity-title {
+          font-weight: 600;
+          color: #2c3e50;
+          margin-bottom: 4px;
+        }
+
+        .activity-description {
+          color: #6c757d;
+          margin-bottom: 4px;
+          font-size: 14px;
+        }
+
+        .activity-time {
+          color: #6c757d;
+          font-size: 12px;
+        }
+      }
+    }
+
+    .activity-footer {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #f8f9fa;
+
+      .view-all-link {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  .quick-actions {
+    .quick-action-btn {
+      width: 100%;
+      background: none;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: right;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #007bff;
+        background: #f8f9fa;
+        transform: translateY(-2px);
+      }
+
+      .action-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #007bff;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+
+      .action-content {
+        flex: 1;
+
+        h6 {
+          margin: 0 0 4px 0;
+          font-weight: 600;
+          color: #2c3e50;
+        }
+
+        p {
+          margin: 0;
+          color: #6c757d;
+          font-size: 13px;
+        }
+      }
+    }
+  }
+
+  .progress-overview {
+    .progress-item {
+      margin-bottom: 20px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+
+        .course-name {
+          font-weight: 500;
+          color: #2c3e50;
+        }
+
+        .progress-percentage {
+          font-weight: 600;
+          color: #007bff;
+        }
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #007bff, #0056b3);
+          transition: width 0.3s ease;
+        }
+      }
+    }
+
+    .progress-footer {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #f8f9fa;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .student-dashboard {
+    padding: 16px;
+
+    .welcome-section {
+      flex-direction: column;
+      text-align: center;
+      gap: 20px;
+      padding: 24px;
+
+      .welcome-content .welcome-title {
+        font-size: 24px;
+      }
+    }
+
+    .stat-card {
+      padding: 20px !important;
+
+      .stat-icon {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 20px !important;
+      }
+
+      .stat-content .stat-number {
+        font-size: 24px !important;
+      }
+    }
+
+    .card-body {
+      padding: 20px !important;
+    }
+  }
+}

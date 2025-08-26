@@ -1,0 +1,139 @@
+<header class="student-header">
+  <div class="header-container">
+    <!-- Left Section: Menu Toggle -->
+    <div class="header-left">
+      <button 
+        type="button" 
+        class="btn btn-ghost sidebar-toggle"
+        (click)="onToggleSidebar()"
+        aria-label="Toggle Sidebar">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+
+    <!-- Center Section: Logo/Brand -->
+    <div class="header-center">
+      <div class="brand">
+        <img src="assets/imgs/logo2.png" alt="SmartED" class="logo">
+        <span class="brand-text">لوحة الطالب</span>
+      </div>
+    </div>
+
+    <!-- Right Section: Notifications & Profile -->
+    <div class="header-right">
+      <!-- Notifications -->
+      <div class="header-item notifications-container">
+        <button 
+          type="button" 
+          class="btn btn-ghost notification-btn"
+          (click)="toggleNotifications()"
+          [class.active]="showNotifications">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge">3</span>
+        </button>
+
+        <!-- Notifications Dropdown -->
+        <div class="notifications-dropdown" [class.show]="showNotifications">
+          <div class="dropdown-header">
+            <h6>الإشعارات</h6>
+            <span class="badge badge-primary">3 جديد</span>
+          </div>
+          <div class="notifications-list">
+            <div class="notification-item unread">
+              <div class="notification-icon">
+                <i class="fas fa-book text-primary"></i>
+              </div>
+              <div class="notification-content">
+                <p class="notification-title">درس جديد متاح</p>
+                <p class="notification-text">تم إضافة درس جديد في مادة الرياضيات</p>
+                <small class="notification-time">منذ 5 دقائق</small>
+              </div>
+            </div>
+            <div class="notification-item">
+              <div class="notification-icon">
+                <i class="fas fa-payment text-success"></i>
+              </div>
+              <div class="notification-content">
+                <p class="notification-title">تم تأكيد الدفع</p>
+                <p class="notification-text">تم تأكيد دفعتك لمادة الفيزياء</p>
+                <small class="notification-time">منذ ساعة</small>
+              </div>
+            </div>
+          </div>
+          <div class="dropdown-footer">
+            <a href="#" class="view-all-link">عرض جميع الإشعارات</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Menu -->
+      <div class="header-item profile-container">
+        <button 
+          type="button" 
+          class="btn btn-ghost profile-btn"
+          (click)="toggleProfileMenu()"
+          [class.active]="showProfileMenu">
+          <div class="profile-avatar">
+            <img src="assets/imgs/avatar-placeholder.png" alt="الملف الشخصي" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+            <div class="avatar-placeholder">أ.م</div>
+          </div>
+          <span class="profile-name d-none d-md-inline">أحمد محمد</span>
+          <i class="fas fa-chevron-down ms-2"></i>
+        </button>
+
+        <!-- Profile Dropdown -->
+        <div class="profile-dropdown" [class.show]="showProfileMenu">
+          <div class="dropdown-header">
+            <div class="user-info">
+              <div class="user-avatar">
+                <img src="assets/imgs/avatar-placeholder.png" alt="الملف الشخصي" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <div class="avatar-placeholder">أ.م</div>
+              </div>
+              <div class="user-details">
+                <div class="user-name">أحمد محمد</div>
+                <div class="user-email">ahmed.mohamed@example.com</div>
+              </div>
+            </div>
+          </div>
+          
+          <ul class="dropdown-menu">
+            <li class="dropdown-item">
+              <a routerLink="/student-dashboard/profile">
+                <i class="fas fa-user me-3"></i>
+                الملف الشخصي
+              </a>
+            </li>
+            <li class="dropdown-item">
+              <a routerLink="/student-dashboard/my-courses">
+                <i class="fas fa-book me-3"></i>
+                كورساتي
+              </a>
+            </li>
+            <li class="dropdown-item">
+              <a routerLink="/student-dashboard/my-payments">
+                <i class="fas fa-credit-card me-3"></i>
+                المدفوعات
+              </a>
+            </li>
+            <li class="dropdown-divider"></li>
+            <li class="dropdown-item">
+              <a href="#" class="settings-link">
+                <i class="fas fa-cog me-3"></i>
+                الإعدادات
+              </a>
+            </li>
+            <li class="dropdown-item">
+              <a href="#" class="logout-link">
+                <i class="fas fa-sign-out-alt me-3"></i>
+                تسجيل الخروج
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Backdrop for closing dropdowns -->
+<div class="dropdown-backdrop" *ngIf="showNotifications || showProfileMenu" (click)="closeDropdowns()"></div>

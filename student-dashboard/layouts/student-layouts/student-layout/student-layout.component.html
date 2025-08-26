@@ -1,0 +1,23 @@
+<div class="student-dashboard-layout">
+  <!-- Sidebar -->
+  <app-student-sidebar 
+    [collapsed]="sidebarCollapsed"
+    class="dashboard-sidebar">
+  </app-student-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="main-content" [class.sidebar-collapsed]="sidebarCollapsed">
+    <!-- Header -->
+    <app-student-header 
+      (toggleSidebar)="toggleSidebar()" 
+      class="dashboard-header">
+    </app-student-header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+      <div class="content-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>
