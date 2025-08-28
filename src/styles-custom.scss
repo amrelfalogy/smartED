@@ -1,5 +1,6 @@
 :root {
   --primary-color: #304a6f;
+  --gradient-color: linear-gradient(135deg, #667eea, #764ba2);
   --secondary-color: #94afca;
   --light-color: #f2f2f2;
   --dark-color: #212529;
@@ -10,7 +11,7 @@
   --gray-color: #60676d;
 }
 body{
-    font-family: 'Arial', sans-serif;
+    font-family: 'Cairo', sans-serif;
     background-color: var(--light-color) !important;
     color: var(--dark-color);
     

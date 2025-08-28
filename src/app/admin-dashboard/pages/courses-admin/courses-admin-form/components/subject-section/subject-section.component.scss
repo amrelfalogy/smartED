@@ -19,10 +19,6 @@
       align-items: center;
       gap: 12px;
 
-      &::before {
-        content: '📚';
-        font-size: 28px;
-      }
     }
 
     .section-description {
@@ -42,7 +38,7 @@
         font-weight: 600;
         color: #374151;
         margin-bottom: 8px;
-        font-size: 14px;
+        font-size: 1rem;
 
         .required {
           color: #ef4444;
@@ -153,8 +149,8 @@
         }
 
         &.selected {
-          border-color: var(--difficulty-color);
-          background-color: var(--difficulty-color);
+          border-color: var(--primary-color);
+          background-color: var(--primary-color);
           color: #ffffff;
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -240,7 +236,8 @@
     }
 
     // Image Upload Section
-    .image-upload-section {
+    .image-section {
+
       .upload-area {
         border: 2px dashed #d1d5db;
         border-radius: 12px;
@@ -251,6 +248,7 @@
         background: #f9fafb;
         position: relative;
         overflow: hidden;
+        margin-bottom: 25px;
 
         &:hover {
           border-color: #3b82f6;
@@ -268,6 +266,12 @@
           flex-direction: column;
           align-items: center;
           gap: 12px;
+
+          .upload-subtitle{
+            display: flex; 
+            gap: 8px;
+          }
+      
 
           .upload-icon {
             font-size: 48px;
@@ -310,6 +314,8 @@
           justify-content: center;
           opacity: 0;
           transition: opacity 0.3s ease;
+          margin: 10px 0 ;
+          border-radius: 4px;
 
           &:hover {
             opacity: 1;
@@ -382,7 +388,7 @@
     .status-indicator {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       font-weight: 600;
 
       &.valid {
@@ -402,7 +408,7 @@
       }
 
       i {
-        font-size: 20px;
+        font-size: 16px;
       }
     }
   }
@@ -461,68 +467,3 @@
   }
 }
 
-// Dark Mode Support
-@media (prefers-color-scheme: dark) {
-  .subject-section {
-    background: #1f2937;
-    border-color: #374151;
-
-    .section-header {
-      border-color: #374151;
-
-      h3 {
-        color: #f9fafb;
-      }
-
-      .section-description {
-        color: #9ca3af;
-      }
-    }
-
-    .subject-form {
-      .form-label {
-        color: #e5e7eb;
-      }
-
-      .form-control,
-      .form-select {
-        background-color: #374151;
-        border-color: #4b5563;
-        color: #f9fafb;
-
-        &::placeholder {
-          color: #6b7280;
-        }
-
-        &:focus {
-          border-color: #3b82f6;
-          background-color: #374151;
-        }
-      }
-
-      .difficulty-options .difficulty-option {
-        background: #374151;
-        border-color: #4b5563;
-        color: #f9fafb;
-
-        &:hover {
-          border-color: #6b7280;
-        }
-      }
-
-      .image-upload-section .upload-area {
-        background: #374151;
-        border-color: #4b5563;
-
-        &:hover {
-          background-color: #4b5563;
-        }
-      }
-    }
-
-    .form-status {
-      background: #374151;
-      border-color: #4b5563;
-    }
-  }
-}

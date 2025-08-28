@@ -1,4 +1,3 @@
-<p>subject-section works!</p>
 <div class="subject-section">
   <div class="section-header">
     <h3>معلومات المادة الأساسية</h3>
@@ -82,7 +81,6 @@
           (click)="subjectForm.patchValue({difficulty: option.value})"
         >
           <div class="option-header">
-            <i class="material-icons" [style.color]="option.color">{{ option.icon }}</i>
             <span class="option-label">{{ option.label }}</span>
           </div>
           <p class="option-description">{{ option.description }}</p>
@@ -117,7 +115,7 @@
 
   <!-- Subject Image -->
   <div class="form-group">
-    <label class="form-label">صورة المادة</label>
+    <label class="form-label">صورة المادة <span class="required">*</span> </label>
 
     <div class="image-section">
       <!-- Image Preview -->
@@ -131,7 +129,7 @@
             title="حذف الصورة"
             [disabled]="isUploading"
           >
-            <i class="fas fa-trash"></i>
+            <i class="pi pi-trash"></i>
           </button>
         </div>
       </div>
@@ -139,19 +137,20 @@
       <!-- Upload Area (shown only if no image and not uploading) -->
       <div class="upload-area" *ngIf="!imagePreview && !isUploading">
         <label class="upload-content" for="subject-image-upload">
-          <i class="fas fa-cloud-upload-alt"></i>
-          <p>اسحب الصورة هنا أو انقر للاختيار</p>
-          <small>JPG, PNG, GIF - حد أقصى 5 ميجابايت</small>
+          <div class="upload-subtitle">
+            <i class="pi pi-cloud-upload"></i>
+            <small>JPG, PNG, GIF - حد أقصى 5 ميجابايت</small>
+          </div>
+          <input
+            type="file"
+            id="subject-image-upload"
+            class="file-input"
+            accept="image/*"
+            (change)="onImageSelected($event)"
+            [disabled]="isUploading"
+            hidden
+          />
         </label>
-        <input
-          type="file"
-          id="subject-image-upload"
-          class="file-input"
-          accept="image/*"
-          (change)="onImageSelected($event)"
-          [disabled]="isUploading"
-          style="display: none"
-        />
       </div>
             <!-- Manual URL Input -->
       <div class="url-input-section" *ngIf="!imagePreview">
@@ -185,8 +184,8 @@
   <!-- Form Status -->
   <div class="form-status">
     <div class="status-indicator" [class.valid]="isFormValid">
-      <i class="fas fa-check-circle" *ngIf="isFormValid"></i>
-      <i class="fas fa-exclamation-circle" *ngIf="!isFormValid"></i>
+      <i class="pi pi-check-circle" *ngIf="isFormValid"></i>
+      <i class="pi pi-exclamation-circle" *ngIf="!isFormValid"></i>
       <span>
         {{ isFormValid ? 'معلومات المادة مكتملة' : 'يرجى إكمال المعلومات المطلوبة' }}
       </span>

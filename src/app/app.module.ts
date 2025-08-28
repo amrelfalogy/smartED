@@ -11,6 +11,7 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { RouterModule } from '@angular/router';
+import { StudentLayoutComponent } from './student-dashboard/student-layouts/student-layout/student-layout.component';
 
 
 @NgModule({

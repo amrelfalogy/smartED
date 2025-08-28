@@ -258,7 +258,7 @@
             <div class="meta-item">
               <i class="fas fa-signal"></i>
               <span class="difficulty" [class]="'difficulty-' + course.difficulty">
-                {{ getDifficultyLabel(course.difficulty) }}
+                {{ getDifficultyLabel(course.difficulty || '') }}
               </span>
             </div>
             <div class="meta-item">
@@ -358,7 +358,7 @@
             class="difficulty-badge"
             [class]="'difficulty-' + course.difficulty"
           >
-            {{ getDifficultyLabel(course.difficulty) }}
+            {{ getDifficultyLabel(course.difficulty || '') }}
           </span>
         </div>
 

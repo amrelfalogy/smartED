@@ -1,63 +1,67 @@
 <div class="course-catalog-container">
+   <!-- Results Info -->
+  <div class="catalog-title">
+    <h2>الدورات المتاحة</h2>
+    <p style="margin: -6px 0 20px ;">{{ filteredCourses.length }} دورات</p>
+  </div>
+
   <!-- Simple Modern Filters -->
   <div class="filters-section">
     <div class="filters-header">
       <h3 class="filters-title">
-        <i class="fas fa-filter"></i>
-        تصفية الكورسات
+        <i class="pi pi-filter"></i>
+        تصفية الدورات
       </h3>
       <button 
         *ngIf="selectedStage || selectedAcademicYear" 
         class="reset-btn"
         (click)="resetFilters()"
       >
-        <i class="fas fa-redo"></i>
+        <i class="pi pi-undo"></i>
         إعادة تعيين
       </button>
     </div>
 
-    <!-- Stage Selection -->
-    <div class="filter-group">
-      <label class="filter-label">المرحلة التعليمية</label>
-      <div class="stage-buttons">
-        <button 
-          class="stage-btn"
-          [class.active]="selectedStage === 'ثانوية'"
-          (click)="selectStage('ثانوية')"
-        >
-          🎓 المرحلة الثانوية
-        </button>
-        <button 
-          class="stage-btn"
-          [class.active]="selectedStage === 'اعدادية'"
-          (click)="selectStage('اعدادية')"
-        >
-          📚 المرحلة الإعدادية
-        </button>
+    <div class="filter-container">
+      <!-- Stage Selection -->
+      <div class="filter-group">
+        <label class="filter-label">المرحلة التعليمية</label>
+        <div class="stage-buttons">
+          <button 
+            class="stage-btn"
+            [class.active]="selectedStage === 'ثانوية'"
+            (click)="selectStage('ثانوية')"
+          >
+            المرحلة الثانوية
+          </button>
+          <button 
+            class="stage-btn"
+            [class.active]="selectedStage === 'اعدادية'"
+            (click)="selectStage('اعدادية')"
+          >
+            المرحلة الإعدادية
+          </button>
+        </div>
+      </div>
+      <!-- Grade Selection (only show when stage is selected) -->
+      <div class="filter-group" *ngIf="selectedStage">
+        <label class="filter-label">السنة الدراسية</label>
+        <div class="grade-buttons">
+          <button
+            class="grade-btn"
+            *ngFor="let grade of getGradesForStage()"
+            [class.active]="selectedAcademicYear === getAcademicYearLabel(grade)"
+            (click)="selectGrade(grade)"
+          >
+            {{ grade.name }}
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Grade Selection (only show when stage is selected) -->
-    <div class="filter-group" *ngIf="selectedStage">
-      <label class="filter-label">السنة الدراسية</label>
-      <div class="grade-buttons">
-        <button
-          class="grade-btn"
-          *ngFor="let grade of getGradesForStage()"
-          [class.active]="selectedAcademicYear === getAcademicYearLabel(grade)"
-          (click)="selectGrade(grade)"
-        >
-          {{ grade.name }}
-        </button>
-      </div>
-    </div>
   </div>
 
-  <!-- Results Info -->
-  <div class="results-info">
-    <h2>الكورسات المتاحة</h2>
-    <p>{{ filteredCourses.length }} كورس</p>
-  </div>
+ 
 
   <!-- Courses Grid -->
   <div class="courses-grid" *ngIf="filteredCourses.length > 0; else noCoursesMsg">
@@ -68,24 +72,22 @@
     >
       <img [src]="course.image" alt="Course image" class="card-img" />
       <div class="card-body">
-        <h3 class="subject-name">{{ course.subject }}</h3>
-        <div class="teacher-name">{{ course.instructor }}</div>
-        <div class="academic-year">{{ course.academicYear }}</div>
+        <div class="subject-name-container">
+          <h3 class="subject-name">{{ course.subject }}</h3>
+          <div class="academic-year">{{ course.academicYear }}</div>
+        </div>
         <p class="course-description">{{ course.description }}</p>
+        <div class="teacher-name">{{ course.instructor }}</div>
+        <button class="btn enroll-btn" routerLink="course-details/:id" > عرض التفاصيل </button>
         <div class="card-footer">
-          <div class="rating">
-            <span class="stars">
-            <span 
-              class="star" 
-              *ngFor="let star of getStars(course.rating); let i = index"
-              [class.filled]="i < course.rating"
-            >
-              ⭐
-            </span>
-          </span>
+          <div class="duration">
+            <i class="pi pi-stopwatch"></i>
+            {{ course.duration }} ساعة
           </div>
-          <div class="duration">{{ course.duration }}</div>
-          <div class="students-count">{{ course.studentsCount }} طالب</div>
+          <div class="students-count">
+            <i class="pi pi-user"></i>
+            {{ course.studentsCount }} طالب
+          </div>
         </div>
       </div>
     </div>

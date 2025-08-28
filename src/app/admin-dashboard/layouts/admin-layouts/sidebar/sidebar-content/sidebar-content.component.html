@@ -5,7 +5,9 @@
         <app-sidebar-group *ngIf="item.type === 'group'" [item]="item"></app-sidebar-group>
       </ng-container>
     </ul>
-    <div class="m-4 mb-0">
+    
+    <!-- Pro Card - Only show for admin role -->
+    <div class="m-4 mb-0" *ngIf="showProCard">
       <div class="card nav-card">
         <div class="card-body">
           <div class="d-flex flex-column align-items-center">
@@ -18,6 +20,24 @@
               <a href="#" target="_blank" class="btn btn-primary text-white">
                 Pro
               </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Welcome Card - Show for student role -->
+    <div class="m-4 mb-0" *ngIf="!showProCard">
+      <div class="card nav-card bg-gradient-primary text-white">
+        <div class="card-body">
+          <div class="d-flex flex-column align-items-center">
+            <i class="fas fa-graduation-cap fa-3x mb-3"></i>
+            <div class="text-center">
+              <h5 class="mb-0 text-white">مرحباً بك</h5>
+              <span class="text-white-50">في منصة التعلم الذكي</span>
+            </div>
+            <div class="m-t-15 text-center">
+              <small class="text-white-75">استمر في التعلم وحقق أهدافك</small>
             </div>
           </div>
         </div>

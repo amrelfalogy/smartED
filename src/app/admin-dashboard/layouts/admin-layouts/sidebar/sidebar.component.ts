@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, Input } from '@angular/core';
 
 @Component({
   selector: 'app-sidebar',
@@ -7,6 +7,10 @@ import { Component, Output, EventEmitter } from '@angular/core';
 })
 export class SidebarComponent {
   @Output() SidebarCollapsedMob = new EventEmitter();
+  @Input() userRole: string = 'admin';
+  @Input() logoPath: string = 'assets/imgs/logo.jpeg';
+  @Input() logoHeight: string = '90px';
+  @Input() homeRoute: string = '/home';
 
   navCollapsedMob: boolean;
   windowWidth: number;
@@ -20,5 +24,9 @@ export class SidebarComponent {
     if (this.windowWidth < 1025) {
       this.SidebarCollapsedMob.emit();
     }
+  }
+
+  get showProCard(): boolean {
+    return this.userRole === 'admin' || this.userRole === 'support';
   }
 }

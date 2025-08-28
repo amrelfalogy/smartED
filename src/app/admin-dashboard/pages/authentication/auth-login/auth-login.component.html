@@ -46,7 +46,7 @@
                   class="btn btn-outline-secondary"
                   (click)="togglePassword()"
                 >
-                  <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                  <i [class]="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
                 </button>
               </div>
               <div class="invalid-feedback" *ngIf="isFieldInvalid('password')">
@@ -72,7 +72,7 @@
 
             <!-- Error Message -->
             <div class="alert alert-danger mt-3" *ngIf="loginError">
-              <i class="fas fa-exclamation-circle me-2"></i>
+              <i class="pi pi-exclamation-circle me-2"></i>
               {{ loginError }}
             </div>
 
@@ -85,7 +85,7 @@
               >
                 <span *ngIf="!isLoading">تسجيل الدخول</span>
                 <span *ngIf="isLoading">
-                  <i class="fas fa-spinner fa-spin me-2"></i>
+                  <i class="pi pi-spinner fa-spin me-2"></i>
                   جاري تسجيل الدخول...
                 </span>
               </button>

@@ -87,9 +87,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.showUserDropdown = false;
   }
 
+  // ✅ Updated to handle both admin and student dashboard navigation
   navigateToDashboard(): void {
     if (this.currentUser?.role === 'admin' || this.currentUser?.role === 'support') {
       this.router.navigate(['/admin/dashboard']);
+    } else if (this.currentUser?.role === 'student') {
+      this.router.navigate(['/student-dashboard/my-courses']);
     } else {
       this.router.navigate(['/home']);
     }
@@ -123,8 +126,51 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.router.navigate(['/auth/register']);
   }
 
-  // Helper method to check if user has admin access
+  // ✅ Updated to check if user can access any dashboard (admin or student)
+  canAccessDashboard(): boolean {
+    return this.currentUser?.role === 'admin' || 
+           this.currentUser?.role === 'support' || 
+           this.currentUser?.role === 'student';
+  }
+
+  // ✅ Keep the original method for admin-specific checks
   canAccessAdmin(): boolean {
     return this.currentUser?.role === 'admin' || this.currentUser?.role === 'support';
+  }
+
+  // ✅ New helper method to get role label in Arabic
+  getRoleLabel(role: string): string {
+    switch (role) {
+      case 'admin':
+        return 'مدير';
+      case 'support':
+        return 'دعم فني';
+      case 'student':
+        return 'طالب';
+      case 'instructor':
+        return 'مُدرس';
+      default:
+        return 'مستخدم';
+    }
+  }
+
+  // ✅ New helper method to get the correct dashboard label
+  getDashboardLabel(): string {
+    if (this.currentUser?.role === 'admin' || this.currentUser?.role === 'support') {
+      return 'لوحة التحكم';
+    } else if (this.currentUser?.role === 'student') {
+      return 'لوحة الطالب';
+    }
+    return 'لوحة التحكم';
+  }
+
+  // ✅ New helper method to get the correct dashboard icon
+  getDashboardIcon(): string {
+    if (this.currentUser?.role === 'admin' || this.currentUser?.role === 'support') {
+      return 'pi pi-warehouse';
+    } else if (this.currentUser?.role === 'student') {
+      return 'pi pi-book';
+    }
+    return 'pi pi-warehouse';
   }
 }

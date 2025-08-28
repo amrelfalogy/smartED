@@ -278,7 +278,6 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     return units.length > 0 && 
            units.every(unit => 
              unit.name?.trim() && 
-             unit.title?.trim() &&
              unit.description?.trim() &&
              unit.lessons && unit.lessons.length > 0 &&
              unit.lessons.every(lesson => this.isLessonValid(lesson))
@@ -398,7 +397,6 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   private async createUnitWithLessons(unit: Unit, subjectId: string): Promise<void> {
     const unitData = {
       name: unit.name,
-      title: unit.title,
       description: unit.description,
       subjectId: subjectId,
       order: unit.order

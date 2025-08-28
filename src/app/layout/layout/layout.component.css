@@ -15,6 +15,11 @@
   color: var(--primary-color);
   border-color: var(--primary-color); 
 }
+.btn:hover {
+  background-color: #5b78a1;
+  color: white;
+  border: none;
+}
 
 /* Auth new */
 .user-menu-container {
@@ -31,7 +36,7 @@
 .user-avatar {
   width: 35px;
   height: 35px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #304a6f, #365f99);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -48,13 +53,13 @@
   margin: 0 0.5rem;
 }
 
-.fa-chevron-down {
+.pi-chevron-down {
   color: #718096;
   font-size: 0.8rem;
   transition: transform 0.3s ease;
 }
 
-.fa-chevron-down.rotated {
+.pi-chevron-down.rotated {
   transform: rotate(180deg);
 }
 
@@ -90,7 +95,7 @@
 
 .dropdown-header {
   padding: 1rem;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #304a6f, #365f99);
   border-radius: 9px 9px 0 0;
 }
 
@@ -179,6 +184,62 @@
   bottom: 0;
   z-index: 999;
   background: transparent;
+}
+
+/* Add these styles to your existing CSS */
+
+/* Role Badge Styles */
+.user-role {
+  margin-top: 4px;
+}
+
+.role-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.role-badge.role-admin {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.role-badge.role-support {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.role-badge.role-student {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.role-badge.role-instructor {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+/* Enhanced dropdown items for student */
+.dropdown-item a {
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dropdown-item:hover a {
+  color: #007bff;
+}
+
+/* Student-specific menu styling */
+.dropdown-item[ng-reflect-router-link*="student-dashboard"] {
+  border-left: 3px solid transparent;
+}
+
+.dropdown-item[ng-reflect-router-link*="student-dashboard"]:hover {
+  border-left-color: #28a745;
+  background: #f8f9fa;
 }
 
 /* Responsive Design */

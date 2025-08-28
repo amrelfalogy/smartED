@@ -28,9 +28,8 @@ import { RouterModule } from '@angular/router';
 import { SidebarModule } from './layouts/admin-layouts/sidebar/sidebar.module';
 
 import { DashboardRoutingModule } from './dashboard-routing.module';
-import { HeaderComponent } from './layouts/admin-layouts/header/header.component';
-import { HeaderRightComponent } from './layouts/admin-layouts/header/header-right/header-right.component';
-import { HeaderLeftComponent } from './layouts/admin-layouts/header/header-left/header-left.component';
+
+import { SharedModule } from '../shared/shared.module';
 
 
 @NgModule({
@@ -38,7 +37,6 @@ import { HeaderLeftComponent } from './layouts/admin-layouts/header/header-left/
     // Pages
     DashboardComponent,
     AdminLayoutComponent,
-    HeaderComponent,
 
     // Chart components
     MonthlyBarChartComponent,
@@ -52,8 +50,7 @@ import { HeaderLeftComponent } from './layouts/admin-layouts/header/header-left/
     SubjectSectionComponent,
     UnitsSectionComponent,
     LessonsSectionComponent,
-    HeaderRightComponent,
-    HeaderLeftComponent,
+
     
   ],
   imports: [
@@ -63,7 +60,8 @@ import { HeaderLeftComponent } from './layouts/admin-layouts/header/header-left/
     ReactiveFormsModule,
     NgApexchartsModule,
     DashboardRoutingModule,
-    SidebarModule
+    SidebarModule,
+    SharedModule
   ],
 })
 export class AdminDashboardModule { }

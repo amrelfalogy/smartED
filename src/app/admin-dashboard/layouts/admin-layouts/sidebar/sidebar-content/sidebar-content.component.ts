@@ -1,6 +1,7 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { Location, LocationStrategy } from '@angular/common';
-import { NavigationItem, NavigationItems } from '../../../../../core/models/navigation.model';
+import { NavigationItem, NavigationItems, StudentNavigationItems, getNavigationByRole } from '../../../../../core/models/navigation.model';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-sidebar-content',
@@ -9,22 +10,36 @@ import { NavigationItem, NavigationItems } from '../../../../../core/models/navi
 })
 export class SidebarContentComponent implements OnInit {
   @Output() SidebarCollapsedMob = new EventEmitter();
+  @Input() userRole: string = 'admin'; // Default to admin
+  @Input() showProCard: boolean = true; // Show pro card for admin, hide for student
 
-  navigations: NavigationItem[];
-  navigation = NavigationItems;
+  navigations: NavigationItem[] = [];
   windowWidth = window.innerWidth;
 
   constructor(
     private location: Location,
-    private locationStrategy: LocationStrategy
-  ) {
-    this.navigations = NavigationItems;
-  }
+    private locationStrategy: LocationStrategy,
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
+    // Get navigation based on user role
+    this.loadNavigationByRole();
+
     if (this.windowWidth < 1025) {
       (document.querySelector('.coded-navbar') as HTMLDivElement)?.classList.add('menupos-static');
     }
+  }
+
+  private loadNavigationByRole(): void {
+    // Get user role from auth service
+    const currentUser = this.authService.getCurrentUser();
+    const userRole = currentUser?.role || this.userRole;
+
+    // Get navigation items based on role
+    this.navigations = getNavigationByRole(userRole);
+    
+    console.log('Loading navigation for role:', userRole, this.navigations);
   }
 
   fireOutClick() {

@@ -41,7 +41,7 @@
               {{ getUserInitials() }}
             </div>
             <span class="user-name d-none d-md-inline">{{ getUserDisplayName() }}</span>
-            <i class="fas fa-chevron-down ms-2" [class.rotated]="showUserDropdown"></i>
+            <i class="pi pi-chevron-down ms-2" [class.rotated]="showUserDropdown"></i>
           </div>
 
           <!-- Dropdown Menu -->
@@ -54,6 +54,12 @@
                 <div class="user-details">
                   <div class="user-name">{{ getUserDisplayName() }}</div>
                   <div class="user-email">{{ currentUser.email || 'لا يوجد بريد إلكتروني' }}</div>
+                  <!-- ✅ Add role badge for better UX -->
+                  <div class="user-role">
+                    <span class="role-badge" [class]="'role-' + currentUser.role">
+                      {{ getRoleLabel(currentUser.role) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -61,28 +67,44 @@
             <ul>
               <li class="dropdown-item">
                 <a>
-                  <i class="fas fa-user me-3"></i>
+                  <i class="pi pi-user me-3"></i>
                   الملف الشخصي
                 </a>
               </li>
               
-              <li class="dropdown-item" (click)="navigateToDashboard()" *ngIf="canAccessAdmin()">
+              <!-- ✅ Updated dashboard menu item - shows for both admin and student -->
+              <li class="dropdown-item" (click)="navigateToDashboard()" *ngIf="canAccessDashboard()">
                 <a>
-                  <i class="fas fa-tachometer-alt me-3"></i>
-                  لوحة التحكم
+                  <i class="{{ getDashboardIcon() }} me-3"></i>
+                  {{ getDashboardLabel() }}
+                </a>
+              </li>
+
+              <!-- ✅ Additional student-specific menu items -->
+              <li class="dropdown-item" *ngIf="currentUser.role === 'student'">
+                <a routerLink="/student-dashboard/my-courses" (click)="closeDropdown()">
+                  <i class="pi pi-book me-3"></i>
+                  دوراتي
+                </a>
+              </li>
+
+              <li class="dropdown-item" *ngIf="currentUser.role === 'student'">
+                <a routerLink="/student-dashboard/my-payments" (click)="closeDropdown()">
+                  <i class="pi pi-credit-card me-3"></i>
+                  مدفوعاتي
                 </a>
               </li>
 
               <li class="dropdown-item">
                 <a>
-                  <i class="fas fa-cog me-3"></i>
+                  <i class="pi pi-cog me-3"></i>
                   الإعدادات
                 </a>
               </li>
 
               <li class="dropdown-item">
                 <a>
-                  <i class="fas fa-question-circle me-3"></i>
+                  <i class="pi pi-question-circle me-3"></i>
                   المساعدة
                 </a>
               </li>
@@ -91,8 +113,8 @@
               
               <li class="dropdown-item logout-item" (click)="logout()" [class.disabled]="isLoggingOut">
                 <a>
-                  <i class="fas fa-sign-out-alt me-3" *ngIf="!isLoggingOut"></i>
-                  <i class="fas fa-spinner fa-spin me-3" *ngIf="isLoggingOut"></i>
+                  <i class="pi pi-sign-out me-3" *ngIf="!isLoggingOut"></i>
+                  <i class="pi pi-spinner pi-spin me-3" *ngIf="isLoggingOut"></i>
                   {{ isLoggingOut ? 'جاري تسجيل الخروج...' : 'تسجيل الخروج' }}
                 </a>
               </li>

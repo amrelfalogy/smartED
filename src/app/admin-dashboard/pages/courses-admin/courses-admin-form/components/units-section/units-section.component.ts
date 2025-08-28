@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { 
   Unit, 
   Lesson, 
@@ -102,11 +102,6 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
       id: [unit?.id || null],
       name: [unit?.name || '', [
         Validators.required, 
-        Validators.minLength(3),
-        Validators.maxLength(100)
-      ]],
-       title: [unit?.title || '', [ 
-        Validators.required,
         Validators.minLength(3),
         Validators.maxLength(100)
       ]],
@@ -418,6 +413,85 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
       return total + (lesson.duration || 0);
     }, 0);
   }
+
+  // Add these new methods to your existing component:
+
+// Get lesson type label
+getLessonTypeLabel(value: string): string {
+  const type = this.lessonTypes.find(t => t.value === value);
+  return type ? type.label : value;
+}
+
+// Get unit progress percentage
+getUnitProgress(unitIndex: number): number | null {
+  const unitForm = this.unitsFormArray.at(unitIndex);
+  const lessonsArray = this.getLessonsFormArray(unitIndex);
+  
+  if (lessonsArray.length === 0) return null;
+  
+  const completedFields = this.getCompletedFieldsCount(unitForm);
+  const totalFields = this.getTotalFieldsCount();
+  
+  return Math.round((completedFields / totalFields) * 100);
+}
+
+// Get completed fields count
+private getCompletedFieldsCount(form: any): number {
+  let count = 0;
+  if (form.get('name')?.value?.trim()) count++;
+  if (form.get('description')?.value?.trim()) count++;
+  
+  const lessonsArray = form.get('lessons') as FormArray;
+  lessonsArray.controls.forEach(lesson => {
+    if (lesson.get('title')?.value?.trim()) count++;
+    if (lesson.get('description')?.value?.trim()) count++;
+    if (lesson.get('duration')?.value > 0) count++;
+  });
+  
+  return count;
+}
+
+// Get total fields count
+private getTotalFieldsCount(): number {
+  return 2; // name + description per unit + 3 per lesson
+}
+
+// Get form status message
+getFormStatusMessage(): string {
+  if (this.isFormValid) {
+    return `جميع الوحدات والدروس مكتملة. المجموع: ${this.unitsFormArray.length} وحدة، ${this.getTotalLessons()} درس`;
+  }
+  
+  const incompleteUnits = this.unitsFormArray.controls.filter(unit => !unit.valid).length;
+  return `يوجد ${incompleteUnits} وحدة غير مكتملة. يرجى مراجعة البيانات المطلوبة.`;
+}
+
+// Enhanced validation for required fields
+hasRequiredFieldErrors(unitIndex: number, lessonIndex?: number): boolean {
+  if (lessonIndex !== undefined) {
+    const lesson = this.getLessonsFormArray(unitIndex).at(lessonIndex);
+    return !lesson.get('title')?.value?.trim() || !lesson.get('description')?.value?.trim();
+  } else {
+    const unit = this.unitsFormArray.at(unitIndex);
+    return !unit.get('name')?.value?.trim() || !unit.get('description')?.value?.trim();
+  }
+}
+
+// Auto-save functionality (optional)
+enableAutoSave(): void {
+  this.unitsForm.valueChanges
+    .pipe(
+      takeUntil(this.destroy$),
+      debounceTime(2000), // Save after 2 seconds of no changes
+      distinctUntilChanged()
+    )
+    .subscribe(() => {
+      if (this.unitsForm.valid) {
+        // Auto-save logic here
+        console.log('Auto-saving...');
+      }
+    });
+}
 
   formatDuration(seconds: number): string {
     const hours = Math.floor(seconds / 3600);

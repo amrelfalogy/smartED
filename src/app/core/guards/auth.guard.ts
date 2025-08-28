@@ -66,6 +66,9 @@ export class AuthGuard implements CanActivate {
     if (requiredRole === 'admin') {
       return userRole === 'admin' || userRole === 'support';
     }
+    else if(requiredRole === 'student') {
+      return userRole === 'student';
+    }
     return userRole === requiredRole;
   }
 }

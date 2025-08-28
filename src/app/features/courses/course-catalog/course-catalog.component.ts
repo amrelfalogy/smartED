@@ -17,15 +17,12 @@ export class CourseCatalogComponent {
   ];
 
   courses: Course[] = [
-    { id: 1, image: 'assets/imgs/Model2.png', instructor: 'أ. محمد علي', subject: 'مقدمة في البرمجة', academicYear: 'الثانية ثانوي', rating: 4, description: 'تعلم أساسيات البرمجة من الصفر', duration: '30 ساعة', studentsCount: 120 },
-    { id: 2, image: 'assets/imgs/Model2.png', instructor: 'أ. سارة أحمد', subject: 'التصميم الجرافيكي', academicYear: 'الثالثة ثانوي', rating: 3, description: 'أساسيات التصميم الجرافيكي', duration: '20 ساعة', studentsCount: 85 },
-    { id: 3, image: 'assets/imgs/Model2.png', instructor: 'أ. عمر حسن', subject: 'التسويق الرقمي', academicYear: 'الثانية ثانوي', rating: 5, description: 'مقدمة في التسويق الرقمي', duration: '25 ساعة', studentsCount: 110 },
-    { id: 4, image: 'assets/imgs/Model2.png', instructor: 'أ. ليلى محمود', subject: 'فيزياء متقدمة', academicYear: 'الثالثة ثانوي', rating: 2, description: 'مفاهيم الفيزياء الحديثة والمتقدمة', duration: '40 ساعة', studentsCount: 60 },
-    { id: 5, image: 'assets/imgs/Model2.png', instructor: 'أ. كريم سعد', subject: 'علم الأحياء', academicYear: 'الثانية ثانوي', rating: 3, description: 'أساسيات علم الأحياء', duration: '22 ساعة', studentsCount: 77 },
-    { id: 6, image: 'assets/imgs/Model2.png', instructor: 'أ. فاطمة محمود', subject: 'لغة عربية', academicYear: 'الأولى اعدادي', rating: 5, description: 'شرح شامل للغة العربية', duration: '18 ساعة', studentsCount: 180 },
-    { id: 7, image: 'assets/imgs/Model2.png', instructor: 'أ. أحمد سمير', subject: 'رياضيات', academicYear: 'الأولى ثانوي', rating: 4, description: 'أساسيات الرياضيات للثانوي', duration: '35 ساعة', studentsCount: 95 },
-    { id: 8, image: 'assets/imgs/Model2.png', instructor: 'أ. نورا علي', subject: 'كيمياء', academicYear: 'الثانية اعدادي', rating: 4, description: 'أساسيات الكيمياء', duration: '28 ساعة', studentsCount: 92 },
-    { id: 9, image: 'assets/imgs/Model2.png', instructor: 'أ. هشام محمد', subject: 'تاريخ', academicYear: 'الثالثة اعدادي', rating: 3, description: 'تاريخ مصر والعالم', duration: '24 ساعة', studentsCount: 105 }
+    { id: 1, image: 'assets/imgs/learn-online.jpg', instructor: 'أ. محمد علي', subject: 'مقدمة في البرمجة', academicYear: 'الثانية ثانوي', rating: 4, description: 'تعلم أساسيات البرمجة من الصفر', duration: '30 ', studentsCount: 120 },
+    { id: 2, image: 'assets/imgs/graphic.jpg', instructor: 'أ. سارة أحمد', subject: 'التصميم الجرافيكي', academicYear: 'الثالثة ثانوي', rating: 3, description: 'أساسيات التصميم الجرافيكي', duration: '20 ', studentsCount: 85 },
+    { id: 3, image: 'assets/imgs/math.jpg', instructor: 'أ. عمر حسن', subject: 'التسويق الرقمي', academicYear: 'الثانية ثانوي', rating: 5, description: 'مقدمة في التسويق الرقمي', duration: '25 ', studentsCount: 110 },
+    { id: 4, image: 'assets/imgs/physics.jpg', instructor: 'أ. ليلى محمود', subject: 'فيزياء متقدمة', academicYear: 'الثالثة ثانوي', rating: 2, description: 'مفاهيم الفيزياء الحديثة والمتقدمة', duration: '40 ', studentsCount: 60 },
+    { id: 5, image: 'assets/imgs/bio.jpg', instructor: 'أ. كريم سعد', subject: 'علم الأحياء', academicYear: 'الثانية ثانوي', rating: 3, description: 'أساسيات علم الأحياء', duration: '22 ', studentsCount: 77 },
+    { id: 6, image: 'assets/imgs/english.jpg', instructor: 'أ. فاطمة محمود', subject: 'لغة عربية', academicYear: 'الأولى اعدادي', rating: 5, description: 'شرح شامل للغة العربية', duration: '18 ', studentsCount: 180 },
   ];
 
   selectedStage: 'اعدادية' | 'ثانوية' | null = null;

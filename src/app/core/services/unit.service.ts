@@ -28,7 +28,6 @@ export class UnitService {
   createUnit(unit: Omit<Unit, 'id'>): Observable<Unit> {
     const payload = {
       name: unit.name,
-      title: unit.title,
       description: unit.description,
       subjectId: unit.subjectId,
       order: unit.order

@@ -98,15 +98,19 @@
   }
 }
 
+.btn-outline-secondary{
+  padding: 0;
+  border: none;
+  background: none;
+  margin: 0;
+}
 form i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: 0px -12px 0px 0px;
+  margin: 0px 0px 0px 0px;
   cursor: pointer;
   padding: 12px;
   font-size: 18px;
-  position: absolute;
-  top: 203px;
-  right: 45px;
+  
 }

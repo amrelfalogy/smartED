@@ -17,7 +17,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #007bff, #0056b3);
+    background: linear-gradient(135deg, #304a6f, #365f99);
     color: white;
     display: flex;
     align-items: center;
@@ -95,7 +95,7 @@
   
   .user-profile-header {
     padding: 25px;
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    background: --gradient-color;
     color: white;
     
     .user-avatar-large {

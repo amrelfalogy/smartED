@@ -1,28 +1,73 @@
 <div class="units-section">
-  <!-- Section Header -->
+  <!-- Enhanced Section Header -->
   <div class="section-header">
     <div class="header-content">
-      <h3>الوحدات والدروس</h3>
-      <p class="section-description">
-        قم بإنشاء الوحدات التعليمية وإضافة الدروس لكل وحدة
-      </p>
+      <div class="header-main">
+        <h3>
+          <i class="pi pi-bookmark"></i>
+          الوحدات والدروس
+        </h3>
+        <p class="section-description">
+          قم بإنشاء الوحدات التعليمية وإضافة الدروس لكل وحدة
+        </p>
+      </div>
+      
+      <!-- Quick Actions -->
+      <div class="header-actions">
+        <button 
+          type="button"
+          class="btn btn-primary btn-add-unit"
+          (click)="addUnit()"
+        >
+          <i class="pi pi-plus"></i>
+          إضافة وحدة
+        </button>
+      </div>
     </div>
     
+    <!-- Enhanced Statistics -->
     <div class="section-stats">
-      <div class="stat-item">
-        <i class="fas fa-layer-group"></i>
-        <span>{{ unitsFormArray.length }}</span>
-        <small>وحدة</small>
-      </div>
-      <div class="stat-item">
-        <i class="fas fa-play-circle"></i>
-        <span>{{ getTotalLessons() }}</span>
-        <small>درس</small>
-      </div>
-      <div class="stat-item">
-        <i class="fas fa-clock"></i>
-        <span>{{ formatDuration(getTotalDuration()) }}</span>
-        <small>المدة الإجمالية</small>
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="pi pi-bookmark-fill"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-number">{{ unitsFormArray.length }}</span>
+            <span class="stat-label">وحدة</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="pi pi-play-circle"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-number">{{ getTotalLessons() }}</span>
+            <span class="stat-label">درس</span>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="pi pi-clock"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-number">{{ formatDuration(getTotalDuration()) }}</span>
+            <span class="stat-label">المدة الإجمالية</span>
+          </div>
+        </div>
+        
+        <!-- Validation Status -->
+        <div class="stat-card" [class.valid]="isFormValid" [class.invalid]="!isFormValid">
+          <div class="stat-icon">
+            <i class="pi pi-check-circle" *ngIf="isFormValid"></i>
+            <i class="pi pi-exclamation-triangle" *ngIf="!isFormValid"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">{{ isFormValid ? 'مكتمل' : 'غير مكتمل' }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -39,78 +84,112 @@
         [formGroupName]="i"
         class="unit-card"
         [class.expanded]="expandedUnit === i"
+        [class.invalid]="!unitForm.valid && unitForm.touched"
       >
         
-        <!-- Unit Header -->
+        <!-- Enhanced Unit Header -->
         <div class="unit-header" (click)="toggleUnitExpansion(i)">
-          <div class="unit-info">
-            <div class="unit-number">{{ i + 1 }}</div>
-            <div class="unit-details">
-              <h4 class="unit-title">
-                {{ unitForm.get('title')?.value || 'وحدة جديدة' }}
-              </h4>
+          <div class="unit-main">
+            <div class="unit-badge">
+              <span class="unit-number">{{ i + 1 }}</span>
+            </div>
+            
+            <div class="unit-info">
+              <div class="unit-title-container">
+                <h4 class="unit-title">
+                  {{ unitForm.get('name')?.value || 'وحدة جديدة' }}
+                </h4>
+                <div class="unit-status">
+                  <span class="status-badge" [class.valid]="unitForm.valid" [class.invalid]="!unitForm.valid && unitForm.touched">
+                    <i class="pi fa-check" *ngIf="unitForm.valid"></i>
+                    <i class="pi fa-exclamation" *ngIf="!unitForm.valid && unitForm.touched"></i>
+                    {{ unitForm.valid ? 'مكتمل' : 'غير مكتمل' }}
+                  </span>
+                </div>
+              </div>
+              
               <p class="unit-description">
                 {{ unitForm.get('description')?.value || 'لا يوجد وصف' }}
               </p>
+              
               <div class="unit-meta">
-                <span class="lessons-count">
-                  <i class="fas fa-video"></i>
-                  {{ getLessonsFormArray(i).length }} دروس
-                </span>
-                <span class="unit-duration">
-                  <i class="fas fa-clock"></i>
-                  {{ formatDuration(getUnitDuration(i)) }}
-                </span>
+                <div class="meta-item">
+                  <i class="pi pi-video"></i>
+                  <span>{{ getLessonsFormArray(i).length }} دروس</span>
+                </div>
+                <div class="meta-item">
+                  <i class="pi pi-clock"></i>
+                  <span>{{ formatDuration(getUnitDuration(i)) }}</span>
+                </div>
+                <div class="meta-item" *ngIf="getUnitProgress(i) !== null">
+                  <i class="pi pi-chart-line"></i>
+                  <span>{{ getUnitProgress(i) }}% مكتمل</span>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="unit-actions" (click)="$event.stopPropagation()">
-            <!-- Reorder Buttons -->
-            <button 
-              type="button"
-              class="btn btn-sm btn-outline-secondary"
-              (click)="moveUnitUp(i)"
-              [disabled]="!canMoveUnitUp(i)"
-              title="تحريك للأعلى"
-            >
-              <i class="fas fa-arrow-up"></i>
-            </button>
-            
-            <button 
-              type="button"
-              class="btn btn-sm btn-outline-secondary"
-              (click)="moveUnitDown(i)"
-              [disabled]="!canMoveUnitDown(i)"
-              title="تحريك للأسفل"
-            >
-              <i class="fas fa-arrow-down"></i>
-            </button>
+            <!-- Enhanced Action Buttons -->
+            <div class="action-group">
+              <button 
+                type="button"
+                class="btn btn-action btn-move"
+                (click)="moveUnitUp(i)"
+                [disabled]="!canMoveUnitUp(i)"
+                title="تحريك للأعلى"
+              >
+                <i class="pi pi-chevron-up"></i>
+              </button>
+              
+              <button 
+                type="button"
+                class="btn btn-action btn-move"
+                (click)="moveUnitDown(i)"
+                [disabled]="!canMoveUnitDown(i)"
+                title="تحريك للأسفل"
+              >
+                <i class="pi pi-chevron-down"></i>
+              </button>
+            </div>
 
-            <!-- Delete Button -->
-            <button 
-              type="button"
-              class="btn btn-sm btn-outline-danger"
-              (click)="removeUnit(i)"
-              [disabled]="unitsFormArray.length <= 1"
-              title="حذف الوحدة"
-            >
-              <i class="fas fa-trash"></i>
-            </button>
+            <div class="action-group">
+              <button 
+                type="button"
+                class="btn btn-action btn-add"
+                (click)="addLesson(i)"
+                title="إضافة درس"
+              >
+                <i class="pi pi-plus"></i>
+              </button>
 
-            <!-- Expand Icon -->
-            <i class="fas fa-chevron-down expand-icon"></i>
+              <button 
+                type="button"
+                class="btn btn-action btn-delete"
+                (click)="removeUnit(i)"
+                [disabled]="unitsFormArray.length <= 1"
+                title="حذف الوحدة"
+              >
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+
+            <!-- Enhanced Expand Icon -->
+            <div class="expand-toggle">
+              <i class="pi pi-chevron-down expand-icon"></i>
+            </div>
           </div>
         </div>
 
-        <!-- Unit Content (Expandable) -->
+        <!-- Enhanced Unit Content -->
         <div class="unit-content" *ngIf="expandedUnit === i">
           
-          <!-- Unit Form Fields -->
-          <div class="row">
-            <div class="col-md-6">
+          <!-- Unit Form Fields with Better Layout -->
+          <div class="unit-form-section">
+            <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">
+                  <i class="pi pi-tag"></i>
                   اسم الوحدة <span class="required">*</span>
                 </label>
                 <input 
@@ -124,29 +203,12 @@
                   {{ getFieldError(unitForm.get('name')) }}
                 </div>
               </div>
-            </div>
-            
-            <div class="col-md-6">
+
               <div class="form-group">
                 <label class="form-label">
-                  عنوان الوحدة <span class="required">*</span>
+                  <i class="pi pi-sort-numeric-up"></i>
+                  ترتيب الوحدة
                 </label>
-                <input 
-                  type="text"
-                  class="form-control"
-                  formControlName="title"
-                  [class.is-invalid]="isUnitFieldInvalid(i, 'title')"
-                  placeholder="أدخل عنوان الوحدة (يظهر في قوائم الدورات)"
-                >
-                <div class="invalid-feedback" *ngIf="isUnitFieldInvalid(i, 'title')">
-                  {{ getFieldError(unitForm.get('title')) }}
-                </div>
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="form-group">
-                <label class="form-label">ترتيب الوحدة</label>
                 <input 
                   type="number"
                   class="form-control"
@@ -156,97 +218,138 @@
                 >
               </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label class="form-label">
-              وصف الوحدة <span class="required">*</span>
-            </label>
-            <textarea 
-              class="form-control"
-              formControlName="description"
-              [class.is-invalid]="isUnitFieldInvalid(i, 'description')"
-              placeholder="أدخل وصف مفصل للوحدة"
-              rows="3"
-            ></textarea>
-            <div class="invalid-feedback" *ngIf="isUnitFieldInvalid(i, 'description')">
-              {{ getFieldError(unitForm.get('description')) }}
+            <div class="form-group">
+              <label class="form-label">
+                <i class="pi pi-align-left"></i>
+                وصف الوحدة <span class="required">*</span>
+              </label>
+              <textarea 
+                class="form-control"
+                formControlName="description"
+                [class.is-invalid]="isUnitFieldInvalid(i, 'description')"
+                placeholder="أدخل وصف مفصل للوحدة"
+                rows="3"
+              ></textarea>
+              <div class="invalid-feedback" *ngIf="isUnitFieldInvalid(i, 'description')">
+                {{ getFieldError(unitForm.get('description')) }}
+              </div>
+              <div class="char-counter">
+                {{ unitForm.get('description')?.value?.length || 0 }}/500 حرف
+              </div>
             </div>
           </div>
 
-          <!-- Lessons Section -->
+          <!-- Enhanced Lessons Section -->
           <div class="lessons-section">
             <div class="lessons-header">
-              <h5>دروس الوحدة</h5>
+              <div class="lessons-title">
+                <h5>
+                  <i class="pi pi-play-circle"></i>
+                  دروس الوحدة
+                </h5>
+                <span class="lessons-count">({{ getLessonsFormArray(i).length }} دروس)</span>
+              </div>
+              
               <button 
                 type="button"
-                class="btn btn-primary btn-sm"
+                class="btn btn-success btn-sm"
                 (click)="addLesson(i)"
               >
-                <i class="fas fa-plus"></i>
+                <i class="pi pi-plus"></i>
                 إضافة درس
               </button>
             </div>
 
-            <!-- Lessons Container -->
+            <!-- Enhanced Lessons Container -->
             <div class="lessons-container" formArrayName="lessons">
               
-              <!-- Lesson Card -->
+              <!-- Enhanced Lesson Card -->
               <div 
                 *ngFor="let lessonForm of getLessonsFormArray(i).controls; let j = index"
                 [formGroupName]="j"
                 class="lesson-card"
+                [class.invalid]="!lessonForm.valid && lessonForm.touched"
               >
+                
+                <!-- Enhanced Lesson Header -->
                 <div class="lesson-header">
-                  <div class="lesson-number">{{ j + 1 }}</div>
-                  
-                  <div class="lesson-info">
-                    <input 
-                      type="text"
-                      class="lesson-title-input form-control"
-                      formControlName="title"
-                      (input)="onLessonTitleChange(i, j)"
-                      [class.is-invalid]="isLessonFieldInvalid(i, j, 'title')"
-                      placeholder="عنوان الدرس"
-                    >
+                  <div class="lesson-main">
+                    <div class="lesson-badge">
+                      <span class="lesson-number">{{ j + 1 }}</span>
+                    </div>
+                    
+                    <div class="lesson-info">
+                      <div class="lesson-title-container">
+                        <input 
+                          type="text"
+                          class="lesson-title-input"
+                          formControlName="title"
+                          (input)="onLessonTitleChange(i, j)"
+                          [class.is-invalid]="isLessonFieldInvalid(i, j, 'title')"
+                          placeholder="عنوان الدرس"
+                        >
+                        <div class="lesson-status">
+                          <span class="status-indicator" [class.valid]="lessonForm.valid" [class.invalid]="!lessonForm.valid && lessonForm.touched">
+                            <i class="pi pi-check" *ngIf="lessonForm.valid"></i>
+                            <i class="pi pi-exclamation" *ngIf="!lessonForm.valid && lessonForm.touched"></i>
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div class="lesson-meta">
+                        <span class="meta-badge" [class]="'lesson-type-' + lessonForm.get('lessonType')?.value">
+                          {{ getLessonTypeLabel(lessonForm.get('lessonType')?.value) }}
+                        </span>
+                        <span class="meta-badge duration">
+                          <i class="pi pi-clock"></i>
+                          {{ formatDuration(lessonForm.get('duration')?.value || 0) }}
+                        </span>
+                        <span class="meta-badge" *ngIf="lessonForm.get('isFree')?.value" class="free-badge">
+                          <i class="pi pi-gift"></i>
+                          مجاني
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="lesson-actions">
-                    <!-- Lesson Reorder Buttons -->
-                    <button 
-                      type="button"
-                      class="btn btn-sm btn-outline-primary"
-                      (click)="moveLessonUp(i, j)"
-                      [disabled]="!canMoveLessonUp(i, j)"
-                      title="تحريك للأعلى"
-                    >
-                      <i class="fas fa-chevron-up"></i>
-                    </button>
-                    
-                    <button 
-                      type="button"
-                      class="btn btn-sm btn-outline-primary"
-                      (click)="moveLessonDown(i, j)"
-                      [disabled]="!canMoveLessonDown(i, j)"
-                      title="تحريك للأسفل"
-                    >
-                      <i class="fas fa-chevron-down"></i>
-                    </button>
+                    <!-- Enhanced Lesson Actions -->
+                    <div class="action-group">
+                      <button 
+                        type="button"
+                        class="btn btn-action btn-move"
+                        (click)="moveLessonUp(i, j)"
+                        [disabled]="!canMoveLessonUp(i, j)"
+                        title="تحريك للأعلى"
+                      >
+                        <i class="pi pi-chevron-up"></i>
+                      </button>
+                      
+                      <button 
+                        type="button"
+                        class="btn btn-action btn-move"
+                        (click)="moveLessonDown(i, j)"
+                        [disabled]="!canMoveLessonDown(i, j)"
+                        title="تحريك للأسفل"
+                      >
+                        <i class="pi pi-chevron-down"></i>
+                      </button>
+                    </div>
 
-                    <!-- Delete Lesson -->
                     <button 
                       type="button"
-                      class="btn btn-sm btn-outline-danger"
+                      class="btn btn-action btn-delete"
                       (click)="removeLesson(i, j)"
                       [disabled]="getLessonsFormArray(i).length <= 1"
                       title="حذف الدرس"
                     >
-                      <i class="fas fa-trash"></i>
+                      <i class="pi pi-trash"></i>
                     </button>
                   </div>
                 </div>
 
-                <!-- Lesson Content -->
+                <!-- Enhanced Lesson Content -->
                 <div class="lesson-content">
                   
                   <!-- Hidden Fields -->
@@ -258,7 +361,10 @@
 
                   <!-- Lesson Description -->
                   <div class="form-group">
-                    <label class="form-label">وصف الدرس</label>
+                    <label class="form-label">
+                      <i class="pi pi-align-left"></i>
+                      وصف الدرس
+                    </label>
                     <textarea 
                       class="form-control"
                       formControlName="description"
@@ -266,105 +372,125 @@
                       placeholder="وصف مختصر للدرس"
                       rows="2"
                     ></textarea>
-                  </div>
-
-                  <!-- Row for Duration and Types -->
-                  <div class="row">
-                    <div class="col-md-3">
-                      <div class="form-group">
-                        <label class="form-label">المدة (دقائق)</label>
-                        <input 
-                          type="number"
-                          class="form-control"
-                          [value]="getDurationInMinutes(lessonForm.get('duration')?.value || 0)"
-                          (input)="updateLessonDuration(i, j, $event)"
-                          min="1"
-                          max="240"
-                          placeholder="30"
-                        >
-                      </div>
-                    </div>
-
-                    <div class="col-md-3">
-                      <div class="form-group">
-                        <label class="form-label">نوع الدرس</label>
-                        <select class="form-select" formControlName="lessonType">
-                          <option *ngFor="let type of lessonTypes" [value]="type.value">
-                            {{ type.label }}
-                          </option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="col-md-3">
-                      <div class="form-group">
-                        <label class="form-label">نوع الجلسة</label>
-                        <select class="form-select" formControlName="sessionType">
-                          <option *ngFor="let type of sessionTypes" [value]="type.value">
-                            {{ type.label }}
-                          </option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="col-md-3">
-                      <div class="form-group">
-                        <label class="form-label">المستوى</label>
-                        <select class="form-select" formControlName="difficulty">
-                          <option *ngFor="let level of difficultyOptions" [value]="level.value">
-                            {{ level.label }}
-                          </option>
-                        </select>
-                      </div>
+                    <div class="char-counter">
+                      {{ lessonForm.get('description')?.value?.length || 0 }}/500 حرف
                     </div>
                   </div>
 
-                  <!-- Lesson Options -->
+                  <!-- Enhanced Form Grid -->
+                  <div class="lesson-form-grid">
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="pi pi-clock"></i>
+                        المدة (دقائق)
+                      </label>
+                      <input 
+                        type="number"
+                        class="form-control"
+                        [value]="getDurationInMinutes(lessonForm.get('duration')?.value || 0)"
+                        (input)="updateLessonDuration(i, j, $event)"
+                        min="1"
+                        max="240"
+                        placeholder="30"
+                      >
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="pi pi-video"></i>
+                        نوع الدرس
+                      </label>
+                      <select class="form-select" formControlName="lessonType">
+                        <option *ngFor="let type of lessonTypes" [value]="type.value">
+                          {{ type.label }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="pi pi-ticket"></i>
+                        نوع الجلسة
+                      </label>
+                      <select class="form-select" formControlName="sessionType">
+                        <option *ngFor="let type of sessionTypes" [value]="type.value">
+                          {{ type.label }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="pi pi-wave-pulse"></i>
+                        المستوى
+                      </label>
+                      <select class="form-select" formControlName="difficulty">
+                        <option *ngFor="let level of difficultyOptions" [value]="level.value">
+                          {{ level.label }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Enhanced Lesson Options -->
                   <div class="lesson-options">
-                    <div class="form-check">
-                      <input 
-                        class="form-check-input" 
-                        type="checkbox" 
-                        formControlName="isFree"
-                        id="isFree_{{ i }}_{{ j }}"
-                      >
-                      <label class="form-check-label" for="isFree_{{ i }}_{{ j }}">
-                        درس مجاني
-                      </label>
-                    </div>
+                    <div class="options-grid">
+                      <div class="custom-checkbox">
+                        <input 
+                          class="form-check-input" 
+                          type="checkbox" 
+                          formControlName="isFree"
+                          id="isFree_{{ i }}_{{ j }}"
+                        >
+                        <label class="form-check-label" for="isFree_{{ i }}_{{ j }}">
+                          <i class="pi pi-gift"></i>
+                          درس مجاني
+                        </label>
+                      </div>
 
-                    <div class="form-check">
-                      <input 
-                        class="form-check-input" 
-                        type="checkbox" 
-                        formControlName="isActive"
-                        id="isActive_{{ i }}_{{ j }}"
-                      >
-                      <label class="form-check-label" for="isActive_{{ i }}_{{ j }}">
-                        درس نشط
-                      </label>
+                      <div class="custom-checkbox">
+                        <input 
+                          class="form-check-input" 
+                          type="checkbox" 
+                          formControlName="isActive"
+                          id="isActive_{{ i }}_{{ j }}"
+                        >
+                        <label class="form-check-label" for="isActive_{{ i }}_{{ j }}">
+                          <i class="pi pi-eye"></i>
+                          درس نشط
+                        </label>
+                      </div>
                     </div>
                   </div>
 
                   <!-- Validation Errors -->
-                  <div class="invalid-feedback" 
-                       *ngIf="isLessonFieldInvalid(i, j, 'title')" 
-                       style="display: block;">
-                    {{ getFieldError(lessonForm.get('title')) }}
+                  <div class="validation-errors" *ngIf="!lessonForm.valid && lessonForm.touched">
+                    <div class="error-item" *ngIf="isLessonFieldInvalid(i, j, 'title')">
+                      <i class="pi pi-exclamation-circle"></i>
+                      {{ getFieldError(lessonForm.get('title')) }}
+                    </div>
+                    <div class="error-item" *ngIf="isLessonFieldInvalid(i, j, 'description')">
+                      <i class="pi pi-exclamation-circle"></i>
+                      {{ getFieldError(lessonForm.get('description')) }}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Empty Lessons State -->
+              <!-- Enhanced Empty Lessons State -->
               <div class="empty-lessons" *ngIf="getLessonsFormArray(i).length === 0">
                 <div class="empty-content">
-                  <i class="fas fa-video"></i>
-                  <p>لا توجد دروس في هذه الوحدة</p>
+                  <div class="empty-icon">
+                    <i class="pi pi-video"></i>
+                  </div>
+                  <h6>لا توجد دروس في هذه الوحدة</h6>
+                  <p>ابدأ بإضافة أول درس لهذه الوحدة</p>
                   <button 
                     type="button"
                     class="btn btn-primary"
                     (click)="addLesson(i)"
                   >
+                    <i class="pi pi-plus"></i>
                     إضافة أول درس
                   </button>
                 </div>
@@ -375,41 +501,37 @@
       </div>
     </div>
 
-    <!-- Empty Units State -->
+    <!-- Enhanced Empty Units State -->
     <div class="empty-units" *ngIf="unitsFormArray.length === 0">
       <div class="empty-content">
-        <i class="fas fa-layer-group"></i>
-        <h4>لا توجد وحدات</h4>
-        <p>ابدأ بإنشاء أول وحدة تعليمية</p>
+        <div class="empty-illustration">
+          <i class=" pi pi-bookmark"></i>
+        </div>
+        <h4>ابدأ بإنشاء الوحدات التعليمية</h4>
+        <p>قم بإنشاء الوحدات التعليمية وإضافة الدروس لكل وحدة لبناء محتوى تعليمي متكامل</p>
         <button 
           type="button"
           class="btn btn-primary btn-lg"
           (click)="addUnit()"
         >
-          <i class="fas fa-plus"></i>
-          إنشاء وحدة جديدة
+          <i class="pi pi-plus"></i>
+          إنشاء أول وحدة
         </button>
       </div>
     </div>
-
-    <!-- Add Unit Section -->
-    <div class="add-unit-section" *ngIf="unitsFormArray.length > 0">
-      <button 
-        type="button"
-        class="btn btn-outline-primary"
-        (click)="addUnit()"
-      >
-        <i class="fas fa-plus"></i>
-        إضافة وحدة جديدة
-      </button>
-    </div>
   </form>
 
-  <!-- Form Status -->
-  <div class="form-status">
-    <div class="status-indicator" [class.valid]="isFormValid">
-      <i class="fas" [class.fa-check-circle]="isFormValid" [class.fa-exclamation-circle]="!isFormValid"></i>
-      <span>{{ isFormValid ? 'تم إنجاز الوحدات والدروس' : 'يرجى إكمال جميع الوحدات والدروس' }}</span>
+  <!-- Enhanced Form Status -->
+  <div class="form-status" *ngIf="unitsFormArray.length > 0">
+    <div class="status-card" [class.valid]="isFormValid" [class.invalid]="!isFormValid">
+      <div class="status-icon">
+        <i class="pi pi-check-circle" *ngIf="isFormValid"></i>
+        <i class="pi pi-exclamation-triangle" *ngIf="!isFormValid"></i>
+      </div>
+      <div class="status-content">
+        <h6>{{ isFormValid ? 'الوحدات والدروس مكتملة' : 'يتطلب إكمال البيانات' }}</h6>
+        <p>{{ getFormStatusMessage() }}</p>
+      </div>
     </div>
   </div>
 </div>

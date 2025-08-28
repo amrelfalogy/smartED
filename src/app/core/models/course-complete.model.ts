@@ -2,7 +2,7 @@ export interface Subject {
   id?: string;
   name: string;
   description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
   duration: string; // "3 months", "1 year", etc.
   imageUrl?: string;
   order: number;
@@ -10,19 +10,22 @@ export interface Subject {
   createdAt?: string;
   updatedAt?: string;
 
-  // these computed/optional properties for UI
-  status?: 'active' | 'inactive' | 'draft';
-  studentsCount?: number;
+ // Add missing properties for student dashboard
   instructorName?: string;
   instructorAvatar?: string;
   thumbnailUrl?: string;
   totalDuration?: number;
+  studentsCount?: number;
+  rating?: number;
+  price?: number;
+  
+  // these computed/optional properties for UI
+  status?: 'active' | 'inactive' | 'draft';
 }
 
 export interface Unit {
   id?: string;
   name: string;
-  title: string; 
   description: string;
   subjectId: string;
   order: number;
@@ -65,6 +68,48 @@ export interface CourseComplete {
   totalLessons: number;
   totalDuration: number; // in seconds
   status: 'draft' | 'published' | 'archived';
+}
+
+// Add interfaces for student dashboard
+export interface CourseProgress {
+  courseId: string;
+  courseName: string;
+  courseImage: string;
+  instructor: string;
+  totalLessons: number;
+  completedLessons: number;
+  progressPercentage: number;
+  lastAccessedDate: Date;
+  status: 'active' | 'completed' | 'paused';
+  enrollmentDate: Date;
+  nextLesson?: {
+    id: string;
+    title: string;
+    unit: string;
+  };
+}
+
+export interface PaymentHistory {
+  id: string;
+  course: string;
+  amount: number;
+  currency: string;
+  method: string;
+  status: 'completed' | 'pending' | 'failed';
+  date: Date;
+  reference?: string;
+}
+
+export interface PaymentStats {
+  lastPayments: number;
+  pendingPayments: number;
+}
+
+export interface ProgressStats {
+  totalCourses: number;
+  completionRate: number;
+  averageProgress: number;
+  totalHoursStudied: number;
 }
 
 // Form state interfaces remain the same

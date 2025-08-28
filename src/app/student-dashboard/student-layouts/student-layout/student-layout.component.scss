@@ -1,0 +1,64 @@
+.pc-sidebar{
+    direction: ltr;
+    left: 0;
+}
+// Layout transitions
+.pc-container, .pc-header, .pc-footer {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Desktop collapsed state
+.pc-container.sidebar-collapsed {
+  margin-left: 0; // Collapsed sidebar width
+}
+
+.pc-header.sidebar-collapsed {
+  left: 0; // Collapsed sidebar width
+}
+
+.pc-footer.sidebar-collapsed {
+  margin-left: 0; // Collapsed sidebar width
+}
+
+// Mobile sidebar open state
+.pc-container.mobile-sidebar-open {
+  overflow: hidden;
+}
+
+// Mobile overlay
+.pc-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(4px);
+  
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+// Make sure it's hidden when not active
+.pc-menu-overlay:not(.active) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+// Responsive adjustments
+@media (max-width: 1023px) {
+  .pc-header {
+    left: 0 !important;
+    top: 0;
+  }
+  
+  .pc-container, .pc-footer {
+    margin-left: 0 !important;
+  }
+}
