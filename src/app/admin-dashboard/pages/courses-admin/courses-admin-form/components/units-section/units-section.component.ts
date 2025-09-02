@@ -520,4 +520,9 @@ enableAutoSave(): void {
     const lessonsArray = this.getLessonsFormArray(unitIndex);
     return lessonIndex < lessonsArray.length - 1;
   }
+
+  onLessonUpdated(unitIndex: number, lessonIndex: number, updatedLesson: Lesson): void {
+  const lessonsArray = this.getLessonsFormArray(unitIndex);
+  lessonsArray.at(lessonIndex).patchValue(updatedLesson);
+}
 }

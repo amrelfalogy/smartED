@@ -25,9 +25,24 @@ export class SubjectService {
       });
     }
     
-    return this.http.get<Subject[]>(`${this.baseUrl}`, { params: httpParams })
+    // ✅ Map the backend response structure
+    return this.http.get<{ subjects: Subject[], pagination: any }>(`${this.baseUrl}`, { params: httpParams })
+      .pipe(
+        map(response => response.subjects), // Extract subjects array
+        catchError(this.handleError)
+      );
+  }
+
+  // ✅ Add status management methods
+  publishSubject(id: string): Observable<Subject> {
+    return this.http.patch<Subject>(`${this.baseUrl}/${id}/publish`, {})
       .pipe(catchError(this.handleError));
   }
+
+  updateSubjectStatus(id: string, status: 'draft' | 'published'): Observable<Subject> {
+  return this.http.patch<Subject>(`${this.baseUrl}/${id}/status`, { status })
+    .pipe(catchError(this.handleError));
+}
 
   // Get single subject
   getSubject(id: string): Observable<Subject> {
@@ -51,10 +66,10 @@ export class SubjectService {
   }
 
   // Delete subject
-  deleteSubject(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`)
-      .pipe(catchError(this.handleError));
-  }
+   deleteSubject(id: string): Observable<void> {
+      return this.http.delete<void>(`${this.baseUrl}/${id}`)
+        .pipe(catchError(this.handleError));
+    }
 
   private handleError = (error: any): Observable<never> => {
     console.error('Subject Service Error:', error);

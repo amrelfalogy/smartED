@@ -1,3 +1,4 @@
+<!-- layout.component.html - Final Updated Version -->
 <nav class="navbar navbar-expand-lg">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center" [routerLink]="['/home']">
@@ -24,8 +25,9 @@
       
       <!-- Authentication Section -->
       <div class="d-flex align-items-center">
+        
         <!-- Not Logged In -->
-        <div class="auth-buttons" *ngIf="!isLoggedIn">
+        <div class="auth-buttons" *ngIf="!isLoggedIn && !isLoading">
           <button class="btn btn-outline-primary ms-2" (click)="login()">
             تسجيل الدخول
           </button>
@@ -34,8 +36,16 @@
           </button>
         </div>
 
-        <!-- Logged In - User Menu -->
-        <div class="user-menu-container" *ngIf="isLoggedIn && currentUser">
+        <!-- Loading State - Show while authentication is being verified -->
+        <div class="user-loading" *ngIf="shouldShowLoading()">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span class="ms-2">جاري التحميل...</span>
+        </div>
+
+        <!-- Logged In - User Menu (Only show when user data is loaded) -->
+        <div class="user-menu-container" *ngIf="shouldShowUserInfo()">
           <div class="user-menu" (click)="toggleUserDropdown()">
             <div class="user-avatar">
               {{ getUserInitials() }}
@@ -53,11 +63,11 @@
                 </div>
                 <div class="user-details">
                   <div class="user-name">{{ getUserDisplayName() }}</div>
-                  <div class="user-email">{{ currentUser.email || 'لا يوجد بريد إلكتروني' }}</div>
+                  <div class="user-email">{{ currentUser?.email || 'لا يوجد بريد إلكتروني' }}</div>
                   <!-- ✅ Add role badge for better UX -->
-                  <div class="user-role">
-                    <span class="role-badge" [class]="'role-' + currentUser.role">
-                      {{ getRoleLabel(currentUser.role) }}
+                  <div class="user-role" *ngIf="currentUser?.role">
+                    <span class="role-badge" [class]="'role-' + (currentUser?.role || '')">
+                      {{ getRoleLabel(currentUser?.role || '') }}
                     </span>
                   </div>
                 </div>
@@ -81,14 +91,14 @@
               </li>
 
               <!-- ✅ Additional student-specific menu items -->
-              <li class="dropdown-item" *ngIf="currentUser.role === 'student'">
+              <li class="dropdown-item" *ngIf="currentUser?.role === 'student'">
                 <a routerLink="/student-dashboard/my-courses" (click)="closeDropdown()">
                   <i class="pi pi-book me-3"></i>
                   دوراتي
                 </a>
               </li>
 
-              <li class="dropdown-item" *ngIf="currentUser.role === 'student'">
+              <li class="dropdown-item" *ngIf="currentUser?.role === 'student'">
                 <a routerLink="/student-dashboard/my-payments" (click)="closeDropdown()">
                   <i class="pi pi-credit-card me-3"></i>
                   مدفوعاتي
@@ -122,13 +132,6 @@
           </div>
         </div>
 
-        <!-- Loading state when logged in but no user data yet -->
-        <div class="user-loading" *ngIf="isLoggedIn && !currentUser">
-          <div class="spinner-border spinner-border-sm" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <span class="ms-2">جاري التحميل...</span>
-        </div>
       </div>
     </div>
   </div>

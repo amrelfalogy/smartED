@@ -1,20 +1,30 @@
+// auth.interceptor.ts - Updated Version
 import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
+import { 
+  HttpInterceptor, 
+  HttpRequest, 
+  HttpHandler, 
+  HttpEvent, 
+  HttpErrorResponse 
+} from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
+  private isRefreshing = false;
+
   constructor(private router: Router) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Skip auth header for login/register requests
+    
+    // Skip auth for certain URLs
     if (this.shouldSkipAuth(request.url)) {
       return next.handle(request);
     }
 
-    // Add auth header if token exists
+    // Add token to request
     const token = this.getToken();
     if (token) {
       request = this.addTokenHeader(request, token);
@@ -22,13 +32,90 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
+        
         // Handle 401 Unauthorized errors
         if (error.status === 401 && !this.shouldSkipAuth(request.url)) {
-          this.handleUnauthorized();
+          return this.handle401Error(request, next);
         }
+        
+        // Handle 403 Forbidden errors
+        if (error.status === 403) {
+          console.warn('Access forbidden:', error);
+          // Don't logout for 403, just show error
+        }
+        
         return throwError(() => error);
       })
     );
+  }
+
+  private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    
+    // If we're already trying to refresh, don't try again
+    if (this.isRefreshing) {
+      this.handleUnauthorized();
+      return throwError(() => new Error('Authentication failed'));
+    }
+
+    // If this is a refresh token request, logout immediately
+    if (request.url.includes('/auth/refresh')) {
+      this.handleUnauthorized();
+      return throwError(() => new Error('Refresh token expired'));
+    }
+
+    // Try to refresh token
+    this.isRefreshing = true;
+    
+    return this.attemptTokenRefresh().pipe(
+      switchMap((newToken: string) => {
+        this.isRefreshing = false;
+        
+        // Retry original request with new token
+        const newRequest = this.addTokenHeader(request, newToken);
+        return next.handle(newRequest);
+      }),
+      catchError((refreshError) => {
+        this.isRefreshing = false;
+        this.handleUnauthorized();
+        return throwError(() => refreshError);
+      })
+    );
+  }
+
+  private attemptTokenRefresh(): Observable<string> {
+    return new Observable(observer => {
+      // Make refresh token request
+      fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getToken()}`
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Token refresh failed');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.token) {
+          // Update stored token
+          localStorage.setItem('authToken', data.token);
+          if (data.user) {
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+          }
+          observer.next(data.token);
+          observer.complete();
+        } else {
+          observer.error(new Error('No token in refresh response'));
+        }
+      })
+      .catch(error => {
+        console.error('Token refresh failed:', error);
+        observer.error(error);
+      });
+    });
   }
 
   private addTokenHeader(request: HttpRequest<any>, token: string): HttpRequest<any> {
@@ -40,7 +127,13 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private shouldSkipAuth(url: string): boolean {
-    const skipUrls = ['/auth/login', '/auth/register', '/auth/refresh'];
+    const skipUrls = [
+      '/auth/login',
+      '/auth/register', 
+      '/auth/refresh',
+      '/auth/forgot-password',
+      '/auth/reset-password'
+    ];
     return skipUrls.some(skipUrl => url.includes(skipUrl));
   }
 
@@ -49,13 +142,20 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private handleUnauthorized(): void {
-    // Clear token
+    console.log('Handling unauthorized access - clearing auth data');
+    
+    // Clear all auth data
     localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
     
     // Notify other parts of the app about logout
     window.dispatchEvent(new CustomEvent('auth-logout'));
     
-    // Redirect to login
-    this.router.navigate(['/auth/login']);
+    // Only redirect if not already on auth pages
+    if (!this.router.url.includes('/auth/')) {
+      this.router.navigate(['/auth/login'], { 
+        queryParams: { returnUrl: this.router.url }
+      });
+    }
   }
 }

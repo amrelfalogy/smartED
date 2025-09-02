@@ -1,7 +1,9 @@
+// layout.component.ts - Final Updated Version
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService, User } from 'src/app/core/services/auth.service';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, combineLatest } from 'rxjs';
+import { takeUntil, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-layout',
@@ -11,10 +13,24 @@ import { Subscription } from 'rxjs';
 export class LayoutComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   isLoggingOut = false;
+  isLoading = false; // Add loading state
   currentUser: User | null = null;
   showUserDropdown = false;
-  private authSubscription!: Subscription;
-  private userSubscription!: Subscription;
+  
+  private destroy$ = new Subject<void>();
+
+  // Combined state for better management
+  authState$ = combineLatest([
+    this.authService.currentUser$,
+    this.authService.isAuthenticated$,
+    this.authService.isLoading$
+  ]).pipe(
+    map(([user, isAuth, loading]) => ({
+      user,
+      isAuthenticated: isAuth,
+      isLoading: loading
+    }))
+  );
 
   constructor(
     private authService: AuthService,
@@ -24,61 +40,66 @@ export class LayoutComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     console.log('LayoutComponent: Initializing...');
     
-    // Subscribe to authentication status
-    this.authSubscription = this.authService.isAuthenticated$.subscribe(
-      isAuth => {
-        console.log('LayoutComponent: Auth status changed:', isAuth);
-        this.isLoggedIn = isAuth;
-        if (!isAuth) {
-          this.currentUser = null;
+    // Subscribe to combined auth state
+    this.authState$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        console.log('LayoutComponent: State changed:', state);
+        
+        this.currentUser = state.user;
+        this.isLoggedIn = state.isAuthenticated;
+        this.isLoading = state.isLoading;
+        
+        // Close dropdown if user logs out
+        if (!state.isAuthenticated) {
           this.showUserDropdown = false;
         }
-      }
-    );
-
-    // Subscribe to current user
-    this.userSubscription = this.authService.currentUser$.subscribe(
-      user => {
-        console.log('LayoutComponent: User data changed:', user);
-        this.currentUser = user;
-      }
-    );
-
-    // Check initial auth state
-    this.isLoggedIn = this.authService.isLoggedIn();
-    this.currentUser = this.authService.getCurrentUser();
-    
-    console.log('LayoutComponent: Initial state:', {
-      isLoggedIn: this.isLoggedIn,
-      currentUser: this.currentUser
-    });
+      });
   }
 
   ngOnDestroy(): void {
-    if (this.authSubscription) {
-      this.authSubscription.unsubscribe();
-    }
-    if (this.userSubscription) {
-      this.userSubscription.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   getUserDisplayName(): string {
+    // Don't show fallback while loading
+    if (this.isLoading) {
+      return ''; // Return empty string while loading
+    }
+    
     if (this.currentUser && this.currentUser.firstName && this.currentUser.lastName) {
       return `${this.currentUser.firstName} ${this.currentUser.lastName}`;
     }
-    return 'المستخدم';
+    
+    // Only show fallback if not loading and authenticated but no user data
+    return this.isLoggedIn ? 'المستخدم' : '';
   }
 
   getUserInitials(): string {
+    // Don't show fallback while loading
+    if (this.isLoading) {
+      return '';
+    }
+    
     if (this.currentUser && this.currentUser.firstName && this.currentUser.lastName) {
       return `${this.currentUser.firstName.charAt(0)}${this.currentUser.lastName.charAt(0)}`;
     }
-    return 'م';
+    return this.isLoggedIn ? 'م' : '';
+  }
+
+  // Check if we should show user info (not loading and has user data)
+  shouldShowUserInfo(): boolean {
+    return this.isLoggedIn && !this.isLoading && this.currentUser !== null;
+  }
+
+  // Check if we should show loading state
+  shouldShowLoading(): boolean {
+    return this.isLoggedIn && this.isLoading;
   }
 
   toggleUserDropdown(): void {
-    if (!this.isLoggingOut) {
+    if (!this.isLoggingOut && this.shouldShowUserInfo()) {
       this.showUserDropdown = !this.showUserDropdown;
     }
   }

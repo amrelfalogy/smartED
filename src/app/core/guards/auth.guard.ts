@@ -3,6 +3,7 @@ import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from
 import { Observable, of } from 'rxjs';
 import { map, catchError, take, timeout } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
+import { Subject, Unit } from '../models/course-complete.model';
 
 @Injectable({
   providedIn: 'root'
@@ -72,3 +73,4 @@ export class AuthGuard implements CanActivate {
     return userRole === requiredRole;
   }
 }
+

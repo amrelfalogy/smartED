@@ -2,13 +2,19 @@ export interface Subject {
   id?: string;
   name: string;
   description: string;
-  difficulty?: 'beginner' | 'intermediate' | 'advanced';
-  duration: string; // "3 months", "1 year", etc.
-  imageUrl?: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  duration: string;
+  imageUrl: string;
+  image?: string | null;        // ✅ Add backend field
+  thumbnail?: string | null;    // ✅ Add backend field
+  status?: 'draft' | 'published'; // ✅ Add status tracking
+  isActive?: boolean;           // ✅ Add active status
+  academicYearId?: string;  // ✅ Add this
+  studentYearId?: string;   // ✅ Add this
+
   order: number;
-  isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: string;           // ✅ Add timestamps
+  updatedAt?: string; 
 
  // Add missing properties for student dashboard
   instructorName?: string;
@@ -19,8 +25,6 @@ export interface Subject {
   rating?: number;
   price?: number;
   
-  // these computed/optional properties for UI
-  status?: 'active' | 'inactive' | 'draft';
 }
 
 export interface Unit {
@@ -51,6 +55,8 @@ export interface Lesson {
   order: number;
   isActive?: boolean;
   content?: LessonContent;
+  hasAccess?: boolean; // ✅ NEW: Access status
+  requiresPayment?: boolean; // ✅ NEW: Payment requirement
   createdAt?: string;
   updatedAt?: string;
 }
@@ -60,6 +66,62 @@ export interface LessonContent {
   documentUrl?: string;
   htmlContent?: string;
   attachments?: string[];
+}
+
+// ✅ NEW: Payment Plan Interface
+export interface PaymentPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  currency: string;
+  duration: number;
+  features: string[];
+  isPopular: boolean;
+  isActive: boolean;
+  order: number;
+  discountPercentage: string;
+  type?: string; // monthly, semester, annual
+  lessonType?: string; // center_recorded, studio_produced
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ✅ NEW: Payment Plans Response
+export interface PaymentPlansResponse {
+  plans: PaymentPlan[];
+}
+
+// ✅ NEW: Lesson Access Response
+export interface LessonAccess {
+  hasAccess: boolean;
+  requiresPayment: boolean;
+  message?: string;
+  planRequired?: string;
+}
+
+// ✅ NEW: Create Payment Plan Request
+export interface CreatePaymentPlanRequest {
+  name: string;
+  description: string;
+  type: string;
+  lessonType: string;
+  price: number;
+  currency: string;
+  duration: number;
+  features: string[];
+}
+
+// ✅ NEW: Lesson Type Card
+export interface LessonTypeCard {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  lessonType: 'center_recorded' | 'studio_produced' | 'zoom';
+  isAvailable: boolean;
+  isSelected: boolean;
+  color: string;
 }
 
 export interface CourseComplete {

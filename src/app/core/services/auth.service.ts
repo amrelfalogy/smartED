@@ -1,7 +1,8 @@
+// auth.service.ts - Updated Version with Nested User Data Fix
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
+import { tap, catchError, map, finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 export interface LoginRequest {
@@ -55,12 +56,16 @@ export interface UpdateProfileRequest {
 export class AuthService {
   private baseUrl = '/api';
   private tokenKey = 'authToken';
+  private userKey = 'currentUser';
   
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+  
+  private isLoadingSubject = new BehaviorSubject<boolean>(false);
+  public isLoading$ = this.isLoadingSubject.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -72,28 +77,33 @@ export class AuthService {
 
   // ===== AUTHENTICATION =====
   login(credentials: LoginRequest): Observable<AuthResponse> {
+    this.isLoadingSubject.next(true);
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, credentials)
       .pipe(
         tap(response => this.handleAuthSuccess(response)),
         catchError(error => {
           console.error('Login error:', error);
           return throwError(() => error);
-        })
+        }),
+        finalize(() => this.isLoadingSubject.next(false))
       );
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
+    this.isLoadingSubject.next(true);
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/register`, userData)
       .pipe(
         tap(response => this.handleAuthSuccess(response)),
         catchError(error => {
           console.error('Register error:', error);
           return throwError(() => error);
-        })
+        }),
+        finalize(() => this.isLoadingSubject.next(false))
       );
   }
 
   logout(): Observable<any> {
+    this.isLoadingSubject.next(true);
     return this.http.post(`${this.baseUrl}/auth/logout`, {})
       .pipe(
         tap(() => this.handleLogout()),
@@ -101,7 +111,8 @@ export class AuthService {
           // Even if logout API fails, clear local state
           this.handleLogout();
           return throwError(() => error);
-        })
+        }),
+        finalize(() => this.isLoadingSubject.next(false))
       );
   }
 
@@ -119,23 +130,33 @@ export class AuthService {
 
   // ===== PROFILE MANAGEMENT =====
   getProfile(): Observable<User> {
-    return this.http.get<User>(`${this.baseUrl}/auth/profile`)
+    return this.http.get<any>(`${this.baseUrl}/auth/profile`)
       .pipe(
-        tap(user => {
-          this.currentUserSubject.next(user);
-          this.isAuthenticatedSubject.next(true);
+        tap(response => {
+          console.log('Profile response:', response);
+          // ✅ FIX: Normalize user data structure
+          const normalizedUser = this.normalizeUserData(response);
+          this.setCurrentUser(normalizedUser);
         }),
+        map(response => this.normalizeUserData(response)),
         catchError(error => {
           console.error('Profile fetch error:', error);
+          this.handleLogout();
           return throwError(() => error);
         })
       );
   }
 
   updateProfile(profileData: UpdateProfileRequest): Observable<User> {
-    return this.http.put<User>(`${this.baseUrl}/auth/profile`, profileData)
+    return this.http.put<any>(`${this.baseUrl}/auth/profile`, profileData)
       .pipe(
-        tap(user => this.currentUserSubject.next(user)),
+        tap(response => {
+          console.log('Profile update response:', response);
+          // ✅ FIX: Normalize user data structure
+          const normalizedUser = this.normalizeUserData(response);
+          this.setCurrentUser(normalizedUser);
+        }),
+        map(response => this.normalizeUserData(response)),
         catchError(error => {
           console.error('Profile update error:', error);
           return throwError(() => error);
@@ -166,6 +187,65 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
   }
 
+  // ===== USER DATA MANAGEMENT =====
+  // ✅ NEW: Normalize user data structure
+  private normalizeUserData(userData: any): User {
+    // Handle nested user structure: {user: {...}} or direct structure: {...}
+    const user = userData?.user || userData;
+    
+    if (!user) {
+      throw new Error('Invalid user data structure');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      role: user.role,
+      bio: user.bio || '',
+      address: user.address || ''
+    };
+  }
+
+  // ✅ UPDATED: Set current user with normalization
+  private setCurrentUser(userData: any): void {
+    const normalizedUser = this.normalizeUserData(userData);
+    
+    console.log('Setting normalized current user:', normalizedUser);
+    this.currentUserSubject.next(normalizedUser);
+    this.isAuthenticatedSubject.next(true);
+    
+    // Store normalized user data
+    this.setUser(normalizedUser);
+  }
+
+  private setUser(user: User): void {
+    localStorage.setItem(this.userKey, JSON.stringify(user));
+  }
+
+  // ✅ UPDATED: Get stored user with normalization
+  private getStoredUser(): User | null {
+    try {
+      const userStr = localStorage.getItem(this.userKey);
+      if (userStr) {
+        const userData = JSON.parse(userStr);
+        // ✅ FIX: Normalize stored user data
+        return this.normalizeUserData(userData);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error parsing stored user:', error);
+      localStorage.removeItem(this.userKey);
+      return null;
+    }
+  }
+
+  private removeUser(): void {
+    localStorage.removeItem(this.userKey);
+  }
+
   // ===== UTILITY METHODS =====
   isLoggedIn(): boolean {
     return !!this.getToken();
@@ -180,51 +260,141 @@ export class AuthService {
     return user ? user.role : null;
   }
 
+  // Check if authentication is in progress
+  isAuthInitialized(): boolean {
+    return !this.isLoadingSubject.value;
+  }
+
   // ===== PRIVATE METHODS =====
+  // ✅ UPDATED: Handle auth success with normalization
   private handleAuthSuccess(response: AuthResponse): void {
+    console.log('Auth success response:', response);
+    
     this.setToken(response.token);
-    this.currentUserSubject.next(response.user);
+    
+    // ✅ FIX: Normalize user data before setting
+    const normalizedUser = this.normalizeUserData(response.user || response);
+    this.setUser(normalizedUser);
+    this.currentUserSubject.next(normalizedUser);
     this.isAuthenticatedSubject.next(true);
+    
+    console.log('Auth success - normalized user set:', normalizedUser);
   }
 
   private handleLogout(): void {
+    console.log('Handling logout - clearing auth state');
     this.removeToken();
+    this.removeUser();
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
   }
 
-  // Update auth.service.ts
+  // ✅ UPDATED: Initialize auth with proper error handling
   private initializeAuth(): void {
+    this.isLoadingSubject.next(true);
+    
     const token = this.getToken();
-    console.log('Initializing auth, token exists:', !!token);
+    const storedUser = this.getStoredUser();
+    
+    console.log('Initializing auth - Token exists:', !!token, 'Stored user:', !!storedUser);
     
     if (token) {
-      // Don't set authenticated state immediately - wait for profile verification
+      if (storedUser) {
+        // ✅ Both token and user exist - set state immediately
+        console.log('Setting stored user and auth state immediately:', storedUser);
+        this.currentUserSubject.next(storedUser);
+        this.isAuthenticatedSubject.next(true);
+      }
+      
+      // Verify/update user data from server
       this.getProfile().subscribe({
         next: (user) => {
-          console.log('Profile loaded successfully:', user);
-          this.currentUserSubject.next(user);
-          this.isAuthenticatedSubject.next(true);
+          console.log('Profile verified/updated from server:', user);
         },
         error: (error) => {
-          console.log('Profile fetch failed, token invalid:', error);
+          console.log('Profile verification failed, clearing auth:', error);
           this.handleLogout();
-          // Only redirect if not already on auth pages
           if (!this.router.url.includes('/auth/')) {
             this.router.navigate(['/auth/login']);
           }
+        },
+        complete: () => {
+          this.isLoadingSubject.next(false);
         }
       });
     } else {
       console.log('No token found, user not authenticated');
       this.handleLogout();
+      this.isLoadingSubject.next(false);
     }
   }
 
   // Listen for logout events from interceptor
   private setupInterceptorListener(): void {
     window.addEventListener('auth-logout', () => {
+      console.log('Received logout event from interceptor');
       this.handleLogout();
     });
+  }
+
+  // ===== ADDITIONAL UTILITY METHODS =====
+  
+  // ✅ NEW: Check if user has specific role
+  hasRole(role: string): boolean {
+    const userRole = this.getUserRole();
+    return userRole === role;
+  }
+
+  // ✅ NEW: Check if user has any of the specified roles
+  hasAnyRole(roles: string[]): boolean {
+    const userRole = this.getUserRole();
+    return userRole ? roles.includes(userRole) : false;
+  }
+
+  // ✅ NEW: Get user display name
+  getUserDisplayName(): string {
+    const user = this.getCurrentUser();
+    if (user && user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user?.email || 'مستخدم';
+  }
+
+  // ✅ NEW: Get user initials
+  getUserInitials(): string {
+    const user = this.getCurrentUser();
+    if (user && user.firstName && user.lastName) {
+      return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+    }
+    return user?.email?.charAt(0).toUpperCase() || 'م';
+  }
+
+  // ✅ NEW: Check if current user can access admin features
+  canAccessAdmin(): boolean {
+    return this.hasAnyRole(['admin', 'support']);
+  }
+
+  // ✅ NEW: Check if current user is a student
+  isStudent(): boolean {
+    return this.hasRole('student');
+  }
+
+  // ✅ NEW: Check if current user is an admin
+  isAdmin(): boolean {
+    return this.hasRole('admin');
+  }
+
+  // ✅ NEW: Get role-specific dashboard URL
+  getDashboardUrl(): string {
+    const role = this.getUserRole();
+    switch (role) {
+      case 'admin':
+      case 'support':
+        return '/admin/dashboard';
+      case 'student':
+        return '/student-dashboard';
+      default:
+        return '/';
+    }
   }
 }

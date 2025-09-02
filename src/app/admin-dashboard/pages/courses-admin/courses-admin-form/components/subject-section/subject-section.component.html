@@ -113,70 +113,139 @@
       <small class="form-text">المدة التقديرية لإكمال جميع دروس المادة</small>
     </div>
 
-  <!-- Subject Image -->
-  <div class="form-group">
-    <label class="form-label">صورة المادة <span class="required">*</span> </label>
+    <!-- Subject Image -->
+    <div class="form-group">
+      <label class="form-label">
+        صورة المادة <span class="required">*</span>
+      </label>
 
-    <div class="image-section">
-      <!-- Image Preview -->
-      <div class="image-preview" *ngIf="imagePreview">
-        <img [src]="imagePreview" alt="معاينة الصورة" class="preview-image" />
-        <div class="image-overlay">
+      <!-- ✅ Input Mode Toggle -->
+      <div class="image-input-toggle" *ngIf="!imagePreview">
+        <div class="toggle-buttons">
           <button
             type="button"
-            class="btn btn-danger btn-sm"
-            (click)="removeImage()"
-            title="حذف الصورة"
-            [disabled]="isUploading"
+            class="btn btn-sm"
+            [class.btn-primary]="imageInputMode === 'upload'"
+            [class.btn-outline-secondary]="imageInputMode !== 'upload'"
+            (click)="imageInputMode = 'upload'"
           >
-            <i class="pi pi-trash"></i>
+            <i class="pi pi-upload"></i>
+            رفع صورة
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class.btn-primary]="imageInputMode === 'url'"
+            [class.btn-outline-secondary]="imageInputMode !== 'url'"
+            (click)="imageInputMode = 'url'"
+          >
+            <i class="pi pi-link"></i>
+            رابط صورة
           </button>
         </div>
       </div>
 
-      <!-- Upload Area (shown only if no image and not uploading) -->
-      <div class="upload-area" *ngIf="!imagePreview && !isUploading">
-        <label class="upload-content" for="subject-image-upload">
-          <div class="upload-subtitle">
-            <i class="pi pi-cloud-upload"></i>
-            <small>JPG, PNG, GIF - حد أقصى 5 ميجابايت</small>
+      <div class="image-section">
+        <!-- ✅ Image Preview (always shown if exists) -->
+        <div class="image-preview" *ngIf="imagePreview">
+          <img [src]="imagePreview" alt="معاينة الصورة" class="preview-image" />
+          <div class="image-overlay">
+            <div class="image-info">
+              <span class="image-source">
+                <i class="pi pi-upload" *ngIf="imageInputMode === 'upload'"></i>
+                <i class="pi pi-link" *ngIf="imageInputMode === 'url'"></i>
+                {{ imageInputMode === 'upload' ? 'صورة مرفوعة' : 'رابط صورة' }}
+              </span>
+            </div>
+            <div class="image-actions">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-light"
+                (click)="toggleImageInputMode()"
+                title="تغيير طريقة الإدخال"
+                [disabled]="isUploading"
+              >
+                <i class="pi pi-refresh"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger"
+                (click)="removeImage()"
+                title="حذف الصورة"
+                [disabled]="isUploading"
+              >
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
           </div>
-          <input
-            type="file"
-            id="subject-image-upload"
-            class="file-input"
-            accept="image/*"
-            (change)="onImageSelected($event)"
-            [disabled]="isUploading"
-            hidden
-          />
-        </label>
-      </div>
-            <!-- Manual URL Input -->
-      <div class="url-input-section" *ngIf="!imagePreview">
-        <label for="imageUrl" class="form-label">أو أدخل رابط الصورة</label>
-        <input
-          type="url"
-          id="imageUrl"
-          class="form-control"
-          formControlName="imageUrl"
-          placeholder="https://example.com/image.jpg"
-          (input)="imagePreview = $any($event.target).value"
-        >
-      </div>
-
-      <!-- Upload Progress (shown only during upload) -->
-      <div class="upload-progress" *ngIf="isUploading">
-        <div class="progress-bar">
-          <div
-            class="progress-fill"
-            [style.width.%]="uploadProgress"
-          ></div>
         </div>
-        <p>جاري رفع الصورة... {{ uploadProgress }}%</p>
+
+        <!-- ✅ Upload Area (shown only for upload mode, no image, not uploading) -->
+        <div class="upload-area" *ngIf="!imagePreview && !isUploading && imageInputMode === 'upload'">
+          <label class="upload-content" for="subject-image-upload">
+            <div class="upload-icon">
+              <i class="pi pi-cloud-upload"></i>
+            </div>
+            <div class="upload-text">
+              <p class="upload-title">انقر لرفع صورة</p>
+              <p class="upload-subtitle">JPG, PNG, GIF - حد أقصى 5 ميجابايت</p>
+            </div>
+            <input
+              type="file"
+              id="subject-image-upload"
+              class="file-input"
+              accept="image/*"
+              (change)="onImageSelected($event)"
+              [disabled]="isUploading"
+              hidden
+            />
+          </label>
+        </div>
+
+        <!-- ✅ URL Input (shown only for URL mode and no image) -->
+        <div class="url-input-section" *ngIf="!imagePreview && imageInputMode === 'url'">
+          <input
+            type="url"
+            id="imageUrl"
+            class="form-control"
+            formControlName="imageUrl"
+            placeholder="https://example.com/image.jpg"
+            (input)="onImageUrlChange($event)"
+            [class.is-invalid]="isFieldInvalid('imageUrl')"
+          />
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('imageUrl')">
+            {{ getFieldError('imageUrl') }}
+          </div>
+          <small class="form-text">
+            <i class="pi pi-info-circle"></i>
+            أدخل رابط صورة صحيح (https://...)
+          </small>
+        </div>
+
+        <!-- ✅ Upload Progress (shown only during upload) -->
+        <div class="upload-progress" *ngIf="isUploading">
+          <div class="progress-info">
+            <i class="pi pi-spinner pi-spin"></i>
+            <span>جاري رفع الصورة...</span>
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              [style.width.%]="uploadProgress"
+            ></div>
+          </div>
+          <p class="progress-text">{{ uploadProgress }}%</p>
+        </div>
+
+        <!-- ✅ Image Validation Error -->
+        <div class="image-error" *ngIf="isFieldInvalid('imageUrl')">
+          <div class="alert alert-danger">
+            <i class="pi pi-exclamation-triangle"></i>
+            {{ getFieldError('imageUrl') }}
+          </div>
+        </div>
       </div>
     </div>
-  </div>
       
      
   </form>

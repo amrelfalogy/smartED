@@ -12,36 +12,27 @@ export class LessonService {
 
   constructor(private http: HttpClient) {}
 
-  // Create lesson - matches backend structure
+  // ✅ ADD: Get lessons by unit
+  getLessonsByUnit(unitId: string): Observable<Lesson[]> {
+    return this.http.get<Lesson[]>(`${this.baseUrl}?unitId=${unitId}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  // Get single lesson
+  getLesson(id: string): Observable<Lesson> {
+    return this.http.get<Lesson>(`${this.baseUrl}/${id}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  // Create lesson
   createLesson(lesson: Omit<Lesson, 'id'>): Observable<Lesson> {
-    const payload = {
-      name: lesson.name,
-      title: lesson.title,
-      description: lesson.description,
-      lectureId: lesson.lectureId, // This should be the unit ID
-      duration: lesson.duration,
-      lessonType: lesson.lessonType,
-      sessionType: lesson.sessionType,
-      academicYearId: lesson.academicYearId,
-      studentYearId: lesson.studentYearId,
-      isFree: lesson.isFree,
-      difficulty: lesson.difficulty,
-      order: lesson.order
-    };
-    
-    return this.http.post<Lesson>(`${this.baseUrl}`, payload)
+    return this.http.post<Lesson>(`${this.baseUrl}`, lesson)
       .pipe(catchError(this.handleError));
   }
 
   // Update lesson
   updateLesson(id: string, lesson: Partial<Lesson>): Observable<Lesson> {
     return this.http.put<Lesson>(`${this.baseUrl}/${id}`, lesson)
-      .pipe(catchError(this.handleError));
-  }
-
-  // Get lessons by unit (lectureId)
-  getLessonsByUnit(unitId: string): Observable<Lesson[]> {
-    return this.http.get<Lesson[]>(`${this.baseUrl}?lectureId=${unitId}`)
       .pipe(catchError(this.handleError));
   }
 

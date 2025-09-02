@@ -17,7 +17,7 @@ export interface FileUploadProgress {
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadService {
-  private baseUrl = '/api/uploads';
+  private baseUrl = '/api/uploads'; // ✅ Changed from '/api/api/uploads' to '/api/uploads'
 
   constructor(private http: HttpClient) {}
 
@@ -45,32 +45,64 @@ export class FileUploadService {
     return this.http.get<any>(`${this.baseUrl}/stats`);
   }
 
-  /* Shared file upload logic for all types.*/
-  private uploadFile(
-    file: File,
-    type: 'image' | 'video' | 'document' | 'receipt'
-  ): Observable<FileUploadResponse | FileUploadProgress> {
-    const formData = new FormData();
-    formData.append('image', file);
+ // ...existing code...
 
-    const url = `${this.baseUrl}/${type}`;
-    const req = new HttpRequest('POST', url, formData, { reportProgress: true });
-    return this.http.request(req).pipe(
-      map((event: HttpEvent<any>) => {
-        switch (event.type) {
-          case HttpEventType.UploadProgress:
-            if (event.total) {
-              const progress = Math.round((100 * event.loaded) / event.total);
-              return { progress, loaded: event.loaded, total: event.total } as FileUploadProgress;
-            }
-            return { progress: 0, loaded: event.loaded, total: event.total ?? 0 } as FileUploadProgress;
-          case HttpEventType.Response:
-            return event.body as FileUploadResponse;
-          default:
-            return undefined;
-        }
-      }),
-      filter((result): result is FileUploadResponse | FileUploadProgress => result !== undefined)
-    );
+private uploadFile(
+  file: File,
+  type: 'image' | 'video' | 'document' | 'receipt'
+): Observable<FileUploadResponse | FileUploadProgress> {
+  const formData = new FormData();
+  
+  // ✅ Try different field names based on endpoint type
+  if (type === 'image') {
+    formData.append('image', file); // Backend might expect 'image' for /uploads/image
+  } else if (type === 'video') {
+    formData.append('video', file); // Backend might expect 'video' for /uploads/video
+  } else if (type === 'document') {
+    formData.append('document', file); // Backend might expect 'document' for /uploads/document
+  } else {
+    formData.append('file', file); // Fallback to 'file'
   }
+  
+  const url = `${this.baseUrl}/${type}`;
+  console.log('🚀 FileUploadService - Making request to:', url);
+  console.log('📁 File details:', {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    formDataKey: type === 'image' ? 'image' : type === 'video' ? 'video' : type === 'document' ? 'document' : 'file'
+  });
+  
+  const req = new HttpRequest('POST', url, formData, { 
+    reportProgress: true
+  });
+  
+  return this.http.request(req).pipe(
+    map((event: HttpEvent<any>) => {
+      console.log('📥 HTTP Event received:', event.type, event);
+      
+      switch (event.type) {
+        case HttpEventType.Sent:
+          console.log('📡 Request sent');
+          return undefined;
+        case HttpEventType.UploadProgress:
+          if (event.total) {
+            const progress = Math.round((100 * event.loaded) / event.total);
+            console.log(`📊 Upload progress: ${progress}% (${event.loaded}/${event.total})`);
+            return { progress, loaded: event.loaded, total: event.total } as FileUploadProgress;
+          }
+          return { progress: 0, loaded: event.loaded, total: event.total ?? 0 } as FileUploadProgress;
+        case HttpEventType.Response:
+          console.log('✅ Response received:', event.body);
+          return event.body as FileUploadResponse;
+        default:
+          console.log('ℹ️ Other event type:', event.type);
+          return undefined;
+      }
+    }),
+    filter((result): result is FileUploadResponse | FileUploadProgress => result !== undefined)
+  );
+}
+
+// ...existing code...
 }

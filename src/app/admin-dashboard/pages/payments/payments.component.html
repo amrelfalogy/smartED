@@ -1,0 +1,385 @@
+<div class="payment-management">
+  <!-- Page Header -->
+  <div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="page-title">إدارة المدفوعات</h2>
+        <p class="page-description text-muted">إدارة ومراجعة جميع مدفوعات الطلاب</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline-primary" (click)="loadPayments()">
+          <i class="pi pi-refresh me-2"></i>
+          تحديث
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4" dir="ltr">
+    <div class="col-md-6 col-xl-2" *ngFor="let stat of [
+      { title: 'إجمالي المدفوعات', value: stats.totalPayments, icon: 'pi-credit-card', color: 'primary' },
+      { title: 'في الانتظار', value: stats.pendingPayments, icon: 'pi-clock', color: 'warning' },
+      { title: 'موافق عليه', value: stats.approvedPayments, icon: 'pi-check-circle', color: 'success' },
+      { title: 'مرفوض', value: stats.rejectedPayments, icon: 'pi-times-circle', color: 'danger' },
+      { title: 'إجمالي الإيرادات', value: stats.totalRevenue, icon: 'pi-money-bill', color: 'info', isCurrency: true }
+    ]">
+      <app-card [showHeader]="false" blockClass="dashboard-card stat-card">
+        <div class="stat-card-content">
+          <div class="stat-icon" [class]="'text-' + stat.color">
+            <i [class]="'pi ' + stat.icon"></i>
+          </div>
+          <div class="stat-details">
+            <h4 class="stat-value">
+              {{ stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString('en-US') }}
+            </h4>
+            <p class="stat-label text-muted">{{ stat.title }}</p>
+          </div>
+        </div>
+      </app-card>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="filters-section mb-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <div class="search-box">
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="pi pi-search"></i>
+                </span>
+                <input type="text" 
+                       class="form-control" 
+                       placeholder="البحث بالاسم، البريد الإلكتروني، أو رقم الدفعة..."
+                       [(ngModel)]="searchTerm"
+                       (keyup.enter)="onSearch()">
+                <button class="btn btn-outline-secondary" (click)="onSearch()">بحث</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="status-filters">
+              <label class="form-label">تصفية حسب الحالة:</label>
+              <div class="btn-group" role="group">
+                <button type="button" 
+                        class="btn btn-outline-secondary"
+                        [class.active]="statusFilter === 'all'"
+                        (click)="filterByStatus('all')">
+                  الكل
+                </button>
+                <button type="button" 
+                        class="btn btn-warning"
+                        [class.active]="statusFilter === 'pending'"
+                        (click)="filterByStatus('pending')">
+                  في الانتظار
+                </button>
+                <button type="button" 
+                        class="btn btn-success"
+                        [class.active]="statusFilter === 'approved'"
+                        (click)="filterByStatus('approved')">
+                  موافق عليه
+                </button>
+                <button type="button" 
+                        class="btn btn-danger"
+                        [class.active]="statusFilter === 'rejected'"
+                        (click)="filterByStatus('rejected')">
+                  مرفوض
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payments Table -->
+  <div class="payments-table-section">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="pi pi-list me-2"></i>
+          جميع المدفوعات
+          <span class="badge bg-secondary ms-2">{{ totalItems }}</span>
+        </h5>
+      </div>
+      <div class="card-body p-0">
+        <!-- Loading State -->
+        <div class="loading-state text-center py-5" *ngIf="isLoading">
+          <i class="pi pi-spinner pi-spin" style="font-size: 2rem;"></i>
+          <p class="mt-3 text-muted">جاري تحميل المدفوعات...</p>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="table-responsive" *ngIf="!isLoading">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>معلومات الدفع</th>
+                <th>الطالب</th>
+                <th>المبلغ</th>
+                <th>المرحلة التعليمية</th>
+                <th>صف الطالب</th>
+                <th>خطة الدفع</th>
+                <th>الحالة</th>
+                <th>نوع الاشتراك</th>
+                <th>طريقة الدفع</th>
+                <th>التاريخ</th>
+                <th class="text-center">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let payment of paginatedPayments; trackBy: trackByPayment">
+                <td>
+                  <div class="payment-id">
+                    <strong class="text-primary">{{ payment.id }}</strong>
+                    <small class="d-block text-muted" *ngIf="payment.transactionReference">
+                      {{ payment.transactionReference }}
+                    </small>
+                  </div>
+                </td>
+                <td>
+                  <div class="student-info">
+                    <div class="student-name">{{ payment.studentName }}</div>
+                    <small class="text-muted">{{ payment.studentEmail }}</small>
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-bold">{{ formatCurrency(payment.amount, payment.currency) }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark">{{ payment.educationalStage }}</span>
+                </td>
+                <td>{{ payment.studentGrade }}</td>
+                <td>
+                  <span class="badge bg-primary text-white">{{ payment.paymentPlan }}</span>
+                </td>
+                <td>
+                  <span class="badge" [class]="'bg-' + getStatusColor(payment.status)">
+                    {{ getStatusLabel(payment.status) }}
+                  </span>
+                </td>
+                <td>{{ payment.subscriptionType }}</td>
+                <td>
+                  <div class="payment-method">
+                    {{ payment.paymentMethod }}
+                  </div>
+                </td>
+                <td>
+                  <small>{{ formatDate(payment.createdAt) }}</small>
+                </td>
+                <td class="text-center">
+                  <div class="dropdown">
+                    <button class="btn btn-link p-1" 
+                            type="button" 
+                            data-bs-toggle="dropdown" 
+                            aria-expanded="false">
+                      <i class="pi pi-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li>
+                        <a class="dropdown-item" href="javascript:void(0)" (click)="showDetails(payment)">
+                          <i class="pi pi-eye me-2"></i>عرض التفاصيل
+                        </a>
+                      </li>
+                      <li *ngIf="payment.status === 'pending'">
+                        <hr class="dropdown-divider">
+                      </li>
+                      <li *ngIf="payment.status === 'pending'">
+                        <a class="dropdown-item text-success" href="javascript:void(0)" (click)="approvePayment(payment.id)">
+                          <i class="pi pi-check me-2"></i>موافقة
+                        </a>
+                      </li>
+                      <li *ngIf="payment.status === 'pending'">
+                        <a class="dropdown-item text-danger" href="javascript:void(0)" (click)="rejectPayment(payment.id)">
+                          <i class="pi pi-times me-2"></i>رفض
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Empty State -->
+          <div class="empty-state text-center py-5" *ngIf="filteredPayments.length === 0 && !isLoading">
+            <i class="pi pi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
+            <h5 class="mt-3 text-muted">لا توجد مدفوعات</h5>
+            <p class="text-muted">لم يتم العثور على أي مدفوعات تطابق المعايير المحددة</p>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-section p-3 border-top" *ngIf="totalPages > 1">
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" href="javascript:void(0)" (click)="onPageChange(currentPage - 1)">السابق</a>
+              </li>
+              <li class="page-item" 
+                  *ngFor="let page of [].constructor(totalPages); let i = index"
+                  [class.active]="currentPage === i + 1">
+                <a class="page-link" href="javascript:void(0)" (click)="onPageChange(i + 1)">{{ i + 1 }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link" href="javascript:void(0)" (click)="onPageChange(currentPage + 1)">التالي</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Details Modal -->
+<div class="modal fade" 
+     [class.show]="showPaymentDetails" 
+     [style.display]="showPaymentDetails ? 'block' : 'none'"
+     tabindex="-1" 
+     role="dialog"
+     *ngIf="selectedPayment">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="pi pi-info-circle me-2"></i>
+          تفاصيل الدفعة {{ selectedPayment.id }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeDetails()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="payment-details">
+          <div class="row">
+            <!-- Student Information -->
+            <div class="col-md-6 mb-3">
+              <div class="detail-section">
+                <h6 class="section-title">معلومات الطالب</h6>
+                <div class="detail-item">
+                  <label>الاسم:</label>
+                  <span>{{ selectedPayment.studentName }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>البريد الإلكتروني:</label>
+                  <span>{{ selectedPayment.studentEmail }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>المرحلة التعليمية:</label>
+                  <span>{{ selectedPayment.educationalStage }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>الصف الدراسي:</label>
+                  <span>{{ selectedPayment.studentGrade }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="col-md-6 mb-3">
+              <div class="detail-section">
+                <h6 class="section-title">معلومات الدفع</h6>
+                <div class="detail-item">
+                  <label>رقم الدفعة:</label>
+                  <span class="text-primary fw-bold">{{ selectedPayment.id }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>المبلغ:</label>
+                  <span class="fw-bold">{{ formatCurrency(selectedPayment.amount, selectedPayment.currency) }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>طريقة الدفع:</label>
+                  <span>{{ selectedPayment.paymentMethod }}</span>
+                </div>
+                <div class="detail-item" *ngIf="selectedPayment.transactionReference">
+                  <label>رقم المرجع:</label>
+                  <span class="text-muted">{{ selectedPayment.transactionReference }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subscription Information -->
+            <div class="col-md-6 mb-3">
+              <div class="detail-section">
+                <h6 class="section-title">معلومات الاشتراك</h6>
+                <div class="detail-item">
+                  <label>نوع الاشتراك:</label>
+                  <span>{{ selectedPayment.subscriptionType }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>خطة الدفع:</label>
+                  <span class="badge bg-info text-white">{{ selectedPayment.paymentPlan }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status and Dates -->
+            <div class="col-md-6 mb-3">
+              <div class="detail-section">
+                <h6 class="section-title">الحالة والتواريخ</h6>
+                <div class="detail-item">
+                  <label>الحالة:</label>
+                  <span class="badge" [class]="'bg-' + getStatusColor(selectedPayment.status)">
+                    {{ getStatusLabel(selectedPayment.status) }}
+                  </span>
+                </div>
+                <div class="detail-item">
+                  <label>تاريخ الإنشاء:</label>
+                  <span>{{ formatDate(selectedPayment.createdAt) }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>آخر تحديث:</label>
+                  <span>{{ formatDate(selectedPayment.updatedAt) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Receipt -->
+            <div class="col-12" *ngIf="selectedPayment.receiptUrl">
+              <div class="detail-section">
+                <h6 class="section-title">إيصال الدفع</h6>
+                <div class="receipt-preview">
+                  <a [href]="selectedPayment.receiptUrl" target="_blank" class="btn btn-outline-primary">
+                    <i class="pi pi-file-pdf me-2"></i>
+                    عرض الإيصال
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" *ngIf="selectedPayment.status === 'pending'">
+        <button type="button" 
+                class="btn btn-success"
+                [disabled]="isProcessing"
+                (click)="approvePayment(selectedPayment.id)">
+          <i class="pi pi-spinner pi-spin me-2" *ngIf="isProcessing"></i>
+          <i class="pi pi-check me-2" *ngIf="!isProcessing"></i>
+          موافقة
+        </button>
+        <button type="button" 
+                class="btn btn-danger"
+                [disabled]="isProcessing"
+                (click)="rejectPayment(selectedPayment.id)">
+          <i class="pi pi-spinner pi-spin me-2" *ngIf="isProcessing"></i>
+          <i class="pi pi-times me-2" *ngIf="!isProcessing"></i>
+          رفض
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="closeDetails()">إغلاق</button>
+      </div>
+      <div class="modal-footer" *ngIf="selectedPayment.status !== 'pending'">
+        <button type="button" class="btn btn-secondary" (click)="closeDetails()">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" 
+     [class.show]="showPaymentDetails" 
+     *ngIf="showPaymentDetails"
+     (click)="closeDetails()"></div>

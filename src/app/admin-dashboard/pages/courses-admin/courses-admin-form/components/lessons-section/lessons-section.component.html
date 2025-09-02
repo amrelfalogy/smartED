@@ -10,15 +10,15 @@
         </h4>
         <div class="lesson-meta">
           <span class="lesson-type" *ngIf="selectedLessonType">
-            <i class="fas" [class]="'fa-' + selectedLessonType.icon"></i>
+            <i class="pi" [class]="'fa-' + selectedLessonType.icon"></i>
             {{ selectedLessonType.label }}
           </span>
           <span class="lesson-duration" *ngIf="lessonForm.get('duration')?.value">
-            <i class="fas fa-clock"></i>
+            <i class="pi pi-clock"></i>
             {{ formatDuration(lessonForm.get('duration')?.value) }}
           </span>
           <span class="lesson-difficulty" *ngIf="selectedDifficulty">
-            <i class="fas" [class]="'fa-' + selectedDifficulty.icon" [style.color]="selectedDifficulty.color"></i>
+            <i class="pi" [class]="'fa-' + selectedDifficulty.icon" [style.color]="selectedDifficulty.color"></i>
             {{ selectedDifficulty.label }}
           </span>
         </div>
@@ -32,7 +32,7 @@
         (click)="toggleExpansion()"
         title="{{ isExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل' }}"
       >
-        <i class="fas" [class.fa-chevron-up]="isExpanded" [class.fa-chevron-down]="!isExpanded"></i>
+        <i class="pi" [class.fa-chevron-up]="isExpanded" [class.fa-chevron-down]="!isExpanded"></i>
       </button>
       
       <button 
@@ -41,7 +41,7 @@
         (click)="deleteLesson()"
         title="حذف الدرس"
       >
-        <i class="fas fa-trash"></i>
+        <i class="pi pi-trash"></i>
       </button>
     </div>
   </div>
@@ -60,7 +60,7 @@
       <!-- Basic Information -->
       <div class="form-section">
         <h6 class="section-title">
-          <i class="fas fa-info-circle"></i>
+          <i class="pi pi-info-circle"></i>
           معلومات أساسية
         </h6>
         
@@ -124,7 +124,7 @@
       <!-- Lesson Configuration -->
       <div class="form-section">
         <h6 class="section-title">
-          <i class="fas fa-cog"></i>
+          <i class="pi pi-cog"></i>
           إعدادات الدرس
         </h6>
         
@@ -213,14 +213,14 @@
       <!-- Lesson Type Details -->
       <div class="form-section" *ngIf="selectedLessonType">
         <h6 class="section-title">
-          <i class="fas fa-video"></i>
+          <i class="pi pi-video"></i>
           تفاصيل نوع الدرس
         </h6>
         
         <div class="lesson-type-card">
           <div class="lesson-type-info">
             <div class="type-icon">
-              <i class="fas" [class]="'fa-' + selectedLessonType.icon" [style.color]="selectedLessonType.color"></i>
+              <i class="pi" [class]="'pi-' + selectedLessonType.icon" [style.color]="selectedLessonType.color"></i>
             </div>
             <div class="type-details">
               <h6>{{ selectedLessonType.label }}</h6>
@@ -233,14 +233,14 @@
       <!-- Content Section -->
       <div class="form-section" formGroupName="content">
         <h6 class="section-title">
-          <i class="fas fa-folder-open"></i>
+          <i class="pi pi-folder-open"></i>
           محتوى الدرس
         </h6>
         
         <!-- Video Upload -->
         <div class="content-upload-section">
           <label class="form-label">
-            <i class="fas fa-video"></i>
+            <i class="pi pi-video"></i>
             فيديو الدرس
           </label>
           
@@ -259,7 +259,7 @@
                 (click)="videoInput.click()"
                 [disabled]="isUploading('video')"
               >
-                <i class="fas fa-upload"></i>
+                <i class="pi pi-upload"></i>
                 رفع فيديو
               </button>
             </div>
@@ -285,14 +285,14 @@
 
             <!-- Video Status -->
             <div class="content-status success" *ngIf="hasVideoContent && !isUploading('video')">
-              <i class="fas fa-check-circle"></i>
+              <i class="pi pi-check-circle"></i>
               <span>تم رفع الفيديو بنجاح</span>
               <button 
                 type="button" 
                 class="btn btn-sm btn-outline-danger"
                 (click)="removeFile('video')"
               >
-                <i class="fas fa-times"></i>
+                <i class="pi pi-times"></i>
               </button>
             </div>
           </div>
@@ -301,7 +301,7 @@
         <!-- Document Upload -->
         <div class="content-upload-section">
           <label class="form-label">
-            <i class="fas fa-file-alt"></i>
+            <i class="pi pi-file-alt"></i>
             المواد التعليمية
           </label>
           
@@ -320,7 +320,7 @@
                 (click)="documentInput.click()"
                 [disabled]="isUploading('document')"
               >
-                <i class="fas fa-file-upload"></i>
+                <i class="pi pi-file-upload"></i>
                 رفع مستند
               </button>
             </div>
@@ -346,20 +346,20 @@
 
             <!-- Document Status -->
             <div class="content-status success" *ngIf="hasDocumentContent && !isUploading('document')">
-              <i class="fas fa-check-circle"></i>
+              <i class="pi pi-check-circle"></i>
               <span>تم رفع المستند بنجاح</span>
               <button 
                 type="button" 
                 class="btn btn-sm btn-outline-danger"
                 (click)="removeFile('document')"
               >
-                <i class="fas fa-times"></i>
+                <i class="pi pi-times"></i>
               </button>
             </div>
           </div>
 
           <div class="form-text">
-            <i class="fas fa-info-circle"></i>
+            <i class="pi pi-info-circle"></i>
             الملفات المدعومة: PDF, DOC, DOCX, PPT, PPTX (حتى 50 ميجابايت)
           </div>
         </div>
@@ -367,7 +367,7 @@
         <!-- HTML Content -->
         <div class="content-upload-section">
           <label class="form-label">
-            <i class="fas fa-code"></i>
+            <i class="pi pi-code"></i>
             محتوى إضافي (HTML)
           </label>
           <textarea 
@@ -377,7 +377,7 @@
             rows="4"
           ></textarea>
           <div class="form-text">
-            <i class="fas fa-lightbulb"></i>
+            <i class="pi pi-lightbulb"></i>
             يمكنك استخدام HTML لإضافة روابط، نصوص منسقة، أو محتوى تفاعلي
           </div>
         </div>
@@ -387,19 +387,19 @@
           <h6>ملخص المحتوى</h6>
           <div class="content-items">
             <div class="content-item" *ngIf="hasVideoContent">
-              <i class="fas fa-video text-primary"></i>
+              <i class="pi pi-video text-primary"></i>
               <span>فيديو الدرس</span>
-              <i class="fas fa-check-circle text-success"></i>
+              <i class="pi pi-check-circle text-success"></i>
             </div>
             <div class="content-item" *ngIf="hasDocumentContent">
-              <i class="fas fa-file-alt text-secondary"></i>
+              <i class="pi pi-file-alt text-secondary"></i>
               <span>مواد تعليمية</span>
-              <i class="fas fa-check-circle text-success"></i>
+              <i class="pi pi-check-circle text-success"></i>
             </div>
             <div class="content-item" *ngIf="lessonForm.get('content.htmlContent')?.value">
-              <i class="fas fa-code text-info"></i>
+              <i class="pi pi-code text-info"></i>
               <span>محتوى إضافي</span>
-              <i class="fas fa-check-circle text-success"></i>
+              <i class="pi pi-check-circle text-success"></i>
             </div>
           </div>
         </div>
@@ -408,7 +408,7 @@
       <!-- Lesson Options -->
       <div class="form-section">
         <h6 class="section-title">
-          <i class="fas fa-sliders-h"></i>
+          <i class="pi pi-sliders-h"></i>
           خيارات الدرس
         </h6>
         
@@ -423,7 +423,7 @@
               >
               <label class="form-check-label" for="isFree_{{ lessonIndex }}">
                 <div class="option-header">
-                  <i class="fas fa-gift"></i>
+                  <i class="pi pi-gift"></i>
                   <strong>درس مجاني</strong>
                 </div>
                 <small>سيكون الدرس متاحاً للجميع بدون دفع</small>
@@ -441,7 +441,7 @@
               >
               <label class="form-check-label" for="isActive_{{ lessonIndex }}">
                 <div class="option-header">
-                  <i class="fas fa-eye"></i>
+                  <i class="pi pi-eye"></i>
                   <strong>درس نشط</strong>
                 </div>
                 <small>سيظهر الدرس للطلاب في المنصة</small>
@@ -456,7 +456,7 @@
   <!-- Form Status -->
   <div class="form-status" [class.expanded]="isExpanded">
     <div class="status-indicator" [class.valid]="isFormValid" [class.invalid]="!isFormValid">
-      <i class="fas" [class.fa-check-circle]="isFormValid" [class.fa-exclamation-circle]="!isFormValid"></i>
+      <i class="pi" [class.fa-check-circle]="isFormValid" [class.fa-exclamation-circle]="!isFormValid"></i>
       <span>{{ isFormValid ? 'الدرس مكتمل ومجهز للنشر' : 'يرجى إكمال جميع البيانات المطلوبة' }}</span>
     </div>
     

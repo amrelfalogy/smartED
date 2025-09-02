@@ -52,58 +52,110 @@
     
     <!-- Step 1: Subject Information -->
     <div *ngIf="formState.currentStep === 1" class="step-content">
-      <app-subject-section
-        [subjectData]="courseData.subject"
-        [isEdit]="isEdit"
-        (subjectUpdated)="onSubjectUpdated($event)"
-      ></app-subject-section>
-    </div>
 
-    <!-- Step 2: Units and Lessons -->
-    <div *ngIf="formState.currentStep === 2" class="step-content">
-
-      <!-- Academic Year Selection -->
-      <div class="academic-selection" *ngIf="academicYears.length > 0">
-        <div class="academic-header">
-          <h4>إعدادات السنة الدراسية</h4>
-          <p>اختر السنة الدراسية وصف الطلاب لربط الدروس بها</p>
+        <!-- Academic Year Selection -->
+      <div class="academic-selection">
+        <!-- Loading State for Academic Data -->
+        <div *ngIf="isLoadingAcademicData" class="academic-loading">
+          <div class="loading-container">
+            <div class="spinner"></div>
+            <p>جاري تحميل البيانات الأكاديمية...</p>
+          </div>
         </div>
-        
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group">
-              <label class="form-label">السنة الدراسية <span class="required">*</span></label>
-              <select 
-                class="form-select"
-                [value]="selectedAcademicYear?.id || ''"
-                (change)="onAcademicYearChanged($event)"
-              >
-                <option value="">اختر السنة الدراسية</option>
-                <option *ngFor="let year of academicYears" [value]="year.id">
-                  {{ year.name }}
-                </option>
-              </select>
+
+        <!-- Academic Selection Content (shown when loaded) -->
+        <div *ngIf="!isLoadingAcademicData && academicDataLoaded" class="academic-content">
+          <!-- Show content if academic years are available -->
+          <div *ngIf="academicYears.length > 0" class="academic-form">
+            <div class="academic-header">
+              <h4>إعدادات السنة الدراسية</h4>
+              <p>اختر السنة الدراسية وصف الطلاب لربط الدروس بها</p>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">السنة الدراسية <span class="required">*</span></label>
+                  <select 
+                    class="form-select"
+                    [value]="selectedAcademicYear?.id || ''"
+                    (change)="onAcademicYearChanged($event)"
+                    [disabled]="isLoadingStudentYears"
+                  >
+                    <option value="">اختر السنة الدراسية</option>
+                    <option *ngFor="let year of academicYears" [value]="year.id">
+                      {{ year.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">صف الطلاب <span class="required">*</span></label>
+                  
+                  <!-- Loading state for student years only -->
+                  <div *ngIf="isLoadingStudentYears" class="student-year-loading">
+                    <div class="form-select disabled">
+                      <i class="pi pi-spinner pi-spin me-2"></i>
+                      جاري تحميل صفوف الطلاب...
+                    </div>
+                  </div>
+                  
+                  <!-- Student year select (shown when not loading) -->
+                  <select 
+                    *ngIf="!isLoadingStudentYears"
+                    class="form-select"
+                    [value]="selectedStudentYear?.id || ''"
+                    (change)="onStudentYearChanged($event)"
+                    [disabled]="!selectedAcademicYear"
+                  >
+                    <option value="">
+                      {{ selectedAcademicYear ? 'اختر صف الطلاب' : 'اختر السنة الدراسية أولاً' }}
+                    </option>
+                    <option *ngFor="let studentYear of studentYears" [value]="studentYear.id">
+                      {{ studentYear.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selection Summary -->
+            <div *ngIf="selectedAcademicYear && selectedStudentYear" class="selection-summary">
+              <div class="alert alert-info">
+                <i class="pi pi-info-circle me-2"></i>
+                <strong>الاختيار الحالي:</strong>
+                {{ selectedAcademicYear.displayName || selectedAcademicYear.name }} - 
+                {{ selectedStudentYear.displayName || selectedStudentYear.name }}
+              </div>
             </div>
           </div>
-          <div class="col-md-6" *ngIf="selectedAcademicYear">
-            <div class="form-group">
-              <label class="form-label">صف الطلاب <span class="required">*</span></label>
-              <select 
-                class="form-select"
-                [value]="selectedStudentYear?.id || ''"
-                (change)="onStudentYearChanged($event)"
-              >
-                <option value="">اختر صف الطلاب</option>
-                <option *ngFor="let studentYear of studentYears" [value]="studentYear.id">
-                  {{ studentYear.name }}
-                </option>
-              </select>
+
+          <!-- Show message when no academic years available -->
+          <div *ngIf="academicYears.length === 0" class="no-academic-data">
+            <div class="alert alert-warning">
+              <i class="pi pi-exclamation-triangle me-2"></i>
+              <strong>تنبيه:</strong> لا توجد سنوات دراسية متاحة حالياً. 
+              يمكنك المتابعة لإنشاء المادة وربطها لاحقاً بالسنة الدراسية.
             </div>
           </div>
         </div>
       </div>
-   
 
+      <!-- ✅ UPDATED: Pass academic year data to child component -->
+      <div *ngIf="!isLoadingAcademicData && academicDataLoaded">
+        <app-subject-section
+          [subjectData]="courseData.subject"
+          [isEdit]="isEdit"
+          [selectedAcademicYearId]="selectedAcademicYear?.id || null"
+          [selectedStudentYearId]="selectedStudentYear?.id || null"
+          (subjectUpdated)="onSubjectUpdated($event)"
+        ></app-subject-section>
+      </div>
+    </div>
+
+    <!-- Step 2: Units and Lessons -->
+    <div *ngIf="formState.currentStep === 2" class="step-content">
       <app-units-section
         [units]="courseData.units"
         [subjectData]="courseData.subject"

@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Lesson } from 'src/app/core/models/course-complete.model';
+import { FileUploadService } from 'src/app/core/services/file-upload.service';
 
 @Component({
   selector: 'app-lessons-section',
@@ -108,7 +109,10 @@ export class LessonsSectionComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder, 
+    private fileUploadService: FileUploadService
+  ) {}
 
   ngOnInit(): void {
     this.initializeForm();
@@ -193,6 +197,8 @@ export class LessonsSectionComponent implements OnInit, OnDestroy {
       .trim()
       .substring(0, 50); // Limit length
   }
+
+  
 
   // Duration Management
   onDurationMinutesChange(event: Event): void {

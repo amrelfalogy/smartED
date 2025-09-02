@@ -76,7 +76,17 @@ export const NavigationItems: NavigationItem[] = [
             role: ['admin']
           }
         ]
-      }
+      },
+      {
+        id: 'payments-admin',
+        title: 'Payments',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/admin/payments',
+        icon: 'pi pi-credit-card',
+        breadcrumbs: false,
+        role: ['admin', 'support']
+      },
     ]
   },
   {

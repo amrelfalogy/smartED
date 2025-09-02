@@ -53,8 +53,8 @@ export class MyPaymentsComponent implements OnInit {
   ];
 
   paymentMethods = [
-    { value: 'instapay', label: 'Instapay', icon: 'fas fa-credit-card', color: '#9b51e0' },
-    { value: 'vodafone', label: 'Vodafone Cash', icon: 'fas fa-mobile-alt', color: '#e41f1f' }
+    { value: 'instapay', label: 'Instapay', icon: 'pi pi-credit-card', color: '#9b51e0' },
+    { value: 'vodafone', label: 'Vodafone Cash', icon: 'pi pi-mobile-', color: '#e41f1f' }
   ];
 
   paymentInstructions = `

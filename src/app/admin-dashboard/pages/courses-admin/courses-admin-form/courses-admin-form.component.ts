@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -39,6 +39,8 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       name: '',
       description: '',
       difficulty: 'beginner',
+      academicYearId: '',
+      studentYearId: '',
       duration: '',
       imageUrl: '',
       order: 1
@@ -56,6 +58,9 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   isSaving = false;
   errorMsg: string | null = null;
   successMsg: string | null = null;
+  isLoadingAcademicData = false;
+  isLoadingStudentYears = false; 
+  academicDataLoaded = false;
 
   // Data for child components
   academicYears: AcademicYear[] = [];
@@ -71,7 +76,8 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     private subjectService: SubjectService,
     private unitService: UnitService,
     private lessonService: LessonService,
-    private academicYearService: AcademicYearService
+    private academicYearService: AcademicYearService,
+    private cdr: ChangeDetectorRef // ✅ ADD: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -84,7 +90,10 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-    private loadAcademicYears(): void {
+  private loadAcademicYears(): void {
+    this.isLoadingAcademicData = true;
+    this.academicDataLoaded = false;
+    
     this.academicYearService.getAcademicYears()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -93,38 +102,76 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
           this.academicYears = years;
           if (years.length > 0) {
             this.selectedAcademicYear = years[0];
-            this.loadStudentYears();
+            this.loadStudentYears(true);
+          } else {
+            this.isLoadingAcademicData = false;
+            this.academicDataLoaded = true;
+            // ✅ FIX: Use setTimeout to avoid expression changed error
+            setTimeout(() => {
+              this.updateStepsValidation();
+            });
           }
         },
         error: (error) => {
           this.errorMsg = 'حدث خطأ أثناء تحميل السنوات الدراسية';
           console.error('Error loading academic years:', error);
+          this.isLoadingAcademicData = false;
+          this.academicDataLoaded = true;
         }
       });
   }
 
-  private loadStudentYears(): void {
+  private loadStudentYears(isInitialLoad = false): void {
     if (this.selectedAcademicYear) {
+      if (!isInitialLoad) {
+        this.isLoadingStudentYears = true;
+      }
       this.academicYearService.getStudentYears(this.selectedAcademicYear.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (studentYears) => {
-            this.studentYears = studentYears; // <-- store in property
+            this.studentYears = studentYears;
             if (studentYears.length > 0) {
               this.selectedStudentYear = studentYears[0];
             } else {
               this.selectedStudentYear = null;
             }
+            
+            if (isInitialLoad) {
+              this.isLoadingAcademicData = false;
+              this.academicDataLoaded = true;
+            } else {
+              this.isLoadingStudentYears = false;
+            }
+
+            // ✅ FIX: Use setTimeout to avoid expression changed error
+            setTimeout(() => {
+              this.updateStepsValidation();
+            });
           },
           error: (error) => {
             this.studentYears = [];
             this.selectedStudentYear = null;
             console.error('Error loading student years:', error);
+            
+            if (isInitialLoad) {
+              this.isLoadingAcademicData = false;
+              this.academicDataLoaded = true;
+            } else {
+              this.isLoadingStudentYears = false;
+            }
           }
         });
     } else {
       this.studentYears = [];
       this.selectedStudentYear = null;
+      
+      if (isInitialLoad) {
+        this.isLoadingAcademicData = false;
+        this.academicDataLoaded = true;
+      } else {
+        this.isLoadingStudentYears = false;
+      }
     }
   }
 
@@ -179,7 +226,10 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     
     if (unitIds.length === 0) {
       this.isLoading = false;
-      this.updateStepsValidation();
+      // ✅ FIX: Use setTimeout to avoid expression changed error
+      setTimeout(() => {
+        this.updateStepsValidation();
+      });
       return;
     }
 
@@ -194,7 +244,10 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
         });
         
         this.calculateTotals();
-        this.updateStepsValidation();
+        // ✅ FIX: Use setTimeout to avoid expression changed error
+        setTimeout(() => {
+          this.updateStepsValidation();
+        });
         this.isLoading = false;
       })
       .catch(error => {
@@ -236,42 +289,102 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
 
   // Event handlers from child components
   onSubjectUpdated(subjectData: CourseSubject): void {
-    this.courseData.subject = { ...subjectData };
+    this.courseData.subject = { 
+      ...subjectData,
+      academicYearId: this.selectedAcademicYear?.id || subjectData.academicYearId,
+      studentYearId: this.selectedStudentYear?.id || subjectData.studentYearId
+    };
+    
     this.formState.isDirty = true;
-    this.updateStepValidation(1, this.isSubjectValid(subjectData));
     this.clearMessages();
+    
+    // ✅ FIX: Use setTimeout to avoid expression changed error
+    setTimeout(() => {
+      this.updateStepValidation(1, this.isSubjectValid(this.courseData.subject));
+    });
   }
 
   onUnitsUpdated(units: Unit[]): void {
     this.courseData.units = [...units];
     this.formState.isDirty = true;
-    this.updateStepValidation(2, this.areUnitsValid(units));
     this.calculateTotals();
     this.clearMessages();
+    
+    // ✅ FIX: Use setTimeout to avoid expression changed error
+    setTimeout(() => {
+      this.updateStepValidation(2, this.areUnitsValid(units));
+    });
   }
 
- onAcademicYearChanged(event: Event): void {
+  onAcademicYearChanged(event: Event): void {
+    event.preventDefault();
+    
     const target = event.target as HTMLSelectElement;
     const selectedId = target.value;
+    
+    if (this.selectedAcademicYear?.id === selectedId) {
+      return;
+    }
+    
     this.selectedAcademicYear = this.academicYears.find(ay => ay.id === selectedId) || null;
-    this.loadStudentYears();
+    this.selectedStudentYear = null;
+    this.studentYears = [];
+    
+    if (this.selectedAcademicYear) {
+      this.loadStudentYears(false);
+    }
+
+    // ✅ FIX: Use setTimeout to avoid expression changed error
+    setTimeout(() => {
+      this.updateFormValidation();
+    });
   }
 
-   onStudentYearChanged(event: Event): void {
+  onStudentYearChanged(event: Event): void {
+    event.preventDefault();
+    
     const target = event.target as HTMLSelectElement;
     const selectedId = target.value;
+    
+    if (this.selectedStudentYear?.id === selectedId) {
+      return;
+    }
+    
     this.selectedStudentYear = this.studentYears.find(sy => sy.id === selectedId) || null;
+    
+    if (this.selectedAcademicYear && this.selectedStudentYear) {
+      this.courseData.subject.academicYearId = this.selectedAcademicYear.id;
+      this.courseData.subject.studentYearId = this.selectedStudentYear.id;
+      this.formState.isDirty = true;
+    }
+
+    // ✅ FIX: Use setTimeout to avoid expression changed error
+    setTimeout(() => {
+      this.updateFormValidation();
+    });
+  }
+
+  // ✅ NEW: Centralized form validation update
+  private updateFormValidation(): void {
+    this.updateStepValidation(1, this.isSubjectValid(this.courseData.subject));
+    this.updateStepValidation(2, this.areUnitsValid(this.courseData.units));
+    this.cdr.detectChanges(); // Manually trigger change detection
   }
 
   // Validation methods
   private isSubjectValid(subject: CourseSubject): boolean {
-    return !!(
+    const hasRequiredFields = !!(
       subject.name?.trim() &&
       subject.description?.trim() &&
       subject.difficulty &&
       subject.duration?.trim() &&
-      subject.order > 0
+      subject.order > 0 &&
+      subject.imageUrl?.trim()
     );
+
+    const hasAcademicData = !!(this.selectedAcademicYear && this.selectedStudentYear);
+    
+    return hasRequiredFields && hasAcademicData;
   }
 
   private areUnitsValid(units: Unit[]): boolean {
@@ -296,6 +409,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     );
   }
 
+  // ✅ UPDATED: Step validation with proper error handling
   private updateStepValidation(stepId: number, isValid: boolean): void {
     const step = this.formState.steps.find(s => s.id === stepId);
     if (step) {
@@ -303,12 +417,18 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       step.isCompleted = isValid;
       step.hasErrors = !isValid;
     }
+    
+    // Update overall form validity
     this.formState.isValid = this.formState.steps.slice(0, 2).every(s => s.isValid);
   }
 
+  // ✅ UPDATED: Steps validation with setTimeout
   private updateStepsValidation(): void {
-    this.updateStepValidation(1, this.isSubjectValid(this.courseData.subject));
-    this.updateStepValidation(2, this.areUnitsValid(this.courseData.units));
+    setTimeout(() => {
+      this.updateStepValidation(1, this.isSubjectValid(this.courseData.subject));
+      this.updateStepValidation(2, this.areUnitsValid(this.courseData.units));
+      this.cdr.detectChanges();
+    });
   }
 
   private calculateTotals(): void {
@@ -325,10 +445,10 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
 
   // Save operations
   async saveCourse(): Promise<void> {
-     console.log('saveCourse called', this.courseData, this.formState);
+    console.log('saveCourse called', this.courseData, this.formState);
     if (!this.formState.isValid) {
       this.errorMsg = 'يرجى استكمال جميع البيانات المطلوبة';
-          console.log('Form is not valid');
+      console.log('Form is not valid');
       return;
     }
 
@@ -443,7 +563,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     await this.saveCourse();
     
     if (this.successMsg && this.subjectId) {
-        console.log('Publishing course', this.subjectId);
+      console.log('Publishing course', this.subjectId);
       this.courseData.status = 'published';
       this.successMsg = 'تم نشر الكورس بنجاح';
       

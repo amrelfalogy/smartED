@@ -30,6 +30,7 @@ import { SidebarModule } from './layouts/admin-layouts/sidebar/sidebar.module';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 
 import { SharedModule } from '../shared/shared.module';
+import { PaymentsComponent } from './pages/payments/payments.component';
 
 
 @NgModule({
@@ -50,6 +51,7 @@ import { SharedModule } from '../shared/shared.module';
     SubjectSectionComponent,
     UnitsSectionComponent,
     LessonsSectionComponent,
+    PaymentsComponent,
 
     
   ],
