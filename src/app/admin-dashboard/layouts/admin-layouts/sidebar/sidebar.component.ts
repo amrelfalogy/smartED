@@ -8,8 +8,8 @@ import { Component, Output, EventEmitter, Input } from '@angular/core';
 export class SidebarComponent {
   @Output() SidebarCollapsedMob = new EventEmitter();
   @Input() userRole: string = 'admin';
-  @Input() logoPath: string = 'assets/imgs/logo.jpeg';
-  @Input() logoHeight: string = '90px';
+  @Input() logoPath: string = 'assets/imgs/logo2.png';
+  @Input() logoHeight: string = '56px';
   @Input() homeRoute: string = '/home';
 
   navCollapsedMob: boolean;

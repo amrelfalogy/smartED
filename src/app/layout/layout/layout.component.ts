@@ -14,9 +14,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   isLoggingOut = false;
   isLoading = false; // Add loading state
+  currentYear = new Date().getFullYear();
   currentUser: User | null = null;
   showUserDropdown = false;
-  
+  isNavbarOpen = false; 
+
+
   private destroy$ = new Subject<void>();
 
   // Combined state for better management
@@ -61,6 +64,38 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
+
+ // ✅ REPLACE: Your existing closeNavbar method
+closeNavbar(): void {
+  this.isNavbarOpen = false;
+  
+  const navbarCollapse = document.getElementById('navbarNav');
+  if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+    // Add collapsing class for animation
+    navbarCollapse.classList.add('collapsing');
+    navbarCollapse.classList.remove('show');
+    
+    // Clean up after animation completes
+    setTimeout(() => {
+      navbarCollapse.classList.remove('collapsing');
+    }, 350);
+  }
+}
+
+// ✅ ENHANCE: Your existing onNavbarToggle method
+onNavbarToggle(): void {
+  setTimeout(() => {
+    const navbarCollapse = document.getElementById('navbarNav');
+    if (navbarCollapse) {
+      this.isNavbarOpen = navbarCollapse.classList.contains('show');
+      
+      // Add smooth transition classes
+      if (this.isNavbarOpen) {
+        navbarCollapse.style.animation = 'slideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+      }
+    }
+  }, 50);
+}
 
   getUserDisplayName(): string {
     // Don't show fallback while loading

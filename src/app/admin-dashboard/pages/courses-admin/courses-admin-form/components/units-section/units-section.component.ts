@@ -1,12 +1,8 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
-import { 
-  Unit, 
-  Lesson, 
-  Subject as CourseSubject 
-} from 'src/app/core/models/course-complete.model';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject as RxSubject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { Lesson, Unit, Subject as CourseSubject } from 'src/app/core/models/course-complete.model';
 
 @Component({
   selector: 'app-units-section',
@@ -16,48 +12,20 @@ import {
 export class UnitsSectionComponent implements OnInit, OnDestroy {
   @Input() units: Unit[] = [];
   @Input() subjectData!: CourseSubject;
-  @Input() academicYearId!: string;
-  @Input() studentYearId!: string;
   @Output() unitsUpdated = new EventEmitter<Unit[]>();
 
   unitsForm!: FormGroup;
-  expandedUnit: number | null = null;
-  isFormValid = false;
+  expandedUnit: number | null = 0;
 
-  // Lesson configuration options
-  lessonTypes = [
-    { 
-      value: 'center_recorded', 
-      label: 'تسجيل مركز', 
-      icon: 'record_voice_over',
-      description: 'تسجيل صوتي ومرئي من المركز التعليمي'
-    },
-    { 
-      value: 'studio_produced', 
-      label: 'إنتاج استوديو', 
-      icon: 'video_camera_front',
-      description: 'فيديو مُنتج بجودة عالية في الاستوديو'
-    }
-  ];
+  private destroy$ = new RxSubject<void>();
+  private initialized = false;
 
-  sessionTypes = [
-    { value: 'recorded', label: 'مسجل', icon: 'videocam' },
-    { value: 'live', label: 'مباشر', icon: 'live_tv' }
-  ];
-
-  difficultyOptions = [
-    { value: 'beginner', label: 'مبتدئ', color: '#10b981' },
-    { value: 'intermediate', label: 'متوسط', color: '#f59e0b' },
-    { value: 'advanced', label: 'متقدم', color: '#ef4444' }
-  ];
-
-  private destroy$ = new Subject<void>();
-
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this.initializeForm();
-    this.setupFormSubscription();
+    this.initForm();
+    this.patchUnits();
+    this.subscribeChanges();
   }
 
   ngOnDestroy(): void {
@@ -65,29 +33,6 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private initializeForm(): void {
-    this.unitsForm = this.fb.group({
-      units: this.fb.array([])
-    });
-
-    // Load existing units or create first unit
-    if (this.units && this.units.length > 0) {
-      this.units.forEach(unit => this.addUnitToForm(unit));
-    } else {
-      this.addUnit(); // Create first unit automatically
-    }
-  }
-
-  private setupFormSubscription(): void {
-    this.unitsForm.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.validateForm();
-        this.emitUnitsUpdate();
-      });
-  }
-
-  // Form Array Getters
   get unitsFormArray(): FormArray {
     return this.unitsForm.get('units') as FormArray;
   }
@@ -96,433 +41,270 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
     return this.unitsFormArray.at(unitIndex).get('lessons') as FormArray;
   }
 
-  // Unit Form Creation
-  private createUnitFormGroup(unit?: Unit): FormGroup {
-    return this.fb.group({
-      id: [unit?.id || null],
-      name: [unit?.name || '', [
-        Validators.required, 
-        Validators.minLength(3),
-        Validators.maxLength(100)
-      ]],
-      description: [unit?.description || '', [
-        Validators.required, 
-        Validators.minLength(10),
-        Validators.maxLength(500)
-      ]],
-      subjectId: [unit?.subjectId || ''],
-      order: [unit?.order || this.unitsFormArray.length + 1, [
-        Validators.required, 
-        Validators.min(1)
-      ]],
-      lessons: this.fb.array(
-        unit?.lessons?.map(lesson => this.createLessonFormGroup(lesson)) || []
-      ),
-      isActive: [unit?.isActive ?? true]
+  private initForm(): void {
+    this.unitsForm = this.fb.group({
+      units: this.fb.array([])
     });
   }
 
-  // Lesson Form Creation
-  private createLessonFormGroup(lesson?: Lesson): FormGroup {
+  private patchUnits(): void {
+    this.unitsFormArray.clear();
+    if (this.units && this.units.length > 0) {
+      this.units.forEach(u => this.unitsFormArray.push(this.buildUnitGroup(u)));
+      this.initialized = true;
+      this.emitUnitsDeferred();
+    } else {
+      Promise.resolve().then(() => {
+        if (!this.initialized) {
+          const unitGroup = this.buildUnitGroup();
+          this.unitsFormArray.push(unitGroup);
+          const lessonsFa = unitGroup.get('lessons') as FormArray;
+          lessonsFa.push(this.buildLessonGroup({ order: 0 } as any));
+          this.initialized = true;
+          this.emitUnitsDeferred();
+          this.cdr.detectChanges();
+        }
+      });
+    }
+  }
+
+  private subscribeChanges(): void {
+    this.unitsForm.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (this.initialized) {
+          this.emitUnitsDeferred();
+        }
+      });
+  }
+
+  private buildUnitGroup(unit?: Unit): FormGroup {
     return this.fb.group({
-      id: [lesson?.id || null],
-      name: [lesson?.name || '', [Validators.required]],
-      title: [lesson?.title || '', [
-        Validators.required, 
-        Validators.minLength(3),
-        Validators.maxLength(100)
-      ]],
-      description: [lesson?.description || '', [
-        Validators.required,
-        Validators.minLength(10),
-        Validators.maxLength(500)
-      ]],
+      id: [unit?.id],
+      name: [unit?.name || '', [Validators.required, Validators.minLength(3)]],
+      description: [unit?.description || '', [Validators.required, Validators.minLength(10)]],
+      subjectId: [unit?.subjectId || this.subjectData?.id || ''],
+      order: [unit?.order ?? (this.unitsFormArray.length + 1)],
+      lessons: this.fb.array(
+        (unit?.lessons || []).map(l => this.buildLessonGroup(l))
+      )
+    });
+  }
+
+  private buildLessonGroup(lesson?: Lesson): FormGroup {
+    return this.fb.group({
+      id: [lesson?.id],
+      unitId: [lesson?.unitId || lesson?.lectureId || ''],
       lectureId: [lesson?.lectureId || ''],
-      duration: [lesson?.duration || 1800, [
-        Validators.required, 
-        Validators.min(60)
-      ]],
+      title: [lesson?.title || '', [Validators.required, Validators.minLength(3)]],
+      description: [lesson?.description || '', [Validators.required, Validators.minLength(10)]],
+      order: [lesson?.order ?? 0],
       lessonType: [lesson?.lessonType || 'center_recorded', Validators.required],
       sessionType: [lesson?.sessionType || 'recorded', Validators.required],
-      academicYearId: [lesson?.academicYearId || this.academicYearId],
-      studentYearId: [lesson?.studentYearId || this.studentYearId],
-      isFree: [lesson?.isFree ?? false],
       difficulty: [lesson?.difficulty || 'beginner', Validators.required],
-      order: [lesson?.order || 1, [Validators.required, Validators.min(1)]],
-      isActive: [lesson?.isActive ?? true]
+      isFree: [lesson?.isFree ?? false],
+      isActive: [lesson?.isActive ?? true],
+      duration: [lesson?.duration ?? 0],
+      videos: [lesson?.videos || []],
+      documents: [lesson?.documents || []]
     });
   }
 
-  // Unit Management
   addUnit(): void {
-    const unitGroup = this.createUnitFormGroup();
-    
-    const newOrder = this.unitsFormArray.length + 1;
-    unitGroup.patchValue({ 
-      order: newOrder,
-      subjectId: this.subjectData?.id || ''
-    });
-    
-    this.unitsFormArray.push(unitGroup);
+    const group = this.buildUnitGroup();
+    this.unitsFormArray.push(group);
+    const lessonsFa = group.get('lessons') as FormArray;
+    lessonsFa.push(this.buildLessonGroup({ order: 0 } as any));
     this.expandedUnit = this.unitsFormArray.length - 1;
-    
-    // Add first lesson automatically
-    this.addLesson(this.unitsFormArray.length - 1);
-  }
-
-  addUnitToForm(unit: Unit): void {
-    const unitGroup = this.createUnitFormGroup(unit);
-    this.unitsFormArray.push(unitGroup);
+    this.recalculateUnitOrders();
+    this.emitUnitsDeferred();
   }
 
   removeUnit(index: number): void {
     if (this.unitsFormArray.length <= 1) {
-      alert('يجب أن يحتوي الكورس على وحدة واحدة على الأقل');
+      alert('يجب أن تحتوي المادة على وحدة واحدة على الأقل');
       return;
     }
-
-    if (confirm('هل أنت متأكد من حذف هذه الوحدة؟ سيتم حذف جميع الدروس المرتبطة بها.')) {
-      this.unitsFormArray.removeAt(index);
-      this.reorderUnits();
-      
-      if (this.expandedUnit === index) {
-        this.expandedUnit = null;
-      } else if (this.expandedUnit !== null && this.expandedUnit > index) {
-        this.expandedUnit--;
-      }
-    }
+    if (!confirm('سيتم حذف الوحدة وجميع دروسها. هل أنت متأكد؟')) return;
+    this.unitsFormArray.removeAt(index);
+    if (this.expandedUnit === index) this.expandedUnit = null;
+    this.recalculateUnitOrders();
+    this.emitUnitsDeferred();
   }
 
-  // 🔄 SIMPLE REORDERING WITH BUTTONS
   moveUnitUp(index: number): void {
-    if (index > 0) {
-      const unitsArray = this.unitsFormArray;
-      const currentUnit = unitsArray.at(index);
-      const previousUnit = unitsArray.at(index - 1);
-      
-      // Swap positions
-      unitsArray.setControl(index, previousUnit);
-      unitsArray.setControl(index - 1, currentUnit);
-      
-      this.reorderUnits();
-      
-      // Update expanded unit index
-      if (this.expandedUnit === index) {
-        this.expandedUnit = index - 1;
-      } else if (this.expandedUnit === index - 1) {
-        this.expandedUnit = index;
-      }
-    }
+    if (index <= 0) return;
+    const ctrl = this.unitsFormArray.at(index);
+    this.unitsFormArray.removeAt(index);
+    this.unitsFormArray.insert(index - 1, ctrl);
+    this.expandedUnit = index - 1;
+    this.recalculateUnitOrders();
+    this.emitUnitsDeferred();
   }
 
   moveUnitDown(index: number): void {
-    if (index < this.unitsFormArray.length - 1) {
-      const unitsArray = this.unitsFormArray;
-      const currentUnit = unitsArray.at(index);
-      const nextUnit = unitsArray.at(index + 1);
-      
-      // Swap positions
-      unitsArray.setControl(index, nextUnit);
-      unitsArray.setControl(index + 1, currentUnit);
-      
-      this.reorderUnits();
-      
-      // Update expanded unit index
-      if (this.expandedUnit === index) {
-        this.expandedUnit = index + 1;
-      } else if (this.expandedUnit === index + 1) {
-        this.expandedUnit = index;
-      }
-    }
+    if (index >= this.unitsFormArray.length - 1) return;
+    const ctrl = this.unitsFormArray.at(index);
+    this.unitsFormArray.removeAt(index);
+    this.unitsFormArray.insert(index + 1, ctrl);
+    this.expandedUnit = index + 1;
+    this.recalculateUnitOrders();
+    this.emitUnitsDeferred();
   }
 
-  // Lesson Management
+  canMoveUnitUp(i: number): boolean { return i > 0; }
+  canMoveUnitDown(i: number): boolean { return i < this.unitsFormArray.length - 1; }
+
+  toggleUnitExpansion(i: number): void {
+    this.expandedUnit = this.expandedUnit === i ? null : i;
+  }
+
   addLesson(unitIndex: number): void {
-    const lessonsArray = this.getLessonsFormArray(unitIndex);
-    const lessonGroup = this.createLessonFormGroup();
-    
-    const lessonOrder = lessonsArray.length + 1;
-    const unitName = this.unitsFormArray.at(unitIndex).get('name')?.value || 'unit';
-    
-    lessonGroup.patchValue({ 
-      order: lessonOrder,
-      name: this.generateLessonName(`${unitName}-lesson-${lessonOrder}`),
-      academicYearId: this.academicYearId,
-      studentYearId: this.studentYearId
-    });
-    
-    lessonsArray.push(lessonGroup);
+    const fa = this.getLessonsFormArray(unitIndex);
+    const parentUnitId = (this.unitsFormArray.at(unitIndex) as FormGroup).get('id')?.value || '';
+    const newLesson = this.buildLessonGroup({ order: fa.length, unitId: parentUnitId } as any);
+    fa.push(newLesson);
+    this.recalculateLessonOrders(unitIndex);
+    this.emitUnitsDeferred();
   }
 
   removeLesson(unitIndex: number, lessonIndex: number): void {
-    const lessonsArray = this.getLessonsFormArray(unitIndex);
-    
-    if (lessonsArray.length <= 1) {
+    const fa = this.getLessonsFormArray(unitIndex);
+    if (fa.length <= 1) {
       alert('يجب أن تحتوي كل وحدة على درس واحد على الأقل');
       return;
     }
-
-    if (confirm('هل أنت متأكد من حذف هذا الدرس؟')) {
-      lessonsArray.removeAt(lessonIndex);
-      this.reorderLessons(unitIndex);
-    }
+    if (!confirm('هل تريد حذف هذا الدرس؟')) return;
+    fa.removeAt(lessonIndex);
+    this.recalculateLessonOrders(unitIndex);
+    this.emitUnitsDeferred();
   }
 
-  // 🔄 SIMPLE LESSON REORDERING WITH BUTTONS
-  moveLessonUp(unitIndex: number, lessonIndex: number): void {
-    if (lessonIndex > 0) {
-      const lessonsArray = this.getLessonsFormArray(unitIndex);
-      const currentLesson = lessonsArray.at(lessonIndex);
-      const previousLesson = lessonsArray.at(lessonIndex - 1);
-      
-      // Swap positions
-      lessonsArray.setControl(lessonIndex, previousLesson);
-      lessonsArray.setControl(lessonIndex - 1, currentLesson);
-      
-      this.reorderLessons(unitIndex);
-    }
+  onLessonUpdated(unitIndex: number, lessonIndex: number, updated: Lesson): void {
+    const fa = this.getLessonsFormArray(unitIndex);
+    const ctrl = fa.at(lessonIndex) as FormGroup;
+    const parentUnitId = (this.unitsFormArray.at(unitIndex) as FormGroup).get('id')?.value || '';
+    ctrl.patchValue({
+      ...updated,
+      unitId: updated.unitId || parentUnitId || updated.lectureId,
+      videos: updated.videos || [],
+      documents: updated.documents || []
+    }, { emitEvent: false });
+    this.emitUnitsDeferred();
   }
 
-  moveLessonDown(unitIndex: number, lessonIndex: number): void {
-    const lessonsArray = this.getLessonsFormArray(unitIndex);
-    if (lessonIndex < lessonsArray.length - 1) {
-      const currentLesson = lessonsArray.at(lessonIndex);
-      const nextLesson = lessonsArray.at(lessonIndex + 1);
-      
-      // Swap positions
-      lessonsArray.setControl(lessonIndex, nextLesson);
-      lessonsArray.setControl(lessonIndex + 1, currentLesson);
-      
-      this.reorderLessons(unitIndex);
-    }
-  }
-
-  // Helper Methods
-  private generateLessonName(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFFa-z0-9\s]/g, '')
-      .replace(/\s+/g, '-')
-      .trim();
-  }
-
-  onLessonTitleChange(unitIndex: number, lessonIndex: number): void {
-    const lessonForm = this.getLessonsFormArray(unitIndex).at(lessonIndex);
-    const title = lessonForm.get('title')?.value;
-    
-    if (title && !lessonForm.get('name')?.value) {
-      const generatedName = this.generateLessonName(title);
-      lessonForm.patchValue({ name: generatedName });
-    }
-  }
-
-  // Duration Conversion
-  updateLessonDuration(unitIndex: number, lessonIndex: number, event: Event): void {
-    const target = event.target as HTMLInputElement;
-    const minutes = +target.value;
-  
-  if (minutes && minutes > 0) {
-    const seconds = minutes * 60;
-    const lessonForm = this.getLessonsFormArray(unitIndex).at(lessonIndex);
-    lessonForm.patchValue({ duration: seconds });
-    }
-  }
-
-  getDurationInMinutes(seconds: number): number {
-    return Math.round(seconds / 60);
-  }
-
-  // Reordering
-  private reorderUnits(): void {
-    this.unitsFormArray.controls.forEach((control, index) => {
-      control.patchValue({ order: index + 1 });
+  private recalculateUnitOrders(): void {
+    this.unitsFormArray.controls.forEach((ctrl, idx) => {
+      ctrl.get('order')?.setValue(idx + 1, { emitEvent: false });
     });
   }
 
-  private reorderLessons(unitIndex: number): void {
-    const lessonsArray = this.getLessonsFormArray(unitIndex);
-    lessonsArray.controls.forEach((control, index) => {
-      control.patchValue({ order: index + 1 });
+  private recalculateLessonOrders(unitIndex: number): void {
+    const fa = this.getLessonsFormArray(unitIndex);
+    fa.controls.forEach((ctrl, idx) => {
+      ctrl.get('order')?.setValue(idx, { emitEvent: false });
     });
   }
 
-  // UI Interaction
-  toggleUnitExpansion(index: number): void {
-    this.expandedUnit = this.expandedUnit === index ? null : index;
+  get isUnitFieldInvalid(): (i: number, field: string) => boolean {
+    return (i: number, field: string) => {
+      const ctrl = (this.unitsFormArray.at(i) as FormGroup).get(field);
+      return !!ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched);
+    };
   }
 
-  // Validation
-  private validateForm(): void {
-    this.isFormValid = this.unitsForm.valid && this.unitsFormArray.length > 0;
-    
-    for (let i = 0; i < this.unitsFormArray.length; i++) {
-      const lessonsArray = this.getLessonsFormArray(i);
-      if (lessonsArray.length === 0) {
-        this.isFormValid = false;
-        break;
-      }
-    }
+  getFieldError(ctrl: any): string {
+    if (!ctrl?.errors) return '';
+    if (ctrl.errors['required']) return 'هذا الحقل مطلوب';
+    if (ctrl.errors['minlength']) return `الحد الأدنى ${ctrl.errors['minlength'].requiredLength} حروف`;
+    return 'قيمة غير صالحة';
   }
 
-  isUnitFieldInvalid(unitIndex: number, fieldName: string): boolean {
-    const field = this.unitsFormArray.at(unitIndex).get(fieldName);
-    return !!(field && field.invalid && (field.dirty || field.touched));
-  }
-
-  isLessonFieldInvalid(unitIndex: number, lessonIndex: number, fieldName: string): boolean {
-    const field = this.getLessonsFormArray(unitIndex).at(lessonIndex).get(fieldName);
-    return !!(field && field.invalid && (field.dirty || field.touched));
-  }
-
-  getFieldError(control: any): string {
-    if (control?.errors) {
-      if (control.errors['required']) return 'هذا الحقل مطلوب';
-      if (control.errors['minlength']) return `الحد الأدنى ${control.errors['minlength'].requiredLength} أحرف`;
-      if (control.errors['maxlength']) return `الحد الأقصى ${control.errors['maxlength'].requiredLength} حرف`;
-      if (control.errors['min']) return `القيمة يجب أن تكون أكبر من ${control.errors['min'].min}`;
-    }
-    return '';
-  }
-
-  // Data Emission
-  private emitUnitsUpdate(): void {
-    if (this.unitsForm.valid) {
-      const formValue = this.unitsForm.value;
-      this.unitsUpdated.emit(formValue.units);
-    }
-  }
-
-  // Statistics
   getTotalLessons(): number {
-    return this.unitsFormArray.value.reduce((total: number, unit: any) => {
-      return total + (unit.lessons?.length || 0);
-    }, 0);
-  }
-
-  getTotalDuration(): number {
-    return this.unitsFormArray.value.reduce((total: number, unit: any) => {
-      return total + (unit.lessons?.reduce((unitTotal: number, lesson: any) => {
-        return unitTotal + (lesson.duration || 0);
-      }, 0) || 0);
+    return this.unitsFormArray.controls.reduce((acc, u) => {
+      const lessons = (u.get('lessons') as FormArray).length;
+      return acc + lessons;
     }, 0);
   }
 
   getUnitDuration(unitIndex: number): number {
-    const lessonsArray = this.getLessonsFormArray(unitIndex);
-    return lessonsArray.value.reduce((total: number, lesson: any) => {
-      return total + (lesson.duration || 0);
-    }, 0);
-  }
-
-  // Add these new methods to your existing component:
-
-// Get lesson type label
-getLessonTypeLabel(value: string): string {
-  const type = this.lessonTypes.find(t => t.value === value);
-  return type ? type.label : value;
-}
-
-// Get unit progress percentage
-getUnitProgress(unitIndex: number): number | null {
-  const unitForm = this.unitsFormArray.at(unitIndex);
-  const lessonsArray = this.getLessonsFormArray(unitIndex);
-  
-  if (lessonsArray.length === 0) return null;
-  
-  const completedFields = this.getCompletedFieldsCount(unitForm);
-  const totalFields = this.getTotalFieldsCount();
-  
-  return Math.round((completedFields / totalFields) * 100);
-}
-
-// Get completed fields count
-private getCompletedFieldsCount(form: any): number {
-  let count = 0;
-  if (form.get('name')?.value?.trim()) count++;
-  if (form.get('description')?.value?.trim()) count++;
-  
-  const lessonsArray = form.get('lessons') as FormArray;
-  lessonsArray.controls.forEach(lesson => {
-    if (lesson.get('title')?.value?.trim()) count++;
-    if (lesson.get('description')?.value?.trim()) count++;
-    if (lesson.get('duration')?.value > 0) count++;
-  });
-  
-  return count;
-}
-
-// Get total fields count
-private getTotalFieldsCount(): number {
-  return 2; // name + description per unit + 3 per lesson
-}
-
-// Get form status message
-getFormStatusMessage(): string {
-  if (this.isFormValid) {
-    return `جميع الوحدات والدروس مكتملة. المجموع: ${this.unitsFormArray.length} وحدة، ${this.getTotalLessons()} درس`;
-  }
-  
-  const incompleteUnits = this.unitsFormArray.controls.filter(unit => !unit.valid).length;
-  return `يوجد ${incompleteUnits} وحدة غير مكتملة. يرجى مراجعة البيانات المطلوبة.`;
-}
-
-// Enhanced validation for required fields
-hasRequiredFieldErrors(unitIndex: number, lessonIndex?: number): boolean {
-  if (lessonIndex !== undefined) {
-    const lesson = this.getLessonsFormArray(unitIndex).at(lessonIndex);
-    return !lesson.get('title')?.value?.trim() || !lesson.get('description')?.value?.trim();
-  } else {
-    const unit = this.unitsFormArray.at(unitIndex);
-    return !unit.get('name')?.value?.trim() || !unit.get('description')?.value?.trim();
-  }
-}
-
-// Auto-save functionality (optional)
-enableAutoSave(): void {
-  this.unitsForm.valueChanges
-    .pipe(
-      takeUntil(this.destroy$),
-      debounceTime(2000), // Save after 2 seconds of no changes
-      distinctUntilChanged()
-    )
-    .subscribe(() => {
-      if (this.unitsForm.valid) {
-        // Auto-save logic here
-        console.log('Auto-saving...');
-      }
-    });
-}
-
-  formatDuration(seconds: number): string {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
-    if (hours > 0) {
-      return `${hours}س ${minutes}د`;
+    const fa = this.getLessonsFormArray(unitIndex);
+    return fa.controls.reduce((acc, l) => acc + (l.get('duration')?.value || 0), 0);
     }
-    return `${minutes}د`;
+
+  getTotalDuration(): number {
+    return this.unitsFormArray.controls.reduce(
+      (acc, u, idx) => acc + this.getUnitDuration(idx),
+      0
+    );
   }
 
-  // 🎯 UTILITY METHODS FOR BUTTON STATES
-  canMoveUnitUp(index: number): boolean {
-    return index > 0;
+  getUnitProgress(unitIndex: number): number | null {
+    const fa = this.getLessonsFormArray(unitIndex);
+    if (fa.length === 0) return null;
+    let valid = 0;
+    fa.controls.forEach(ctrl => {
+      const title = ctrl.get('title')?.value?.trim();
+      const desc = ctrl.get('description')?.value?.trim();
+      const lt = ctrl.get('lessonType')?.value;
+      const st = ctrl.get('sessionType')?.value;
+      const diff = ctrl.get('difficulty')?.value;
+      if (title && desc && lt && st && diff) valid++;
+    });
+    return Math.round((valid / fa.length) * 100);
   }
 
-  canMoveUnitDown(index: number): boolean {
-    return index < this.unitsFormArray.length - 1;
+  getFormStatusMessage(): string {
+    if (this.isFormValid) return 'جميع الوحدات والدروس مكتملة';
+    if (this.unitsFormArray.length === 0) return 'أضف وحدة واحدة على الأقل';
+    const emptyUnits = this.unitsFormArray.controls.filter(u => {
+      const lessons = u.get('lessons') as FormArray;
+      return lessons.length === 0;
+    }).length;
+    if (emptyUnits > 0) return `هناك ${emptyUnits} وحدة بلا دروس`;
+    return 'يرجى استكمال بيانات بعض الدروس';
   }
 
-  canMoveLessonUp(unitIndex: number, lessonIndex: number): boolean {
-    return lessonIndex > 0;
+  get isFormValid(): boolean {
+    if (this.unitsFormArray.length === 0) return false;
+    return this.unitsFormArray.controls.every(u => {
+      const lessons = u.get('lessons') as FormArray;
+      return u.valid &&
+        lessons.length > 0 &&
+        lessons.controls.every(l => {
+          const title = l.get('title')?.value?.trim();
+          const desc = l.get('description')?.value?.trim();
+          const lt = l.get('lessonType')?.value;
+          const st = l.get('sessionType')?.value;
+          const diff = l.get('difficulty')?.value;
+          return title && desc && lt && st && diff;
+        });
+    });
   }
 
-  canMoveLessonDown(unitIndex: number, lessonIndex: number): boolean {
-    const lessonsArray = this.getLessonsFormArray(unitIndex);
-    return lessonIndex < lessonsArray.length - 1;
+  private emitUnitsDeferred(): void {
+    const value: Unit[] = this.unitsFormArray.controls.map((unitCtrl) => {
+      const uVal = unitCtrl.value as Unit;
+      const ensuredLessons = (uVal.lessons || []).map((l: any) => ({
+        ...l,
+        unitId: l.unitId || uVal.id || l.lectureId,
+        videos: Array.isArray(l.videos) ? l.videos : [],
+        documents: Array.isArray(l.documents) ? l.documents : []
+      }));
+      return { ...uVal, lessons: ensuredLessons };
+    });
+
+    Promise.resolve().then(() => this.unitsUpdated.emit(value));
+  }
+  formatDuration(seconds: number): string {
+    const h = Math.floor((seconds || 0) / 3600);
+    const m = Math.floor(((seconds || 0) % 3600) / 60);
+    if (h > 0) return `${h}س ${m}د`;
+    return `${m}د`;
   }
 
-  onLessonUpdated(unitIndex: number, lessonIndex: number, updatedLesson: Lesson): void {
-  const lessonsArray = this.getLessonsFormArray(unitIndex);
-  lessonsArray.at(lessonIndex).patchValue(updatedLesson);
-}
+  trackByUnit = (_: number, unitGroup: FormGroup) =>
+    unitGroup.get('id')?.value || unitGroup.get('name')?.value || _;
+  trackByLesson = (_: number, lessonGroup: FormGroup) =>
+    lessonGroup.get('id')?.value || lessonGroup.get('title')?.value || _;
 }

@@ -55,6 +55,16 @@ const routes: Routes = [
         loadChildren: () => import('./features/home/home.module').then(m => m.HomeModule)
       },
 
+      { 
+        path: 'about', 
+        loadChildren: () => import('./features/about/about.module').then(m => m.AboutModule)
+      },
+      
+      {
+        path: 'support',
+        loadChildren: () => import('./features/support/support.module').then(m => m.SupportModule),
+        canActivate: [AuthGuard] // Require any logged-in user (no specific role)
+      },
       // Protected user routes (for public course browsing)
       { 
         path: 'courses', 

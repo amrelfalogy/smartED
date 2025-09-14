@@ -5,59 +5,59 @@
   </div>
 
   <form [formGroup]="subjectForm" class="subject-form">
-    <!-- Subject Name and Order -->
     <div class="row">
       <div class="col-md-8">
         <div class="form-group">
-          <label for="name" class="form-label">
-            اسم المادة <span class="required">*</span>
-          </label>
+          <label class="form-label">اسم المادة <span class="required">*</span></label>
           <input
             type="text"
-            id="name"
             class="form-control"
             formControlName="name"
-            placeholder="مثال: الرياضيات للصف الأول الثانوي"
+            placeholder="مثال: الرياضيات"
             [class.is-invalid]="isFieldInvalid('name')"
-          >
+          />
           <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
             {{ getFieldError('name') }}
           </div>
         </div>
       </div>
-      <div class="col-md-4">
+
+      <div class="col-md-2">
         <div class="form-group">
-          <label for="order" class="form-label">
-            ترتيب المادة <span class="required">*</span>
-          </label>
+          <label class="form-label">ترتيب <span class="required">*</span></label>
           <input
             type="number"
-            id="order"
             class="form-control"
             formControlName="order"
             min="1"
-            placeholder="1"
             [class.is-invalid]="isFieldInvalid('order')"
-          >
+          />
           <div class="invalid-feedback" *ngIf="isFieldInvalid('order')">
             {{ getFieldError('order') }}
           </div>
-          <small class="form-text">ترتيب ظهور المادة في القائمة</small>
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <div class="form-group">
+          <label class="form-label">الحالة</label>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge" [ngClass]="(subjectData.status || 'draft') === 'published' ? 'bg-success' : 'bg-secondary'">
+              {{ (subjectData.status || 'draft') === 'published' ? 'منشورة' : 'مسودة' }}
+            </span>
+            <small class="text-muted">* يتم النشر من خطوة المراجعة</small>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Subject Description -->
     <div class="form-group">
-      <label for="description" class="form-label">
-        وصف المادة <span class="required">*</span>
-      </label>
+      <label class="form-label">وصف المادة <span class="required">*</span></label>
       <textarea
-        id="description"
         class="form-control"
         formControlName="description"
         rows="4"
-        placeholder="وصف مفصل عن محتوى المادة والأهداف التعليمية..."
+        placeholder="وصف مفصل عن المادة..."
         [class.is-invalid]="isFieldInvalid('description')"
       ></textarea>
       <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
@@ -68,209 +68,137 @@
       </div>
     </div>
 
-    <!-- Difficulty Level -->
-    <div class="form-group">
-      <label class="form-label">
-        مستوى الصعوبة <span class="required">*</span>
-      </label>
-      <div class="difficulty-options">
-        <div
-          *ngFor="let option of difficultyOptions"
-          class="difficulty-option"
-          [class.selected]="subjectForm.get('difficulty')?.value === option.value"
-          (click)="subjectForm.patchValue({difficulty: option.value})"
-        >
-          <div class="option-header">
-            <span class="option-label">{{ option.label }}</span>
-          </div>
-          <p class="option-description">{{ option.description }}</p>
-        </div>
-      </div>
-      <div class="invalid-feedback" *ngIf="isFieldInvalid('difficulty')">
-        {{ getFieldError('difficulty') }}
-      </div>
-    </div>
+    <!-- Difficulty and Duration are hidden in UI; we still keep them in the form with defaults -->
+    <input type="hidden" formControlName="difficulty" />
+    <input type="hidden" formControlName="duration" />
 
-    <!-- Duration -->
     <div class="form-group">
-      <label for="duration" class="form-label">
-        مدة الكورس <span class="required">*</span>
-      </label>
-      <select
-        id="duration"
-        class="form-select"
-        formControlName="duration"
-        [class.is-invalid]="isFieldInvalid('duration')"
-      >
-        <option value="">اختر مدة الكورس</option>
-        <option *ngFor="let duration of durationOptions" [value]="duration">
-          {{ duration }}
-        </option>
-      </select>
-      <div class="invalid-feedback" *ngIf="isFieldInvalid('duration')">
-        {{ getFieldError('duration') }}
-      </div>
-      <small class="form-text">المدة التقديرية لإكمال جميع دروس المادة</small>
-    </div>
+      <label class="form-label">صورة المادة <span class="required">*</span></label>
 
-    <!-- Subject Image -->
-    <div class="form-group">
-      <label class="form-label">
-        صورة المادة <span class="required">*</span>
-      </label>
-
-      <!-- ✅ Input Mode Toggle -->
-      <div class="image-input-toggle" *ngIf="!imagePreview">
-        <div class="toggle-buttons">
+      <div class="image-input-toggle" *ngIf="!imagePreview && !isUploading">
+        <div class="toggle-buttons" role="tablist">
           <button
             type="button"
             class="btn btn-sm"
             [class.btn-primary]="imageInputMode === 'upload'"
             [class.btn-outline-secondary]="imageInputMode !== 'upload'"
-            (click)="imageInputMode = 'upload'"
-          >
-            <i class="pi pi-upload"></i>
-            رفع صورة
+            (click)="imageInputMode = 'upload'">
+            <i class="pi pi-upload me-1"></i> رفع
           </button>
           <button
             type="button"
             class="btn btn-sm"
             [class.btn-primary]="imageInputMode === 'url'"
             [class.btn-outline-secondary]="imageInputMode !== 'url'"
-            (click)="imageInputMode = 'url'"
-          >
-            <i class="pi pi-link"></i>
-            رابط صورة
+            (click)="imageInputMode = 'url'">
+            <i class="pi pi-link me-1"></i> رابط
           </button>
         </div>
       </div>
 
       <div class="image-section">
-        <!-- ✅ Image Preview (always shown if exists) -->
         <div class="image-preview" *ngIf="imagePreview">
-          <img [src]="imagePreview" alt="معاينة الصورة" class="preview-image" />
+          <img [src]="imagePreview" alt="معاينة" class="preview-image" />
           <div class="image-overlay">
             <div class="image-info">
               <span class="image-source">
                 <i class="pi pi-upload" *ngIf="imageInputMode === 'upload'"></i>
                 <i class="pi pi-link" *ngIf="imageInputMode === 'url'"></i>
-                {{ imageInputMode === 'upload' ? 'صورة مرفوعة' : 'رابط صورة' }}
+                {{ imageInputMode === 'upload' ? 'مرفوعة' : 'رابط' }}
               </span>
             </div>
             <div class="image-actions">
+              <input
+                #replaceInput
+                type="file"
+                accept="image/*"
+                class="d-none"
+                (change)="onImageSelected($event)"
+                [disabled]="isUploading || imageInputMode !== 'upload'"
+              />
               <button
                 type="button"
                 class="btn btn-sm btn-outline-light"
-                (click)="toggleImageInputMode()"
-                title="تغيير طريقة الإدخال"
-                [disabled]="isUploading"
-              >
+                (click)="imageInputMode === 'upload' ? replaceInput.click() : null"
+                [disabled]="isUploading || imageInputMode !== 'upload'"
+                title="استبدال">
                 <i class="pi pi-refresh"></i>
               </button>
               <button
                 type="button"
+                class="btn btn-sm btn-outline-light"
+                (click)="toggleImageInputMode()"
+                [disabled]="isUploading"
+                title="تبديل الوضع">
+                <i class="pi pi-exchange"></i>
+              </button>
+              <a class="btn btn-sm btn-outline-light" [href]="imagePreview" target="_blank" rel="noopener" title="فتح">
+                <i class="pi pi-external-link"></i>
+              </a>
+              <button
+                type="button"
                 class="btn btn-sm btn-danger"
                 (click)="removeImage()"
-                title="حذف الصورة"
                 [disabled]="isUploading"
-              >
+                title="حذف">
                 <i class="pi pi-trash"></i>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- ✅ Upload Area (shown only for upload mode, no image, not uploading) -->
-        <div class="upload-area" *ngIf="!imagePreview && !isUploading && imageInputMode === 'upload'">
-          <label class="upload-content" for="subject-image-upload">
+        <div class="upload-area" *ngIf="!imagePreview && imageInputMode === 'upload' && !isUploading">
+          <label class="upload-content">
             <div class="upload-icon">
               <i class="pi pi-cloud-upload"></i>
             </div>
             <div class="upload-text">
               <p class="upload-title">انقر لرفع صورة</p>
-              <p class="upload-subtitle">JPG, PNG, GIF - حد أقصى 5 ميجابايت</p>
+              <p class="upload-subtitle">
+                <span>JPG/PNG</span><span>•</span><span>حد أقصى 5MB</span>
+              </p>
             </div>
-            <input
-              type="file"
-              id="subject-image-upload"
-              class="file-input"
-              accept="image/*"
-              (change)="onImageSelected($event)"
-              [disabled]="isUploading"
-              hidden
-            />
+            <input type="file" accept="image/*" (change)="onImageSelected($event)" hidden />
           </label>
         </div>
 
-        <!-- ✅ URL Input (shown only for URL mode and no image) -->
-        <div class="url-input-section" *ngIf="!imagePreview && imageInputMode === 'url'">
-          <input
-            type="url"
-            id="imageUrl"
-            class="form-control"
-            formControlName="imageUrl"
-            placeholder="https://example.com/image.jpg"
-            (input)="onImageUrlChange($event)"
-            [class.is-invalid]="isFieldInvalid('imageUrl')"
-          />
+        <div class="url-input-section" *ngIf="!imagePreview && imageInputMode === 'url' && !isUploading">
+          <div class="input-group">
+            <input
+              type="url"
+              class="form-control"
+              formControlName="imageUrl"
+              placeholder="https://example.com/image.jpg"
+              (blur)="onImageUrlChange($event)"
+              [class.is-invalid]="isFieldInvalid('imageUrl')"
+            />
+            <span class="input-group-text">
+              <i class="pi pi-link"></i>
+            </span>
+          </div>
           <div class="invalid-feedback" *ngIf="isFieldInvalid('imageUrl')">
             {{ getFieldError('imageUrl') }}
           </div>
-          <small class="form-text">
-            <i class="pi pi-info-circle"></i>
-            أدخل رابط صورة صحيح (https://...)
-          </small>
         </div>
 
-        <!-- ✅ Upload Progress (shown only during upload) -->
         <div class="upload-progress" *ngIf="isUploading">
           <div class="progress-info">
-            <i class="pi pi-spinner pi-spin"></i>
-            <span>جاري رفع الصورة...</span>
+            <i class="pi pi-spinner pi-spin"></i> جاري الرفع...
           </div>
           <div class="progress-bar">
-            <div
-              class="progress-fill"
-              [style.width.%]="uploadProgress"
-            ></div>
+            <div class="progress-fill" [style.width.%]="uploadProgress"></div>
           </div>
           <p class="progress-text">{{ uploadProgress }}%</p>
         </div>
-
-        <!-- ✅ Image Validation Error -->
-        <div class="image-error" *ngIf="isFieldInvalid('imageUrl')">
-          <div class="alert alert-danger">
-            <i class="pi pi-exclamation-triangle"></i>
-            {{ getFieldError('imageUrl') }}
-          </div>
-        </div>
       </div>
     </div>
-      
-     
   </form>
 
-  <!-- Form Status -->
   <div class="form-status">
     <div class="status-indicator" [class.valid]="isFormValid">
       <i class="pi pi-check-circle" *ngIf="isFormValid"></i>
       <i class="pi pi-exclamation-circle" *ngIf="!isFormValid"></i>
-      <span>
-        {{ isFormValid ? 'معلومات المادة مكتملة' : 'يرجى إكمال المعلومات المطلوبة' }}
-      </span>
-    </div>
-    
-    <!-- Current Selection Summary -->
-    <div class="selection-summary" *ngIf="selectedDifficulty">
-      <div class="summary-item">
-        <span class="summary-label">المستوى المحدد:</span>
-        <div class="summary-value">
-          <i class="material-icons" [style.color]="selectedDifficulty.color">
-            {{ selectedDifficulty.icon }}
-          </i>
-          {{ selectedDifficulty.label }}
-        </div>
-      </div>
+      <span>{{ isFormValid ? 'معلومات المادة مكتملة' : 'يرجى استكمال المعلومات المطلوبة' }}</span>
     </div>
   </div>
 </div>

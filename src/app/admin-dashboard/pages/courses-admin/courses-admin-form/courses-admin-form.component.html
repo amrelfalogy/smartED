@@ -1,5 +1,4 @@
 <div class="courses-admin-form">
-  <!-- Header -->
   <div class="form-header">
     <div class="header-content">
       <h2>{{ isEdit ? 'تعديل الكورس' : 'إنشاء كورس جديد' }}</h2>
@@ -7,23 +6,18 @@
         قم بإنشاء كورس تعليمي متكامل مع المواد والوحدات والدروس
       </p>
     </div>
-    
-    <!-- Progress Bar -->
+
     <div class="progress-section">
       <div class="progress-bar">
-        <div 
-          class="progress-fill" 
-          [style.width.%]="progressPercentage"
-        ></div>
+        <div class="progress-fill" [style.width.%]="progressPercentage"></div>
       </div>
       <span class="progress-text">{{ progressPercentage.toFixed(0) }}% مكتمل</span>
     </div>
   </div>
 
-  <!-- Steps Navigation -->
   <div class="steps-nav">
-    <div 
-      *ngFor="let step of formState.steps" 
+    <div
+      *ngFor="let step of formState.steps"
       class="step-item"
       [class.active]="formState.currentStep === step.id"
       [class.completed]="step.isCompleted"
@@ -41,21 +35,15 @@
     </div>
   </div>
 
-  <!-- Loading State -->
   <div *ngIf="isLoading" class="loading-container">
     <div class="spinner"></div>
     <p>جاري تحميل بيانات الكورس...</p>
   </div>
 
-  <!-- Form Content -->
   <div class="form-content" *ngIf="!isLoading">
-    
-    <!-- Step 1: Subject Information -->
+    <!-- Step 1 -->
     <div *ngIf="formState.currentStep === 1" class="step-content">
-
-        <!-- Academic Year Selection -->
       <div class="academic-selection">
-        <!-- Loading State for Academic Data -->
         <div *ngIf="isLoadingAcademicData" class="academic-loading">
           <div class="loading-container">
             <div class="spinner"></div>
@@ -63,133 +51,104 @@
           </div>
         </div>
 
-        <!-- Academic Selection Content (shown when loaded) -->
         <div *ngIf="!isLoadingAcademicData && academicDataLoaded" class="academic-content">
-          <!-- Show content if academic years are available -->
           <div *ngIf="academicYears.length > 0" class="academic-form">
             <div class="academic-header">
               <h4>إعدادات السنة الدراسية</h4>
-              <p>اختر السنة الدراسية وصف الطلاب لربط الدروس بها</p>
+              <p>اختر السنة الدراسية وصف الطلاب لربط المادة بها</p>
             </div>
-            
+
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
                   <label class="form-label">السنة الدراسية <span class="required">*</span></label>
-                  <select 
+                  <select
                     class="form-select"
-                    [value]="selectedAcademicYear?.id || ''"
-                    (change)="onAcademicYearChanged($event)"
+                    [(ngModel)]="selectedAcademicYearId"
+                    (ngModelChange)="onAcademicYearIdChange($event)"
                     [disabled]="isLoadingStudentYears"
                   >
                     <option value="">اختر السنة الدراسية</option>
-                    <option *ngFor="let year of academicYears" [value]="year.id">
-                      {{ year.name }}
-                    </option>
+                    <option *ngFor="let ay of academicYears" [value]="ay.id">{{ ay.name }}</option>
                   </select>
                 </div>
               </div>
+
               <div class="col-md-6">
                 <div class="form-group">
                   <label class="form-label">صف الطلاب <span class="required">*</span></label>
-                  
-                  <!-- Loading state for student years only -->
                   <div *ngIf="isLoadingStudentYears" class="student-year-loading">
                     <div class="form-select disabled">
                       <i class="pi pi-spinner pi-spin me-2"></i>
-                      جاري تحميل صفوف الطلاب...
+                      جاري التحميل...
                     </div>
                   </div>
-                  
-                  <!-- Student year select (shown when not loading) -->
-                  <select 
+                  <select
                     *ngIf="!isLoadingStudentYears"
                     class="form-select"
-                    [value]="selectedStudentYear?.id || ''"
-                    (change)="onStudentYearChanged($event)"
-                    [disabled]="!selectedAcademicYear"
+                    [(ngModel)]="selectedStudentYearId"
+                    (ngModelChange)="onStudentYearIdChange($event)"
+                    [disabled]="!selectedAcademicYearId"
                   >
                     <option value="">
-                      {{ selectedAcademicYear ? 'اختر صف الطلاب' : 'اختر السنة الدراسية أولاً' }}
+                      {{ selectedAcademicYearId ? 'اختر صف الطلاب' : 'اختر السنة الدراسية أولاً' }}
                     </option>
-                    <option *ngFor="let studentYear of studentYears" [value]="studentYear.id">
-                      {{ studentYear.name }}
-                    </option>
+                    <option *ngFor="let sy of studentYears" [value]="sy.id">{{ sy.name }}</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            <!-- Selection Summary -->
             <div *ngIf="selectedAcademicYear && selectedStudentYear" class="selection-summary">
               <div class="alert alert-info">
                 <i class="pi pi-info-circle me-2"></i>
                 <strong>الاختيار الحالي:</strong>
-                {{ selectedAcademicYear.displayName || selectedAcademicYear.name }} - 
-                {{ selectedStudentYear.displayName || selectedStudentYear.name }}
+                {{ selectedAcademicYear.name }} - {{ selectedStudentYear.name }}
               </div>
             </div>
           </div>
 
-          <!-- Show message when no academic years available -->
           <div *ngIf="academicYears.length === 0" class="no-academic-data">
             <div class="alert alert-warning">
               <i class="pi pi-exclamation-triangle me-2"></i>
-              <strong>تنبيه:</strong> لا توجد سنوات دراسية متاحة حالياً. 
-              يمكنك المتابعة لإنشاء المادة وربطها لاحقاً بالسنة الدراسية.
+              <strong>تنبيه:</strong> لا توجد سنوات دراسية متاحة حالياً.
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ✅ UPDATED: Pass academic year data to child component -->
-      <div *ngIf="!isLoadingAcademicData && academicDataLoaded">
-        <app-subject-section
-          [subjectData]="courseData.subject"
-          [isEdit]="isEdit"
-          [selectedAcademicYearId]="selectedAcademicYear?.id || null"
-          [selectedStudentYearId]="selectedStudentYear?.id || null"
-          (subjectUpdated)="onSubjectUpdated($event)"
-        ></app-subject-section>
-      </div>
+      <app-subject-section
+        *ngIf="!isLoadingAcademicData && academicDataLoaded"
+        [subjectData]="courseData.subject"
+        [isEdit]="isEdit"
+        [selectedAcademicYearId]="selectedAcademicYearId || null"
+        [selectedStudentYearId]="selectedStudentYearId || null"
+        (subjectUpdated)="onSubjectUpdated($event)"
+      ></app-subject-section>
     </div>
 
-    <!-- Step 2: Units and Lessons -->
+    <!-- Step 2 -->
     <div *ngIf="formState.currentStep === 2" class="step-content">
       <app-units-section
         [units]="courseData.units"
         [subjectData]="courseData.subject"
-        [academicYearId]="selectedAcademicYear?.id || ''"
-        [studentYearId]="selectedStudentYear?.id ?? ''"
         (unitsUpdated)="onUnitsUpdated($event)"
       ></app-units-section>
     </div>
 
-    <!-- Step 3: Review and Publish -->
+    <!-- Step 3 -->
     <div *ngIf="formState.currentStep === 3" class="step-content">
       <div class="review-section">
         <h3>مراجعة الكورس</h3>
-        
-        <!-- Subject Summary -->
+
         <div class="review-card">
           <h4>معلومات المادة</h4>
           <div class="summary-grid">
-            <div class="summary-item">
-              <label>اسم المادة:</label>
-              <span>{{ courseData.subject.name }}</span>
-            </div>
-            <div class="summary-item">
-              <label>المستوى:</label>
-              <span>{{ courseData.subject.difficulty }}</span>
-            </div>
-            <div class="summary-item">
-              <label>المدة:</label>
-              <span>{{ courseData.subject.duration }}</span>
-            </div>
-            <div class="summary-item">
-              <label>الترتيب:</label>
-              <span>{{ courseData.subject.order }}</span>
-            </div>
+            <div class="summary-item"><label>الاسم:</label><span>{{ courseData.subject.name }}</span></div>
+            <div class="summary-item"><label>المستوى:</label><span>{{ courseData.subject.difficulty }}</span></div>
+            <div class="summary-item"><label>المدة:</label><span>{{ courseData.subject.duration }}</span></div>
+            <div class="summary-item"><label>الحالة:</label><span>{{ courseData.subject.status || 'draft' }}</span></div>
+            <div class="summary-item"><label>الترتيب:</label><span>{{ courseData.subject.order }}</span></div>
           </div>
           <div class="summary-description">
             <label>الوصف:</label>
@@ -197,53 +156,49 @@
           </div>
         </div>
 
-        <!-- Units and Lessons Summary -->
         <div class="review-card">
           <h4>الوحدات والدروس</h4>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <i class="pi pi-bookmark-fill"></i>
-              <span class="stat-number">{{ courseData.units.length }}</span>
-              <span class="stat-label">وحدة</span>
-            </div>
-            <div class="stat-item">
-              <i class="pi pi-play-circle"></i>
-              <span class="stat-number">{{ courseData.totalLessons }}</span>
-              <span class="stat-label">درس</span>
-            </div>
-            <div class="stat-item">
-              <i class="pi pi-clock"></i>
-              <span class="stat-number">{{ formatDuration(courseData.totalDuration) }}</span>
-              <span class="stat-label">إجمالي المدة</span>
-            </div>
-          </div>
-
-          <!-- Units List -->
-          <div class="units-review">
-            <div *ngFor="let unit of courseData.units; let i = index" class="unit-review">
-              <h5>{{ i + 1 }}. {{ unit.name }}</h5>
-              <p>{{ unit.description }}</p>
-              <div class="lessons-count">
-                <i class="pi pi-video"></i>
-                {{ unit.lessons?.length || 0 }} دروس
+            <div class="stats-grid">
+              <div class="stat-item">
+                <i class="pi pi-bookmark-fill"></i>
+                <span class="stat-number">{{ courseData.units.length }}</span>
+                <span class="stat-label">وحدة</span>
               </div>
-              
-              <!-- Lessons preview -->
-              <div class="lessons-preview" *ngIf="unit.lessons && unit.lessons.length > 0">
-                <div *ngFor="let lesson of unit.lessons" class="lesson-preview">
-                  <i class="pi pi-play"></i>
-                  <span>{{ lesson.title }}</span>
-                  <span class="lesson-duration">({{ formatDuration(lesson.duration) }})</span>
+              <div class="stat-item">
+                <i class="pi pi-play-circle"></i>
+                <span class="stat-number">{{ courseData.totalLessons }}</span>
+                <span class="stat-label">درس</span>
+              </div>
+              <div class="stat-item">
+                <i class="pi pi-clock"></i>
+                <span class="stat-number">{{ formatDuration(courseData.totalDuration) }}</span>
+                <span class="stat-label">المدة الإجمالية</span>
+              </div>
+            </div>
+
+            <div class="units-review">
+              <div *ngFor="let unit of courseData.units; let i = index" class="unit-review">
+                <h5>{{ i + 1 }}. {{ unit.name }}</h5>
+                <p>{{ unit.description }}</p>
+                <div class="lessons-count">
+                  <i class="pi pi-video"></i>
+                  {{ unit.lessons?.length || 0 }} دروس
+                </div>
+                <div class="lessons-preview" *ngIf="unit.lessons?.length">
+                  <div *ngFor="let lesson of unit.lessons" class="lesson-preview">
+                    <i class="pi pi-play"></i>
+                    <span>{{ lesson.title }}</span>
+                    <span class="lesson-duration">({{ formatDuration(lesson.duration || 0) }})</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
         </div>
+
       </div>
     </div>
   </div>
 
-  <!-- Messages -->
   <div class="messages-container">
     <div *ngIf="errorMsg" class="alert alert-danger">
       <i class="pi pi-exclamation-circle"></i>
@@ -255,68 +210,89 @@
     </div>
   </div>
 
-  <!-- Navigation Buttons -->
-  <div class="form-actions">
-    <div class="actions-left">
-      <button 
-        type="button" 
-        class="btn btn-outline-secondary"
-        (click)="cancel()"
-        [disabled]="isSaving"
-      >
-        <i class="pi pi-times"></i>
-        إلغاء
-      </button>
-    </div>
+<div class="form-actions">
+  <div class="actions-left">
+    <button type="button" class="btn btn-outline-secondary" (click)="cancel()" [disabled]="isSaving">
+      <i class="pi pi-times"></i>
+      إلغاء
+    </button>
+  </div>
 
-    <div class="actions-center">
-      <button 
-        type="button" 
-        class="btn btn-outline-primary"
-        (click)="previousStep()"
-        [disabled]="isFirstStep || isSaving"
-        *ngIf="!isFirstStep"
-      >
-        <i class="pi pi-arrow-right"></i>
-        السابق
-      </button>
+  <div class="actions-center">
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      (click)="previousStep()"
+      [disabled]="isFirstStep || isSaving"
+      *ngIf="!isFirstStep"
+    >
+      <i class="pi pi-arrow-right"></i>
+      السابق
+    </button>
 
-      <button 
-        type="button" 
-        class="btn btn-primary"
-        (click)="nextStep()"
-        [disabled]="!canGoNext || isSaving"
-        *ngIf="!isLastStep"
-      >
-        التالي
-        <i class="pi pi-arrow-left"></i>
-      </button>
-    </div>
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="nextStep()
+      "
+      [disabled]="!canGoNext || isSaving"
+      *ngIf="!isLastStep"
+    >
+      التالي
+      <i class="pi pi-arrow-left"></i>
+    </button>
+  </div>
 
-    <div class="actions-right">
-      <button 
-        type="button" 
+  <div class="actions-right" *ngIf="isLastStep">
+    <!-- If DRAFT: keep Save as Draft + Publish -->
+    <ng-container *ngIf="courseData.subject.status !== 'published'; else publishedActions">
+      <button
+        type="button"
         class="btn btn-outline-info"
         (click)="saveCourse()"
         [disabled]="!formState.isValid || isSaving"
-        *ngIf="isLastStep"
       >
         <i class="pi pi-save" *ngIf="!isSaving"></i>
         <i class="pi pi-spinner pi-spin" *ngIf="isSaving"></i>
         {{ isSaving ? 'جاري الحفظ...' : 'حفظ كمسودة' }}
       </button>
 
-      <button 
-        type="button" 
+      <button
+        type="button"
         class="btn btn-success"
         (click)="publishCourse()"
         [disabled]="!formState.isValid || isSaving"
-        *ngIf="isLastStep"
       >
         <i class="pi pi-globe" *ngIf="!isSaving"></i>
         <i class="pi pi-spinner pi-spin" *ngIf="isSaving"></i>
         {{ isSaving ? 'جاري النشر...' : 'نشر الكورس' }}
       </button>
-    </div>
+    </ng-container>
+
+    <!-- If PUBLISHED: show Save changes + Unpublish -->
+    <ng-template #publishedActions>
+      <button
+        type="button"
+        class="btn btn-success"
+        (click)="saveCourse()"
+        [disabled]="!formState.isValid || isSaving"
+      >
+        <i class="pi pi-check" *ngIf="!isSaving"></i>
+        <i class="pi pi-spinner pi-spin" *ngIf="isSaving"></i>
+        {{ isSaving ? 'جارِ حفظ التعديلات...' : 'حفظ التعديلات' }}
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-danger"
+        (click)="unpublishCourse()"
+        [disabled]="isSaving"
+      >
+        <i class="pi pi-eye-slash" *ngIf="!isSaving"></i>
+        <i class="pi pi-spinner pi-spin" *ngIf="isSaving"></i>
+        إلغاء النشر
+      </button>
+    </ng-template>
   </div>
+</div>
 </div>

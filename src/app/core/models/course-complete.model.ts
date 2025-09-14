@@ -5,18 +5,19 @@ export interface Subject {
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   duration: string;
   imageUrl: string;
-  image?: string | null;        // ✅ Add backend field
-  thumbnail?: string | null;    // ✅ Add backend field
-  status?: 'draft' | 'published'; // ✅ Add status tracking
-  isActive?: boolean;           // ✅ Add active status
-  academicYearId?: string;  // ✅ Add this
-  studentYearId?: string;   // ✅ Add this
-
   order: number;
-  createdAt?: string;           // ✅ Add timestamps
-  updatedAt?: string; 
 
- // Add missing properties for student dashboard
+  
+  academicYearId?: string;
+  studentYearId?: string;
+  status?: 'draft' | 'published';
+  isActive?: boolean;
+  image?: string | null;
+  thumbnail?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+
+  // Optional enrichment fields for UI
   instructorName?: string;
   instructorAvatar?: string;
   thumbnailUrl?: string;
@@ -24,7 +25,6 @@ export interface Subject {
   studentsCount?: number;
   rating?: number;
   price?: number;
-  
 }
 
 export interface Unit {
@@ -35,28 +35,8 @@ export interface Unit {
   order: number;
   lessons?: Lesson[];
   isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Lesson {
-  id?: string;
-  name: string; // URL-friendly name like "intro-to-variables"
-  title: string; // Display title
-  description: string;
-  lectureId: string; // This should match your Unit ID
-  duration: number; // Duration in seconds
-  lessonType: 'center_recorded' | 'studio_produced' | 'zoom' | 'document';
-  sessionType: 'recorded' | 'live';
-  academicYearId: string;
-  studentYearId: string;
-  isFree: boolean;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  order: number;
-  isActive?: boolean;
-  content?: LessonContent;
-  hasAccess?: boolean; // ✅ NEW: Access status
-  requiresPayment?: boolean; // ✅ NEW: Payment requirement
+  status?: 'draft' | 'published';
+  thumbnail?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -68,51 +48,62 @@ export interface LessonContent {
   attachments?: string[];
 }
 
-// ✅ NEW: Payment Plan Interface
-export interface PaymentPlan {
-  id: string;
-  name: string;
+export interface Lesson {
+  id?: string;
+  title: string;
   description: string;
-  price: string;
-  currency: string;
-  duration: number;
-  features: string[];
-  isPopular: boolean;
-  isActive: boolean;
+
+  // Backend uses unitId now (lectureId kept for backward compatibility when loading legacy data)
+  unitId?: string;
+  lectureId?: string;
+
+  duration?: number; // seconds
+  lessonType?: 'center_recorded' | 'studio_produced' | 'zoom' | 'document';
+  sessionType?: 'recorded' | 'live';
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
   order: number;
-  discountPercentage: string;
-  type?: string; // monthly, semester, annual
-  lessonType?: string; // center_recorded, studio_produced
-  createdAt: string;
-  updatedAt: string;
+
+  academicYearId?: string | null;
+  studentYearId?: string | null;
+
+  isFree?: boolean;
+  isActive?: boolean;
+  status?: 'draft' | 'published';
+  thumbnail?: string | null;
+
+  videos?: string[];     // required: at least one for non-document lessons
+  documents?: string[];
+  
+  hasAccess?: boolean;
+  requiresPayment?: boolean;
+  
+  createdAt?: string;
+  updatedAt?: string;
+}
+export interface CourseComplete {
+  subject: Subject;
+  units: Unit[];
+  totalLessons: number;
+  totalDuration: number;
+  status: 'draft' | 'published' | 'archived';
 }
 
-// ✅ NEW: Payment Plans Response
-export interface PaymentPlansResponse {
-  plans: PaymentPlan[];
+export interface CourseFormState {
+  currentStep: number;
+  steps: FormStep[];
+  isValid: boolean;
+  isDirty: boolean;
 }
 
-// ✅ NEW: Lesson Access Response
-export interface LessonAccess {
-  hasAccess: boolean;
-  requiresPayment: boolean;
-  message?: string;
-  planRequired?: string;
+export interface FormStep {
+  id: number;
+  title: string;
+  isCompleted: boolean;
+  isValid: boolean;
+  hasErrors: boolean;
 }
 
-// ✅ NEW: Create Payment Plan Request
-export interface CreatePaymentPlanRequest {
-  name: string;
-  description: string;
-  type: string;
-  lessonType: string;
-  price: number;
-  currency: string;
-  duration: number;
-  features: string[];
-}
-
-// ✅ NEW: Lesson Type Card
+// Payment & Plans (unchanged)
 export interface LessonTypeCard {
   id: string;
   title: string;
@@ -124,15 +115,96 @@ export interface LessonTypeCard {
   color: string;
 }
 
-export interface CourseComplete {
-  subject: Subject;
-  units: Unit[];
-  totalLessons: number;
-  totalDuration: number; // in seconds
-  status: 'draft' | 'published' | 'archived';
+export type PlanType = 'lesson' | 'monthly' | 'semester';
+export type LessonType = 'center_recorded' | 'studio_produced' | 'zoom' | 'document';
+export type PaymentMethod = 'vodafone_cash' | 'instapay';
+export type PaymentStatus = 'pending' | 'approved' | 'rejected';
+
+export interface PaymentPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: 'EGP';
+  duration: number; // days
+  features: string[];
+  isPopular: boolean;
+  isActive: boolean;
+  order: number;
+  discountPercentage: string;
+  type: PlanType;
+  lessonType?: Extract<LessonType, 'center_recorded' | 'studio_produced'>;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Add interfaces for student dashboard
+export interface PaymentPlansResponse {
+  plans: PaymentPlan[];
+}
+
+export interface LessonAccess {
+  hasAccess: boolean;
+  requiresPayment: boolean;
+  message?: string;
+  planRequired?: string;
+}
+
+export interface CreatePaymentPlanRequest {
+  name: string;
+  description: string;
+  type: PlanType;
+  lessonType?: Extract<LessonType, 'center_recorded' | 'studio_produced'>;
+  price: number;
+  currency: 'EGP';
+  duration: number;
+  features: string[];
+}
+
+export interface CreatePaymentRequest {
+  planId: string;
+  amount: number;
+  currency: 'EGP';
+  paymentMethod: PaymentMethod;
+  receiptUrl: string;
+  notes?: string;
+  lessonId?: string;
+  subjectId?: string;
+}
+
+export interface StudentPayment {
+  id: string;
+  status: PaymentStatus;
+  amount: number;
+  currency: 'EGP';
+  paymentMethod: PaymentMethod;
+  planType: PlanType;
+  subjectId?: string;
+  subjectName?: string;
+  lessonId?: string;
+  lessonTitle?: string;
+  receiptUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminPayment extends StudentPayment {
+  studentId?: string;
+  studentName?: string;
+  studentEmail?: string;
+  academicYearId?: string;
+  academicYearName?: string;
+  studentYearId?: string;
+  studentYearName?: string;
+  transactionReference?: string;
+}
+
+export interface PaymentStatsOverview {
+  stats: Array<{ planType: PlanType; count: number; revenue: number }>;
+  totalRevenue: number;
+  byMethod: Array<{ method: PaymentMethod; count: number; revenue: number }>;
+}
+
+
 export interface CourseProgress {
   courseId: string;
   courseName: string;
@@ -174,22 +246,6 @@ export interface ProgressStats {
   totalHoursStudied: number;
 }
 
-// Form state interfaces remain the same
-export interface CourseFormState {
-  currentStep: number;
-  steps: FormStep[];
-  isValid: boolean;
-  isDirty: boolean;
-}
-
-export interface FormStep {
-  id: number;
-  title: string;
-  isCompleted: boolean;
-  isValid: boolean;
-  hasErrors: boolean;
-}
-
 export interface Instructor {
   id: number;
   name: string;
@@ -201,15 +257,3 @@ export interface Instructor {
   department?: string;
 }
 
-export interface Course {
-  id: number;
-  image: string;
-  instructor: string;  // Instructor
-  instructorImg?: string; // Optional image for instructor
-  subject: string; //Type Subject commented till db integration
-  academicYear: string;
-  rating: number;
-  description?: string;
-  duration?: string;
-  studentsCount?: number;
-}

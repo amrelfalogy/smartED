@@ -1,16 +1,12 @@
 <div class="lesson-section" [class.expanded]="isExpanded">
-  
-  <!-- Lesson Header -->
   <div class="lesson-header" (click)="toggleExpansion()">
     <div class="lesson-info">
       <div class="lesson-number">{{ lessonIndex + 1 }}</div>
       <div class="lesson-details">
-        <h4 class="lesson-title">
-          {{ lessonForm.get('title')?.value || 'درس جديد' }}
-        </h4>
+        <h4 class="lesson-title">{{ lessonForm.get('title')?.value || 'درس جديد' }}</h4>
         <div class="lesson-meta">
           <span class="lesson-type" *ngIf="selectedLessonType">
-            <i class="pi" [class]="'fa-' + selectedLessonType.icon"></i>
+            <i class="pi" [style.color]="selectedLessonType.color"></i>
             {{ selectedLessonType.label }}
           </span>
           <span class="lesson-duration" *ngIf="lessonForm.get('duration')?.value">
@@ -18,7 +14,7 @@
             {{ formatDuration(lessonForm.get('duration')?.value) }}
           </span>
           <span class="lesson-difficulty" *ngIf="selectedDifficulty">
-            <i class="pi" [class]="'fa-' + selectedDifficulty.icon" [style.color]="selectedDifficulty.color"></i>
+            <i class="pi" [style.color]="selectedDifficulty.color"></i>
             {{ selectedDifficulty.label }}
           </span>
         </div>
@@ -26,457 +22,216 @@
     </div>
 
     <div class="lesson-actions" (click)="$event.stopPropagation()">
-      <button 
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        (click)="toggleExpansion()"
-        title="{{ isExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل' }}"
-      >
-        <i class="pi" [class.fa-chevron-up]="isExpanded" [class.fa-chevron-down]="!isExpanded"></i>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleExpansion()" title="{{ isExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل' }}">
+        <i class="pi" [ngClass]="isExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
       </button>
-      
-      <button 
-        type="button"
-        class="btn btn-sm btn-outline-danger"
-        (click)="deleteLesson()"
-        title="حذف الدرس"
-      >
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteLesson()" title="حذف الدرس">
         <i class="pi pi-trash"></i>
       </button>
     </div>
   </div>
 
-  <!-- Lesson Form (Expandable Content) -->
   <div class="lesson-content" *ngIf="isExpanded">
     <form [formGroup]="lessonForm" class="lesson-form">
-      
-      <!-- Hidden Fields -->
-      <input type="hidden" formControlName="id">
-      <input type="hidden" formControlName="lectureId">
-      <input type="hidden" formControlName="academicYearId">
-      <input type="hidden" formControlName="studentYearId">
-      <input type="hidden" formControlName="order">
+      <input type="hidden" formControlName="id" />
+      <input type="hidden" formControlName="unitId" />
+      <input type="hidden" formControlName="lectureId" />
+      <input type="hidden" formControlName="order" />
 
-      <!-- Basic Information -->
+      <!-- Basic info (unchanged) -->
       <div class="form-section">
         <h6 class="section-title">
           <i class="pi pi-info-circle"></i>
           معلومات أساسية
         </h6>
-        
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-12">
             <div class="form-group">
-              <label class="form-label">
-                عنوان الدرس <span class="required">*</span>
-              </label>
-              <input 
-                type="text"
-                class="form-control"
-                formControlName="title"
-                [class.is-invalid]="isFieldInvalid('title')"
-                placeholder="أدخل عنوان الدرس"
-              >
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('title')">
-                {{ getFieldError('title') }}
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="form-group">
-              <label class="form-label">
-                اسم الدرس (URL) <span class="required">*</span>
-              </label>
-              <input 
-                type="text"
-                class="form-control"
-                formControlName="name"
-                [class.is-invalid]="isFieldInvalid('name')"
-                placeholder="lesson-name"
-              >
-              <div class="form-text">سيتم إنشاؤه تلقائياً من العنوان</div>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
-                {{ getFieldError('name') }}
-              </div>
+              <label class="form-label">عنوان الدرس <span class="required">*</span></label>
+              <input type="text" class="form-control" formControlName="title" [class.is-invalid]="isFieldInvalid('title')" placeholder="أدخل عنوان الدرس" />
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('title')">{{ getFieldError('title') }}</div>
             </div>
           </div>
         </div>
 
-        <!-- Description -->
         <div class="form-group">
-          <label class="form-label">
-            وصف الدرس <span class="required">*</span>
-          </label>
-          <textarea 
-            class="form-control"
-            formControlName="description"
-            [class.is-invalid]="isFieldInvalid('description')"
-            placeholder="أدخل وصف مفصل للدرس وما سيتعلمه الطالب"
-            rows="4"
-          ></textarea>
-          <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
-            {{ getFieldError('description') }}
-          </div>
+          <label class="form-label">وصف الدرس <span class="required">*</span></label>
+          <textarea class="form-control" formControlName="description" rows="4" [class.is-invalid]="isFieldInvalid('description')" placeholder="وصف مفصل لمحتوى الدرس"></textarea>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">{{ getFieldError('description') }}</div>
         </div>
       </div>
 
-      <!-- Lesson Configuration -->
+      <!-- Settings (unchanged) -->
       <div class="form-section">
-        <h6 class="section-title">
-          <i class="pi pi-cog"></i>
-          إعدادات الدرس
-        </h6>
-        
+        <h6 class="section-title"><i class="pi pi-cog"></i> إعدادات الدرس</h6>
         <div class="row">
           <div class="col-md-3">
             <div class="form-group">
-              <label class="form-label">المدة (دقائق) <span class="required">*</span></label>
-              <input 
-                type="number"
-                class="form-control"
-                [value]="getDurationInMinutes()"
-                (input)="onDurationMinutesChange($event)"
-                [class.is-invalid]="isFieldInvalid('duration')"
-                min="1"
-                max="240"
-                placeholder="30"
-              >
-              <div class="form-text">
-                المدة: {{ formatDuration(lessonForm.get('duration')?.value || 0) }}
-              </div>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('duration')">
-                {{ getFieldError('duration') }}
-              </div>
+              <label class="form-label">المدة (ثواني)</label>
+              <input type="number" class="form-control" formControlName="duration" min="0" placeholder="0" />
+              <div class="form-text">يمكن تركها صفر واحتسابها لاحقاً</div>
             </div>
           </div>
-
           <div class="col-md-3">
             <div class="form-group">
               <label class="form-label">المستوى <span class="required">*</span></label>
-              <select 
-                class="form-select" 
-                formControlName="difficulty"
-                [class.is-invalid]="isFieldInvalid('difficulty')"
-              >
+              <select class="form-select" formControlName="difficulty" [class.is-invalid]="isFieldInvalid('difficulty')">
                 <option value="">اختر المستوى</option>
-                <option *ngFor="let option of difficultyOptions" [value]="option.value">
-                  {{ option.label }}
-                </option>
+                <option *ngFor="let d of difficultyOptions" [value]="d.value">{{ d.label }}</option>
               </select>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('difficulty')">
-                {{ getFieldError('difficulty') }}
-              </div>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('difficulty')">{{ getFieldError('difficulty') }}</div>
             </div>
           </div>
-
           <div class="col-md-3">
             <div class="form-group">
               <label class="form-label">نوع الجلسة <span class="required">*</span></label>
-              <select 
-                class="form-select" 
-                formControlName="sessionType"
-                [class.is-invalid]="isFieldInvalid('sessionType')"
-              >
+              <select class="form-select" formControlName="sessionType" [class.is-invalid]="isFieldInvalid('sessionType')">
                 <option value="">اختر نوع الجلسة</option>
-                <option *ngFor="let type of sessionTypes" [value]="type.value">
-                  {{ type.label }}
-                </option>
+                <option *ngFor="let st of sessionTypes" [value]="st.value">{{ st.label }}</option>
               </select>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('sessionType')">
-                {{ getFieldError('sessionType') }}
-              </div>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('sessionType')">{{ getFieldError('sessionType') }}</div>
             </div>
           </div>
-
           <div class="col-md-3">
             <div class="form-group">
               <label class="form-label">نوع الدرس <span class="required">*</span></label>
-              <select 
-                class="form-select" 
-                formControlName="lessonType"
-                [class.is-invalid]="isFieldInvalid('lessonType')"
-              >
+              <select class="form-select" formControlName="lessonType" [class.is-invalid]="isFieldInvalid('lessonType')">
                 <option value="">اختر نوع الدرس</option>
-                <option *ngFor="let type of lessonTypes" [value]="type.value">
-                  {{ type.label }}
-                </option>
+                <option *ngFor="let lt of lessonTypes" [value]="lt.value">{{ lt.label }}</option>
               </select>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('lessonType')">
-                {{ getFieldError('lessonType') }}
-              </div>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('lessonType')">{{ getFieldError('lessonType') }}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Lesson Type Details -->
-      <div class="form-section" *ngIf="selectedLessonType">
-        <h6 class="section-title">
-          <i class="pi pi-video"></i>
-          تفاصيل نوع الدرس
-        </h6>
-        
-        <div class="lesson-type-card">
-          <div class="lesson-type-info">
-            <div class="type-icon">
-              <i class="pi" [class]="'pi-' + selectedLessonType.icon" [style.color]="selectedLessonType.color"></i>
-            </div>
-            <div class="type-details">
-              <h6>{{ selectedLessonType.label }}</h6>
-              <p>{{ selectedLessonType.description }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content Section -->
-      <div class="form-section" formGroupName="content">
-        <h6 class="section-title">
-          <i class="pi pi-folder-open"></i>
-          محتوى الدرس
-        </h6>
-        
-        <!-- Video Upload -->
-        <div class="content-upload-section">
-          <label class="form-label">
-            <i class="pi pi-video"></i>
-            فيديو الدرس
-          </label>
-          
-          <div class="upload-area" [class.has-content]="hasVideoContent">
-            <div class="upload-input-group">
-              <input 
-                type="text"
-                class="form-control"
-                formControlName="videoUrl"
-                placeholder="رابط الفيديو سيظهر هنا بعد الرفع"
-                readonly
-              >
-              <button 
-                type="button"
-                class="btn btn-outline-primary"
-                (click)="videoInput.click()"
-                [disabled]="isUploading('video')"
-              >
-                <i class="pi pi-upload"></i>
-                رفع فيديو
-              </button>
-            </div>
-            
-            <input 
-              #videoInput
-              type="file"
-              accept="video/*"
-              style="display: none"
-              (change)="onFileSelected($event, 'video')"
-            >
-            
-            <!-- Upload Progress -->
-            <div class="upload-progress" *ngIf="isUploading('video')">
-              <div class="progress">
-                <div 
-                  class="progress-bar progress-bar-striped progress-bar-animated" 
-                  [style.width.%]="getUploadProgress('video')"
-                ></div>
-              </div>
-              <small>جاري رفع الفيديو: {{ getUploadProgress('video') }}%</small>
-            </div>
-
-            <!-- Video Status -->
-            <div class="content-status success" *ngIf="hasVideoContent && !isUploading('video')">
-              <i class="pi pi-check-circle"></i>
-              <span>تم رفع الفيديو بنجاح</span>
-              <button 
-                type="button" 
-                class="btn btn-sm btn-outline-danger"
-                (click)="removeFile('video')"
-              >
-                <i class="pi pi-times"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Document Upload -->
-        <div class="content-upload-section">
-          <label class="form-label">
-            <i class="pi pi-file-alt"></i>
-            المواد التعليمية
-          </label>
-          
-          <div class="upload-area" [class.has-content]="hasDocumentContent">
-            <div class="upload-input-group">
-              <input 
-                type="text"
-                class="form-control"
-                formControlName="documentUrl"
-                placeholder="رابط المستند سيظهر هنا بعد الرفع"
-                readonly
-              >
-              <button 
-                type="button"
-                class="btn btn-outline-secondary"
-                (click)="documentInput.click()"
-                [disabled]="isUploading('document')"
-              >
-                <i class="pi pi-file-upload"></i>
-                رفع مستند
-              </button>
-            </div>
-            
-            <input 
-              #documentInput
-              type="file"
-              accept=".pdf,.doc,.docx,.ppt,.pptx"
-              style="display: none"
-              (change)="onFileSelected($event, 'document')"
-            >
-            
-            <!-- Upload Progress -->
-            <div class="upload-progress" *ngIf="isUploading('document')">
-              <div class="progress">
-                <div 
-                  class="progress-bar progress-bar-striped progress-bar-animated" 
-                  [style.width.%]="getUploadProgress('document')"
-                ></div>
-              </div>
-              <small>جاري رفع المستند: {{ getUploadProgress('document') }}%</small>
-            </div>
-
-            <!-- Document Status -->
-            <div class="content-status success" *ngIf="hasDocumentContent && !isUploading('document')">
-              <i class="pi pi-check-circle"></i>
-              <span>تم رفع المستند بنجاح</span>
-              <button 
-                type="button" 
-                class="btn btn-sm btn-outline-danger"
-                (click)="removeFile('document')"
-              >
-                <i class="pi pi-times"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="form-text">
-            <i class="pi pi-info-circle"></i>
-            الملفات المدعومة: PDF, DOC, DOCX, PPT, PPTX (حتى 50 ميجابايت)
-          </div>
-        </div>
-
-        <!-- HTML Content -->
-        <div class="content-upload-section">
-          <label class="form-label">
-            <i class="pi pi-code"></i>
-            محتوى إضافي (HTML)
-          </label>
-          <textarea 
-            class="form-control"
-            formControlName="htmlContent"
-            placeholder="يمكنك إضافة محتوى HTML إضافي مثل الروابط، النصوص التفاعلية، أو أي محتوى آخر"
-            rows="4"
-          ></textarea>
-          <div class="form-text">
-            <i class="pi pi-lightbulb"></i>
-            يمكنك استخدام HTML لإضافة روابط، نصوص منسقة، أو محتوى تفاعلي
-          </div>
-        </div>
-
-        <!-- Content Summary -->
-        <div class="content-summary" *ngIf="hasAnyContent">
-          <h6>ملخص المحتوى</h6>
-          <div class="content-items">
-            <div class="content-item" *ngIf="hasVideoContent">
-              <i class="pi pi-video text-primary"></i>
-              <span>فيديو الدرس</span>
-              <i class="pi pi-check-circle text-success"></i>
-            </div>
-            <div class="content-item" *ngIf="hasDocumentContent">
-              <i class="pi pi-file-alt text-secondary"></i>
-              <span>مواد تعليمية</span>
-              <i class="pi pi-check-circle text-success"></i>
-            </div>
-            <div class="content-item" *ngIf="lessonForm.get('content.htmlContent')?.value">
-              <i class="pi pi-code text-info"></i>
-              <span>محتوى إضافي</span>
-              <i class="pi pi-check-circle text-success"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lesson Options -->
+      <!-- NEW: Media management -->
       <div class="form-section">
         <h6 class="section-title">
-          <i class="pi pi-sliders-h"></i>
-          خيارات الدرس
+          <i class="pi pi-video"></i>
+          الوسائط
         </h6>
-        
-        <div class="options-grid">
-          <div class="option-card">
-            <div class="form-check">
-              <input 
-                class="form-check-input" 
-                type="checkbox" 
-                formControlName="isFree"
-                id="isFree_{{ lessonIndex }}"
-              >
-              <label class="form-check-label" for="isFree_{{ lessonIndex }}">
-                <div class="option-header">
-                  <i class="pi pi-gift"></i>
-                  <strong>درس مجاني</strong>
-                </div>
-                <small>سيكون الدرس متاحاً للجميع بدون دفع</small>
+
+        <!-- Videos (required for non-document lessons) -->
+        <div class="content-upload-section">
+          <label class="form-label"><i class="pi pi-video"></i> روابط الفيديو</label>
+
+          <div class="upload-area" [class.has-content]="videosFA.length > 0">
+            <div class="upload-input-group">
+              <input type="url" class="form-control" placeholder="https://example.com/video.mp4" #videoUrlInput />
+              <button type="button" class="btn btn-primary" (click)="addVideoUrl(videoUrlInput)">
+                <i class="pi pi-plus"></i>
+                إضافة رابط
+              </button>
+              <label class="btn btn-outline-secondary mb-0">
+                <i class="pi pi-upload"></i>
+                رفع ملف فيديو
+                <input type="file" accept="video/*" class="d-none" (change)="onVideoFileSelected($event)" />
               </label>
+            </div>
+
+            <div class="upload-progress" *ngIf="isLoadingMedia">
+              <div class="progress">
+                <div class="progress-bar" [style.width.%]="50"></div>
+              </div>
+              <small>جاري تحميل الوسائط...</small>
+            </div>
+
+            <div class="content-status success" *ngIf="videosFA.length > 0">
+              <i class="pi pi-check-circle"></i>
+              <span>تمت إضافة {{ videosFA.length }} فيديو</span>
             </div>
           </div>
 
-          <div class="option-card">
-            <div class="form-check">
-              <input 
-                class="form-check-input" 
-                type="checkbox" 
-                formControlName="isActive"
-                id="isActive_{{ lessonIndex }}"
-              >
-              <label class="form-check-label" for="isActive_{{ lessonIndex }}">
-                <div class="option-header">
-                  <i class="pi pi-eye"></i>
-                  <strong>درس نشط</strong>
-                </div>
-                <small>سيظهر الدرس للطلاب في المنصة</small>
-              </label>
+          <!-- List -->
+          <div class="video-list mt-2" *ngIf="videosFA.length > 0">
+            <div class="d-flex align-items-center gap-2 mb-2" *ngFor="let ctrl of videosFA.controls; let i = index">
+              <span class="badge bg-light text-dark">#{{ i + 1 }}</span>
+              <input type="text" class="form-control" [value]="ctrl.value" readonly />
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="moveVideo(i, 'up')" [disabled]="i===0">
+                <i class="pi pi-arrow-up"></i>
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="moveVideo(i, 'down')" [disabled]="i===videosFA.length-1">
+                <i class="pi pi-arrow-down"></i>
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeVideo(i)">
+                <i class="pi pi-trash"></i>
+              </button>
             </div>
+          </div>
+
+          <small class="text-muted d-block mt-1">
+            الفيديو مطلوب (أدخل رابط واحد على الأقل) ما لم يكن نوع الدرس "مستند".
+          </small>
+        </div>
+
+        <!-- Documents (optional) -->
+        <div class="content-upload-section mt-3">
+          <label class="form-label"><i class="pi pi-file"></i> مستندات الدرس (اختياري)</label>
+          <div class="upload-area" [class.has-content]="documentsFA.length > 0">
+            <label class="btn btn-outline-secondary mb-0">
+              <i class="pi pi-upload"></i>
+              رفع ملف مستند
+              <input type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" class="d-none" (change)="onDocumentFileSelected($event)" />
+            </label>
+
+            <div class="content-status success" *ngIf="documentsFA.length > 0">
+              <i class="pi pi-check-circle"></i>
+              <span>تمت إضافة {{ documentsFA.length }} مستند</span>
+            </div>
+          </div>
+
+          <div class="doc-list mt-2" *ngIf="documentsFA.length > 0">
+            <div class="d-flex align-items-center gap-2 mb-2" *ngFor="let ctrl of documentsFA.controls; let i = index">
+              <span class="badge bg-light text-dark">#{{ i + 1 }}</span>
+              <input type="text" class="form-control" [value]="ctrl.value" readonly />
+              <a class="btn btn-outline-primary btn-sm" [href]="ctrl.value" target="_blank" rel="noopener">
+                <i class="pi pi-external-link"></i>
+              </a>
+              <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeDocument(i)">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Options (unchanged) -->
+      <div class="form-section">
+        <h6 class="section-title"><i class="pi pi-sliders-h"></i> خيارات الدرس</h6>
+        <div class="options-grid">
+          <div class="option-card">
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="isFree" />
+              <span class="form-check-label">
+                <i class="pi pi-gift"></i> مجاني
+              </span>
+            </label>
+          </div>
+          <div class="option-card">
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="isActive" />
+              <span class="form-check-label">
+                <i class="pi pi-eye"></i> نشط
+              </span>
+            </label>
           </div>
         </div>
       </div>
     </form>
-  </div>
 
-  <!-- Form Status -->
-  <div class="form-status" [class.expanded]="isExpanded">
-    <div class="status-indicator" [class.valid]="isFormValid" [class.invalid]="!isFormValid">
-      <i class="pi" [class.fa-check-circle]="isFormValid" [class.fa-exclamation-circle]="!isFormValid"></i>
-      <span>{{ isFormValid ? 'الدرس مكتمل ومجهز للنشر' : 'يرجى إكمال جميع البيانات المطلوبة' }}</span>
-    </div>
-    
-    <!-- Progress Indicator -->
-    <div class="completion-progress" *ngIf="!isFormValid && isExpanded">
-      <div class="progress-text">مستوى الإكمال</div>
-      <div class="progress">
-        <div class="progress-bar" [style.width.%]="getCompletionPercentage()"></div>
+    <div class="form-status" [class.expanded]="isExpanded">
+      <div class="status-indicator" [class.valid]="isFormValid" [class.invalid]="!isFormValid">
+        <i class="pi" [ngClass]="isFormValid ? 'pi-check-circle' : 'pi-exclamation-circle'"></i>
+        <span>{{ isFormValid ? 'الدرس مكتمل' : 'يرجى استكمال الحقول المطلوبة' }}</span>
       </div>
-      <small>{{ getCompletionPercentage() }}% مكتمل</small>
-    </div>
-  </div>
-
-  <!-- Loading Overlay -->
-  <div class="loading-overlay" *ngIf="isUploadInProgress">
-    <div class="loading-content">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">جاري الرفع...</span>
+      <div class="completion-progress" *ngIf="!isFormValid && isExpanded">
+        <div class="progress-text">مستوى الإكمال</div>
+        <div class="progress">
+          <div class="progress-bar" [style.width.%]="getCompletionPercentage()"></div>
+        </div>
+        <small>{{ getCompletionPercentage() }}% مكتمل</small>
       </div>
-      <p>جاري رفع الملفات...</p>
     </div>
   </div>
 </div>

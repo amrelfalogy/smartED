@@ -1,19 +1,19 @@
 <div class="course-catalog-container">
-   <!-- Results Info -->
+  <!-- Header -->
   <div class="catalog-title">
     <h2>الدورات المتاحة</h2>
-    <p style="margin: -6px 0 20px ;">{{ filteredCourses.length }} دورات</p>
+    <p class="subtitle" *ngIf="!isLoading && !errorMessage">{{ filteredSubjects.length }} مادة</p>
   </div>
 
-  <!-- Simple Modern Filters -->
+  <!-- Filters -->
   <div class="filters-section">
     <div class="filters-header">
       <h3 class="filters-title">
         <i class="pi pi-filter"></i>
         تصفية الدورات
       </h3>
-      <button 
-        *ngIf="selectedStage || selectedAcademicYear" 
+      <button
+        *ngIf="hasActiveFilters"
         class="reset-btn"
         (click)="resetFilters()"
       >
@@ -23,81 +23,182 @@
     </div>
 
     <div class="filter-container">
-      <!-- Stage Selection -->
+      <!-- Academic Year -->
       <div class="filter-group">
         <label class="filter-label">المرحلة التعليمية</label>
         <div class="stage-buttons">
-          <button 
+          <button
             class="stage-btn"
-            [class.active]="selectedStage === 'ثانوية'"
-            (click)="selectStage('ثانوية')"
+            *ngFor="let ay of academicYears"
+            [class.active]="selectedAcademicYearId === ay.id"
+            (click)="selectAcademicYear(ay.id)"
           >
-            المرحلة الثانوية
-          </button>
-          <button 
-            class="stage-btn"
-            [class.active]="selectedStage === 'اعدادية'"
-            (click)="selectStage('اعدادية')"
-          >
-            المرحلة الإعدادية
+            {{ ay.displayName || ay.name }}
           </button>
         </div>
       </div>
-      <!-- Grade Selection (only show when stage is selected) -->
-      <div class="filter-group" *ngIf="selectedStage">
+
+      <!-- Student Year -->
+      <div class="filter-group" *ngIf="selectedAcademicYearId">
         <label class="filter-label">السنة الدراسية</label>
         <div class="grade-buttons">
           <button
             class="grade-btn"
-            *ngFor="let grade of getGradesForStage()"
-            [class.active]="selectedAcademicYear === getAcademicYearLabel(grade)"
-            (click)="selectGrade(grade)"
+            [class.active]="!selectedStudentYearId"
+            (click)="selectStudentYear(null)"
           >
-            {{ grade.name }}
+            الكل
+          </button>
+          <button
+            class="grade-btn"
+            *ngFor="let sy of studentYearsForSelectedAY"
+            [class.active]="selectedStudentYearId === sy.id"
+            (click)="selectStudentYear(sy.id)"
+          >
+            {{ sy.displayName || sy.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="filter-group">
+        <label class="filter-label">بحث</label>
+        <div class="search-box">
+          <input
+            class="form-control"
+            type="text"
+            placeholder="ابحث بالاسم أو الوصف..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="applyFilters()"
+          />
+          <i class="pi pi-search"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">
+    <i class="pi pi-spinner pi-spin"></i>
+    <p>جاري تحميل الدورات...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error" *ngIf="errorMessage && !isLoading">
+    <div class="alert alert-danger">
+      <i class="pi pi-exclamation-triangle me-2"></i>
+      {{ errorMessage }}
+      <button class="btn btn-outline-danger btn-sm ms-2" (click)="reload()">
+        <i class="pi pi-refresh me-1"></i>
+        إعادة المحاولة
+      </button>
+    </div>
+  </div>
+
+  <!-- Courses Grid -->
+  <div class="courses-grid" *ngIf="!isLoading && !errorMessage && filteredSubjects.length > 0; else noCoursesMsg">
+    <div class="course-card" *ngFor="let s of paginatedSubjects" (click)="viewCourse(s)">
+      <div class="image-wrap">
+        <img
+          [src]="s.imageUrl || s.thumbnail || 'assets/imgs/english.jpg'"
+          [alt]="s.name"
+          class="card-img"
+          (error)="onImageError($event)"
+        />
+        <div class="badge" [class.published]="s.status === 'published'" [class.draft]="s.status !== 'published'">
+          <i class="pi" [class.pi-eye]="s.status==='published'" [class.pi-eye-slash]="s.status!=='published'"></i>
+          {{ s.status === 'published' ? 'منشور' : 'مسودة' }}
+        </div>
+      </div>
+
+      <!-- Instructor row -->
+      <div class="instructor-row">
+        <img
+          class="instructor-avatar"
+          [src]="'assets/imgs/avatar/avatar-1.jpg'"
+          alt="instructor"
+          (error)="onImageError($event)"
+        />
+        <span class="instructor-name">{{ getInstructorName(s) }}</span>
+      </div>
+
+      <div class="card-body">
+        <h3 class="subject-name">{{ s.name }}</h3>
+        <p class="course-description">
+          {{ (s.description || '') | slice:0:120 }}
+          <span *ngIf="(s.description || '').length > 120">...</span>
+        </p>
+
+        <div class="meta">
+          <span class="meta-item">
+            <i class="pi pi-graduation-cap"></i>
+            {{ getAcademicYearName(s.academicYearId) }}
+          </span>
+          <span class="meta-item">
+            <i class="pi pi-users"></i>
+            {{ getStudentYearName(s.studentYearId) }}
+          </span>
+          
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" (click)="viewCourse(s); $event.stopPropagation()">
+            <i class="pi pi-info-circle me-2"></i>
+            عرض التفاصيل
           </button>
         </div>
       </div>
     </div>
-
   </div>
 
- 
+  <!-- Pagination (like admin list) -->
+  <div class="pagination-container" *ngIf="!isLoading && filteredSubjects.length > 0">
+    <div class="pagination-info">
+      <span>{{ paginationInfo }}</span>
+    </div>
 
-  <!-- Courses Grid -->
-  <div class="courses-grid" *ngIf="filteredCourses.length > 0; else noCoursesMsg">
-    <div
-      class="course-card"
-      *ngFor="let course of filteredCourses"
-      (click)="viewCourse(course)"
-    >
-      <img [src]="course.image" alt="Course image" class="card-img" />
-      <div class="card-body">
-        <div class="subject-name-container">
-          <h3 class="subject-name">{{ course.subject }}</h3>
-          <div class="academic-year">{{ course.academicYear }}</div>
-        </div>
-        <p class="course-description">{{ course.description }}</p>
-        <div class="teacher-name">{{ course.instructor }}</div>
-        <button class="btn enroll-btn" routerLink="course-details/:id" > عرض التفاصيل </button>
-        <div class="card-footer">
-          <div class="duration">
-            <i class="pi pi-stopwatch"></i>
-            {{ course.duration }} ساعة
-          </div>
-          <div class="students-count">
-            <i class="pi pi-user"></i>
-            {{ course.studentsCount }} طالب
-          </div>
-        </div>
-      </div>
+    <nav class="pagination-nav" *ngIf="totalPages > 1">
+      <ul class="pagination">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link" (click)="goToPage(currentPage - 1)">
+            <i class="pi pi-chevron-right"></i>
+          </button>
+        </li>
+
+        <li
+          class="page-item"
+          *ngFor="let page of [].constructor(totalPages); let i = index"
+          [class.active]="currentPage === i + 1"
+        >
+          <button class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</button>
+        </li>
+
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button class="page-link" (click)="goToPage(currentPage + 1)">
+            <i class="pi pi-chevron-left"></i>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="pagination-controls">
+      <select class="form-select items-per-page" [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()">
+        <option [value]="6">6 لكل صفحة</option>
+        <option [value]="12">12 لكل صفحة</option>
+        <option [value]="24">24 لكل صفحة</option>
+        <option [value]="48">48 لكل صفحة</option>
+      </select>
     </div>
   </div>
 
   <ng-template #noCoursesMsg>
-    <div class="no-courses-msg">
-      <h3>لا توجد كورسات متاحة</h3>
-      <p>جرب تغيير المرشحات</p>
-      <button (click)="resetFilters()">إعادة تعيين</button>
+    <div class="no-courses-msg" *ngIf="!isLoading && !errorMessage">
+      <h3>لا توجد دورات مطابقة</h3>
+      <p>جرّب تغيير المرشحات أو البحث</p>
+      <button class="btn btn-outline-secondary" (click)="resetFilters()">
+        <i class="pi pi-refresh me-2"></i>
+        إعادة تعيين
+      </button>
     </div>
   </ng-template>
 </div>

@@ -6,11 +6,7 @@
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.075);
-    }
+  
   }
   
   .user-avatar {
@@ -95,7 +91,7 @@
   
   .user-profile-header {
     padding: 25px;
-    background: --gradient-color;
+    background: linear-gradient(135deg, #304a6f, #365f99);
     color: white;
     
     .user-avatar-large {
@@ -197,6 +193,7 @@
         
         i {
           font-size: 16px;
+          margin-right: 0;
         }
       }
       
@@ -321,5 +318,6 @@
   &.show {
     opacity: 1;
     transform: translateY(0);
+    z-index: 1050;
   }
 }

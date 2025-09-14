@@ -1,14 +1,14 @@
 <div class="payment-management">
   <!-- Page Header -->
   <div class="page-header mb-4">
-    <div class="d-flex justify-content-between align-items-center">
+    <div class="d-flex justify-content-between align-items-center" style="gap: 20px;">
       <div>
         <h2 class="page-title">إدارة المدفوعات</h2>
         <p class="page-description text-muted">إدارة ومراجعة جميع مدفوعات الطلاب</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline-primary" (click)="loadPayments()">
-          <i class="pi pi-refresh me-2"></i>
+        <button class="btn btn-primary" (click)="loadPayments()">
+          <i class="pi pi-refresh ms-2"></i>
           تحديث
         </button>
       </div>
@@ -16,17 +16,18 @@
   </div>
 
   <!-- Statistics Cards -->
-  <div class="row mb-4" dir="ltr">
-    <div class="col-md-6 col-xl-2" *ngFor="let stat of [
-      { title: 'إجمالي المدفوعات', value: stats.totalPayments, icon: 'pi-credit-card', color: 'primary' },
-      { title: 'في الانتظار', value: stats.pendingPayments, icon: 'pi-clock', color: 'warning' },
-      { title: 'موافق عليه', value: stats.approvedPayments, icon: 'pi-check-circle', color: 'success' },
-      { title: 'مرفوض', value: stats.rejectedPayments, icon: 'pi-times-circle', color: 'danger' },
-      { title: 'إجمالي الإيرادات', value: stats.totalRevenue, icon: 'pi-money-bill', color: 'info', isCurrency: true }
-    ]">
+  <div class="row mb-4">
+    <div  *ngFor="let stat of [
+      { title: 'إجمالي المدفوعات', value: stats.totalPayments, icon: 'pi-credit-card', color: 'bg-primary', isCurrency: true, isWide: true },
+      { title: 'إجمالي الإيرادات', value: stats.totalRevenue, icon: 'pi-wallet', color: 'bg-info', isCurrency: true, isWide: true },
+      { title: 'في الانتظار', value: stats.pendingPayments, icon: 'pi-clock', color: 'bg-warning' },
+      { title: 'موافق عليه', value: stats.approvedPayments, icon: 'pi-check-circle', color: 'bg-success' },
+      { title: 'مرفوض', value: stats.rejectedPayments, icon: 'pi-times-circle', color: 'bg-danger' }
+    ]"
+    [class]="stat.isWide ? 'col-md-6 col-xl-6' : 'col-md-6 col-xl-4'">
       <app-card [showHeader]="false" blockClass="dashboard-card stat-card">
         <div class="stat-card-content">
-          <div class="stat-icon" [class]="'text-' + stat.color">
+          <div class="stat-icon" [class]=" stat.color">
             <i [class]="'pi ' + stat.icon"></i>
           </div>
           <div class="stat-details">

@@ -95,10 +95,10 @@
                 />
                 <button 
                   type="button" 
-                  class="btn btn-outline-secondary"
+                  class="btn "
                   (click)="togglePassword()"
                 >
-                  <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                  <i [class]="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" style="color: varr(--muted);"></i>
                 </button>
               </div>
               <div class="invalid-feedback" *ngIf="isFieldInvalid('password')">

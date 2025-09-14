@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { PaymentService } from 'src/app/core/services/payment.service';
+import { AcademicYearService } from 'src/app/core/services/academic-year.service';
 
 interface PaymentStats {
   totalPayments: number;
@@ -25,6 +27,15 @@ interface Payment {
   receiptUrl?: string;
   createdAt: string;
   updatedAt: string;
+
+  // Optional backend fields we might map from:
+  academicYearId?: string;
+  academicYearName?: string;
+  studentYearId?: string;
+  studentYearName?: string;
+  planType?: 'lesson' | 'monthly' | 'semester';
+  subjectName?: string;
+  lessonTitle?: string;
 }
 
 @Component({
@@ -51,24 +62,44 @@ export class PaymentsComponent implements OnInit {
   // Filters
   statusFilter: string = 'all';
   searchTerm: string = '';
-  
+
   // Pagination
   currentPage = 1;
   itemsPerPage = 10;
   totalItems = 0;
 
-  constructor(private paymentService: PaymentService) {}
+  // AY/SY mapping caches
+  private academicYearMap = new Map<string, string>();
+  private studentYearMap = new Map<string, Map<string, string>>(); // ayId -> (syId -> name)
+
+  constructor(
+    private paymentService: PaymentService,
+    private academicYearService: AcademicYearService
+  ) {}
 
   ngOnInit(): void {
-    this.loadPaymentStats();
-    this.loadPayments();
+    // Preload AY/SY maps (best effort; table will render even if mapping not ready)
+    this.preloadAcademicMappings(() => {
+      this.loadPaymentStats();
+      this.loadPayments();
+    });
   }
 
-  // ✅ Load Payment Statistics
+  // Load counts client-side + revenue overview
   loadPaymentStats(): void {
-    this.paymentService.getAdminPaymentStats().subscribe({
-      next: (response) => {
-        this.stats = response.data;
+    forkJoin({
+      total: this.paymentService.getPaymentsTotalByStatus(),
+      pending: this.paymentService.getPaymentsTotalByStatus('pending'),
+      approved: this.paymentService.getPaymentsTotalByStatus('approved'),
+      rejected: this.paymentService.getPaymentsTotalByStatus('rejected'),
+      overview: this.paymentService.getPaymentStatsOverview()
+    }).subscribe({
+      next: ({ total, pending, approved, rejected, overview }) => {
+        this.stats.totalPayments = total;
+        this.stats.pendingPayments = pending;
+        this.stats.approvedPayments = approved;
+        this.stats.rejectedPayments = rejected;
+        this.stats.totalRevenue = overview.totalRevenue || 0;
       },
       error: (error) => {
         console.error('Error loading payment stats:', error);
@@ -77,18 +108,20 @@ export class PaymentsComponent implements OnInit {
     });
   }
 
-  // ✅ Load Payments List
   loadPayments(): void {
     this.isLoading = true;
-    this.paymentService.getAdminPayments({
+    this.paymentService.getPayments({
       page: this.currentPage,
       limit: this.itemsPerPage,
-      status: this.statusFilter !== 'all' ? this.statusFilter : '',
+      status: this.statusFilter !== 'all' ? (this.statusFilter as any) : '',
       search: this.searchTerm
     }).subscribe({
       next: (response) => {
-        this.payments = response.data.payments;
-        this.totalItems = response.data.total;
+        const list = (response as any).payments || (response as any).data?.payments || [];
+        this.totalItems = (response as any).pagination?.total || (response as any).data?.total || list.length;
+
+        // Map AY/SY names if only IDs provided
+        this.payments = list.map((p: any) => this.mapBackendPaymentToUI(p));
         this.applyFilters();
         this.isLoading = false;
       },
@@ -100,14 +133,91 @@ export class PaymentsComponent implements OnInit {
     });
   }
 
-  // ✅ Apply Filters
+  private mapBackendPaymentToUI(p: any): Payment {
+    const ayName = p.academicYearName
+      || (p.academicYearId && this.academicYearMap.get(p.academicYearId))
+      || p.educationalStage
+      || '';
+
+    let syName = p.studentYearName || '';
+    if (!syName) {
+      if (p.studentYearId && p.academicYearId) {
+        const syMap = this.studentYearMap.get(p.academicYearId);
+        syName = syMap?.get(p.studentYearId) || '';
+      }
+      if (!syName) syName = p.studentGrade || '';
+    }
+
+    const planLabel =
+      p.plan?.name ||
+      (p.planType === 'monthly' ? 'شهري' : p.planType === 'semester' ? 'فصلي' : p.planType === 'lesson' ? 'درس' : (p.paymentPlan || ''));
+
+    const subscriptionTarget =
+      p.subjectName || p.lessonTitle || p.subscriptionType || '';
+
+    return {
+      id: p.id,
+      studentName: p.user?.name || p.studentName || '',
+      studentEmail: p.user?.email || p.studentEmail || '',
+      amount: Number(p.amount ?? p.amount_cents ? (p.amount_cents / 100) : p.amount) || 0,
+      currency: 'EGP',
+      educationalStage: ayName,
+      studentGrade: syName,
+      paymentPlan: planLabel,
+      status: p.status,
+      subscriptionType: subscriptionTarget,
+      paymentMethod: p.paymentMethod || p.method || '',
+      transactionReference: p.transactionReference,
+      receiptUrl: p.receiptUrl,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+
+      academicYearId: p.academicYearId,
+      academicYearName: ayName,
+      studentYearId: p.studentYearId,
+      studentYearName: syName,
+      planType: p.planType,
+      subjectName: p.subjectName,
+      lessonTitle: p.lessonTitle
+    };
+  }
+
+  private preloadAcademicMappings(done: () => void): void {
+    this.academicYearService.getAcademicYears().subscribe({
+      next: (ays) => {
+        ays.forEach(ay => this.academicYearMap.set(ay.id, (ay as any).displayName || ay.name));
+        // Load student years for each AY (best effort)
+        let remaining = ays.length;
+        if (remaining === 0) return done();
+        ays.forEach(ay => {
+          this.academicYearService.getStudentYears(ay.id).subscribe({
+            next: (sys) => {
+              const map = new Map<string, string>();
+              sys.forEach(sy => map.set(sy.id, (sy as any).displayName || sy.name));
+              this.studentYearMap.set(ay.id, map);
+            },
+            error: () => {},
+            complete: () => {
+              remaining -= 1;
+              if (remaining === 0) done();
+            }
+          });
+        });
+      },
+      error: () => done()
+    });
+  }
+
+  // Filters
   applyFilters(): void {
     this.filteredPayments = this.payments.filter(payment => {
       const matchesStatus = this.statusFilter === 'all' || payment.status === this.statusFilter;
-      const matchesSearch = !this.searchTerm || 
-        payment.studentName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        payment.studentEmail.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        payment.id.toLowerCase().includes(this.searchTerm.toLowerCase());
+      const s = (this.searchTerm || '').toLowerCase();
+      const matchesSearch = !s ||
+        payment.studentName.toLowerCase().includes(s) ||
+        payment.studentEmail.toLowerCase().includes(s) ||
+        payment.id.toLowerCase().includes(s) ||
+        payment.subscriptionType.toLowerCase().includes(s);
       return matchesStatus && matchesSearch;
     });
   }
@@ -133,7 +243,6 @@ export class PaymentsComponent implements OnInit {
     this.selectedPayment = null;
   }
 
-  // ✅ Approve Payment
   approvePayment(paymentId: string): void {
     this.isProcessing = true;
     this.paymentService.approvePayment(paymentId).subscribe({
@@ -152,7 +261,6 @@ export class PaymentsComponent implements OnInit {
     });
   }
 
-  // ✅ Reject Payment
   rejectPayment(paymentId: string): void {
     this.isProcessing = true;
     this.paymentService.rejectPayment(paymentId).subscribe({
@@ -214,13 +322,7 @@ export class PaymentsComponent implements OnInit {
 
   formatDate(dateString: string): string {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-EG', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
   formatCurrency(amount: number, currency: string = 'EGP'): string {
@@ -231,69 +333,20 @@ export class PaymentsComponent implements OnInit {
     return payment.id;
   }
 
-  // Mock Data Functions (fallback)
+  // Mock fallback
   private loadMockStats(): void {
     this.stats = {
-      totalPayments: 1250,
-      pendingPayments: 45,
-      approvedPayments: 1180,
-      rejectedPayments: 25,
-      totalRevenue: 2850000
+      totalPayments: 0,
+      pendingPayments: 0,
+      approvedPayments: 0,
+      rejectedPayments: 0,
+      totalRevenue: 0
     };
   }
 
   private loadMockPayments(): void {
-    this.payments = [
-      {
-        id: 'PAY001',
-        studentName: 'أحمد محمد علي',
-        studentEmail: 'ahmed@example.com',
-        amount: 500,
-        currency: 'EGP',
-        educationalStage: 'الثانوية العامة',
-        studentGrade: 'الصف الثالث الثانوي',
-        paymentPlan: 'شهري',
-        status: 'pending',
-        subscriptionType: 'اشتراك شامل',
-        paymentMethod: 'فودافون كاش',
-        transactionReference: 'VF123456789',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'PAY002',
-        studentName: 'فاطمة أحمد',
-        studentEmail: 'fatma@example.com',
-        amount: 1500,
-        currency: 'EGP',
-        educationalStage: 'الثانوية العامة',
-        studentGrade: 'الصف الثاني الثانوي',
-        paymentPlan: 'ربع سنوي',
-        status: 'approved',
-        subscriptionType: 'اشتراك الرياضيات',
-        paymentMethod: 'تحويل بنكي',
-        transactionReference: 'BANK987654321',
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        updatedAt: new Date(Date.now() - 86400000).toISOString()
-      },
-      {
-        id: 'PAY003',
-        studentName: 'محمد حسن',
-        studentEmail: 'mohamed@example.com',
-        amount: 300,
-        currency: 'EGP',
-        educationalStage: 'الإعدادية',
-        studentGrade: 'الصف الثالث الإعدادي',
-        paymentPlan: 'شهري',
-        status: 'rejected',
-        subscriptionType: 'اشتراك العلوم',
-        paymentMethod: 'أورانج موني',
-        transactionReference: 'OR555666777',
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-        updatedAt: new Date(Date.now() - 172800000).toISOString()
-      }
-    ];
-    this.totalItems = this.payments.length;
+    this.payments = [];
+    this.totalItems = 0;
     this.applyFilters();
     this.isLoading = false;
   }
@@ -301,7 +354,6 @@ export class PaymentsComponent implements OnInit {
   private showSuccessMessage(message: string): void {
     console.log('Success:', message);
   }
-
   private showErrorMessage(message: string): void {
     console.error('Error:', message);
   }

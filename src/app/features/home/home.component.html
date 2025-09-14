@@ -1,15 +1,16 @@
+<!-- ✅ UPDATED: home.component.html - With Real Data Loading States -->
 <div class="container">
     <div class="header">
         <div class="row">
             <div class="col-md-6 content">
-                <h1> ابدأ رحلتك التعليمية بالطريقة التي تناسبك</h1>
+                <h1>ابدأ رحلتك التعليمية بالطريقة التي تناسبك</h1>
                 <p>
                     منصتنا توفر لك دروسًا تفاعلية وشاملة من نخبة المعلمين، مصممة لترتقي بمستواك الدراسي وتُحقق لك أفضل النتائج.
                 </p>
-                 <a class="btn btn-primary btn-lg" style="width:150px;" href="#">ابدأ الآن</a>
+                <a class="btn btn-primary btn-lg" style="width:175px;" routerLink="/courses">ابدأ الآن</a>
             </div>
-            <div class="col-6 text-center">
-                <img src="assets/imgs/Model2.png" alt="header" class="img-fluid" style="max-height: 400px;">
+            <div class="col-md-6 text-center">
+                <img src="assets/imgs/Model2.png" alt="header" class="img-fluid header-illustration">
             </div>
         </div>
     </div>
@@ -20,7 +21,7 @@
             <div class="col-sm-6 col-lg-3">
                 <div class="card-item d-flex flex-column align-items-center text-center py-30 px-5 w-100">
                     <div class="icon-box teacher">
-                        <img src="assets/imgs/Model2.png" alt="Model2" class="img-fluid">
+                        <i class="pi pi-crown"></i>
                     </div>
                     <h4 class="feature-title">أفضل المعلمين</h4>
                     <p class="feature-desc">ابدأ التعلم مع المعلمين الرائدين في تخصصهم</p>
@@ -29,7 +30,7 @@
             <div class="col-sm-6 col-lg-3">
                 <div class="card-item d-flex flex-column align-items-center text-center py-30 px-5 w-100">
                     <div class="icon-box student">
-                        <img src="assets/imgs/Model2.png" alt="Model2" class="img-fluid">
+                        <i class="pi pi-sparkles"></i>
                     </div>
                     <h4 class="feature-title">طلاب سعداء</h4>
                     <p class="feature-desc">نظم حياتك الدراسية وشارك في التطور التعليمي</p>
@@ -38,7 +39,7 @@
             <div class="col-sm-6 col-lg-3">
                 <div class="card-item d-flex flex-column align-items-center text-center py-30 px-5 w-100">
                     <div class="icon-box live">
-                        <img src="assets/imgs/Model2.png" alt="Model2" class="img-fluid">
+                        <i class="pi pi-headphones"></i>
                     </div>
                     <h4 class="feature-title">حصص مباشرة</h4>
                     <p class="feature-desc">طور مهاراتك عن طريق افضل طرق التعليم</p>
@@ -47,7 +48,7 @@
             <div class="col-sm-6 col-lg-3">
                 <div class="card-item d-flex flex-column align-items-center text-center py-30 px-5 w-100">
                     <div class="icon-box video">
-                        <img src="assets/imgs/Model2.png" alt="Model2" class="img-fluid">
+                        <i class="pi pi-microphone"></i>
                     </div>
                     <h4 class="feature-title">كورسات مسجلة</h4>
                     <p class="feature-desc">تعلم بدون عوائق الوقت والمكان</p>
@@ -55,93 +56,152 @@
             </div>
         </div>
     </div>
-
-     <!-- Header Hero Section with Image -->
-  <section class="about-section">
-    <div class="hero-image-container">
-      <div class="hero-overlay"></div>
-      <div class="hero-content-overlay">
+    <!-- How it works -->
+    <section class="how-it-works container">
         <div class="container">
-          <div class="row justify-content-center text-center">
-            <div class="col-lg-8">
-              <h1 class="display-3 fw-bold text-white mb-4 animate__animated animate__fadeInDown">
-                Who we are
-              </h1>
-              <p class="lead text-white mb-4 animate__animated animate__fadeInUp animate__delay-1s">
-                We are committed to providing top-notch educational resources and a supportive learning environment to help you achieve your academic goals.
-              </p>
+        <h2 class="section-title">كيف تعمل منصتنا؟</h2>
+        <div class="timeline row">
+            <div class="step col-md-5 " *ngFor="let step of steps; let i = index">
+            <div class="step-icon">
+                <i class="pi" [ngClass]="step.icon"></i>
+                <span class="step-index">{{ i + 1 }}</span>
             </div>
-          </div>
+            <div class="step-content">
+                <h5>{{ step.title }}</h5>
+                <p>{{ step.desc }}</p>
+            </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </section>
+        </div>
+    </section>
+    <section class="home-section">
+        <!-- ✅ Newest Subjects Carousel with Real Data -->
+        <app-card-carousel
+            [items]="courses"
+            sectionTitle="أحدث المواد"
+            sectionHint="مواد مضافة حديثًا"
+            viewAllText="عرض الكل"
+            viewAllLink="/courses">
+            <ng-template #cardTemplate let-course>
+                <!-- ✅ Loading State -->
+                <div *ngIf="isLoadingCourses" class="course-card-loading">
+                    <div class="loading-placeholder">
+                        <div class="loading-image"></div>
+                        <div class="loading-content">
+                            <div class="loading-line"></div>
+                            <div class="loading-line short"></div>
+                            <div class="loading-line"></div>
+                        </div>
+                    </div>
+                </div>
 
- <section class="home-section">
- 
-    <!-- Courses Carousel -->
-   <app-card-carousel 
-    [items]="courses" 
-    sectionTitle="أحدث الكورسات"
-    sectionHint="الكورسات لكل تخصص"
-    viewAllText="عرض الكل"
-    viewAllLink="/courses">
-    <ng-template #cardTemplate let-course>
-      <div class="course-card-content">
-        <img [src]="course.image" alt="Course image" class="card-image" />
-        <div class="card-info course-info">
-          <!-- Instructor info first -->
-          <div class="instructor-info">
-            <img [src]="course.instructorImg || 'assets/imgs/default-instructor.png'" 
-                alt="Instructor photo" 
-                class="instructor-avatar" />
-            <span class="instructor-name">{{ course.instructor }}</span>
-          </div>
-          
-          <!-- Course title -->
-          <h4>{{ course.subject }}</h4>
-          
-          <!-- Other course details -->
-          <p class="academic-year">{{ course.academicYear }}</p>
-          <div class="course-stats">
-          </div>
-          <div class="rating">
-            <i *ngFor="let star of [].constructor(5); let i = index"
-              class="pi"
-              [ngClass]="i < course.rating ? 'pi-star-fill' : 'pi-star'"
-            ></i>
-          </div>
-        </div>
-      </div>
-    </ng-template>
-  </app-card-carousel>
+                <!-- ✅ Error State -->
+                <div *ngIf="coursesError && !isLoadingCourses" class="course-card-error">
+                    <div class="error-content">
+                        <i class="pi pi-exclamation-triangle"></i>
+                        <p>{{ coursesError }}</p>
+                        <button class="btn btn-sm btn-outline-primary" (click)="reloadCourses()">
+                            <i class="pi pi-refresh me-1"></i>
+                            إعادة المحاولة
+                        </button>
+                    </div>
+                </div>
 
+                <!-- ✅ Course Card with Real Data -->
+                <div *ngIf="!isLoadingCourses && !coursesError" class="course-card-content" (click)="viewCourse(course)">
+                    <img 
+                        [src]="course.image || course.imageUrl || course.thumbnail || 'assets/imgs/bio.jpg'"
+                        [alt]="course.name"
+                        class="card-image"
+                        (error)="onImageError($event)"
+                    />
+                    <div class="card-info course-info">
+                        <!-- Instructor -->
+                        <div class="instructor-info">
+                            <img
+                                [src]="course.instructorImg || 'assets/imgs/bio.jpg'"
+                                [alt]="course.instructor"
+                                class="instructor-avatar"
+                                (error)="onImageError($event)"
+                            />
+                            <span class="instructor-name">{{ course.instructor }}</span>
+                        </div>
 
-  <!-- Instructors Carousel -->
-  <app-card-carousel 
-    [items]="instructors" 
-    sectionTitle="أعضاء هيئة التدريس المميزون"
-    sectionHint="نخبة من أفضل المدرسين والأكاديميين"
-    viewAllText="عرض جميع المدرسين"
-    viewAllLink="/instructors">
-    <ng-template #cardTemplate let-instructor>
-      <div class="instructor-card-content">
-        <div class="instructor-photo-container">
-          <img [src]="instructor.photo" alt="Instructor photo" class="card-image" />
-        </div>
-        <div class="card-info card-info">
-          <h4>{{ instructor.name }}</h4>
-          <p class="specialization">{{ instructor.specialization }}</p>
-          <p class="department">{{ instructor.department }}</p>
-          
-          <div class="rating">
-            <i *ngFor="let star of [].constructor(5); let i = index"
-               class="pi"
-               [ngClass]="i < instructor.rating ? 'pi-star-fill' : 'pi-star'"
-            ></i>
-          </div>
-        </div>
-      </div>
-    </ng-template>
-  </app-card-carousel>
-</section>
+                        <!-- Title -->
+                        <h4 class="course-title">{{ course.name }}</h4>
+
+                        <!-- Academic Year + Tags + Price -->
+                        <div class="meta-row">
+                            <span class="academic-year">{{ course.academicYearName }}</span>
+                        </div>
+                        <div class="meta-row tags-row">
+                            <span
+                                class="chip"
+                                [ngClass]="course.lessonType === 'center_recorded' ? 'chip--center' : 'chip--studio'"
+                            >
+                                {{ course.lessonType === 'center_recorded' ? 'الدروس المسجلة - المركز' : 'الدروس المنتجة - الاستوديو' }}
+                            </span>
+                        </div>              
+                        <!-- Actions -->
+                        <div class="actions">
+                            <button
+                                class="btn btn-primary details-btn"
+                                (click)="viewCourse(course); $event.stopPropagation()"
+                            >
+                                <i class="pi pi-info-circle me-2"></i>
+                                عرض التفاصيل
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </app-card-carousel>
+
+        <!-- Instructors Carousel (Keep existing demo data for now) -->
+        <app-card-carousel
+            [items]="instructors"
+            sectionTitle="أعضاء هيئة التدريس"
+            sectionHint="نخبة من أفضل المدرسين والأكاديميين"
+            viewAllText="عرض جميع المدرسين"
+            viewAllLink="/instructors">
+            <ng-template #cardTemplate let-instructor>
+                <div class="instructor-card-content" (click)="viewInstructor(instructor)">
+                    <div class="instructor-photo-container">
+                        <img [src]="instructor.photo" alt="Instructor photo" class="card-image" />
+                    </div>
+                    <div class="card-info">
+                        <div class="instructor-header">
+                            <h4 class="instructor-name">
+                                {{ instructor.name }}
+                                <i class="pi pi-verified verified" *ngIf="instructor.verified"></i>
+                            </h4>
+                        </div>
+                        <p class="specialization">
+                            <i class="pi pi-briefcase me-1"></i>
+                            {{ instructor.specialization }}
+                        </p>
+                        <p class="department">
+                            <i class="pi pi-building me-1"></i>
+                            {{ instructor.department }}
+                        </p>
+
+                        <div class="rating">
+                            <i
+                                *ngFor="let star of [].constructor(5); let i = index"
+                                class="pi"
+                                [ngClass]="i < instructor.rating ? 'pi-star-fill' : 'pi-star'"
+                            ></i>
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn btn-outline-primary teacher-btn" (click)="viewInstructor(instructor); $event.stopPropagation()">
+                                <i class="pi pi-user me-2"></i>
+                                عرض الملف
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </app-card-carousel>
+    </section>
+</div>

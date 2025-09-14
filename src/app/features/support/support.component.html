@@ -1,0 +1,165 @@
+<div class="support-page container" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h2 class="title">
+        <i class="pi pi-life-ring me-2"></i>
+        الدعم والمساعدة
+      </h2>
+      <p class="subtitle">التواصل يتم مباشرة عبر واتساب مع فريق الدعم.</p>
+    </div>
+    <div class="quick-actions">
+      <button class="btn btn-success" type="button" (click)="openWhatsApp()">
+        <i class="pi pi-whatsapp me-2" [class.pi-spin]="isOpening"></i>
+        تواصل عبر واتساب الآن
+      </button>
+    </div>
+  </div>
+
+  <!-- Info Cards -->
+  <div class="row g-3 info-row">
+    <div class="col-md-4">
+      <div class="info-card">
+        <i class="pi pi-whatsapp"></i>
+        <div>
+          <h5>دعم واتساب</h5>
+          <p>أولوية التواصل عبر واتساب خلال ساعات العمل.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="info-card">
+        <i class="pi pi-clock"></i>
+        <div>
+          <h5>ساعات العمل</h5>
+          <p>يومياً 9 ص - 9 م (بتوقيت القاهرة)</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="info-card">
+        <i class="pi pi-shield"></i>
+        <div>
+          <h5>خصوصيتك</h5>
+          <p>نستخدم بياناتك فقط للتواصل بشأن طلبك.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Topics -->
+  <div class="quick-topics card mt-3">
+    <div class="card-body">
+      <h5 class="mb-2"><i class="pi pi-bolt me-2"></i>مواضيع سريعة</h5>
+      <div class="chips">
+        <button
+          class="chip"
+          type="button"
+          *ngFor="let q of quickTopics"
+          (click)="applyQuickTopic(q)"
+          [attr.aria-label]="q.title"
+        >
+          <i class="pi" [ngClass]="q.icon"></i>
+          {{ q.title }}
+        </button>
+      </div>
+      <p class="muted mt-2">ستُملأ الحقول بالأسفل تلقائيًا ويمكنك تعديلها قبل الإرسال.</p>
+    </div>
+  </div>
+
+  <!-- Support Form (local only, builds WhatsApp message) -->
+  <div class="card mt-3">
+    <div class="card-body">
+      <form [formGroup]="form" (ngSubmit)="openWhatsApp()" novalidate>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">الاسم الكامل</label>
+            <input type="text" class="form-control" formControlName="name" placeholder="أدخل اسمك" />
+            <div class="invalid" *ngIf="form.controls.name.touched && form.controls.name.invalid">
+              الاسم مطلوب (على الأقل حرفان)
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">الهاتف / واتساب (اختياري)</label>
+            <input type="text" class="form-control" formControlName="phone" placeholder="201234567890" />
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">الفئة</label>
+            <select class="form-select" formControlName="category">
+              <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">رقم الطلب/الدفع (اختياري)</label>
+            <input type="text" class="form-control" formControlName="orderId" placeholder="إن وُجد" />
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">الموضوع</label>
+            <input type="text" class="form-control" formControlName="subject" placeholder="عنوان قصير للمشكلة" />
+            <div class="invalid" *ngIf="form.controls.subject.touched && form.controls.subject.invalid">
+              الموضوع مطلوب (3-120 حرف)
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">وصف المشكلة</label>
+            <textarea rows="5" class="form-control" formControlName="message" placeholder="اشرح مشكلتك بالتفصيل"></textarea>
+            <div class="invalid" *ngIf="form.controls.message.touched && form.controls.message.invalid">
+              الوصف مطلوب (10-2000 حرف)
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="consent" id="consentCheck">
+              <label class="form-check-label" for="consentCheck">
+                أوافق على استخدام بياناتي للتواصل ومعالجة طلبي
+              </label>
+            </div>
+            <div class="invalid" *ngIf="form.controls.consent.touched && form.controls.consent.invalid">
+              يجب الموافقة لإرسال الطلب
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Preview & Actions -->
+        <div class="preview mt-3">
+          <label class="form-label d-flex align-items-center gap-2">
+            <i class="pi pi-comment"></i> نص الرسالة إلى واتساب
+          </label>
+          <textarea class="form-control preview-area" rows="6" readonly [value]="composedMessage"></textarea>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-success" type="submit" [disabled]="isOpening">
+              <i class="pi pi-whatsapp me-2" [class.pi-spin]="isOpening"></i>
+              ابدأ المحادثة على واتساب
+            </button>
+            <button class="btn btn-outline-secondary" type="button" (click)="copyMessage()">
+              <i class="pi" [ngClass]="copyDone ? 'pi-check' : 'pi-copy'"></i>
+              <span class="ms-2">{{ copyDone ? 'تم النسخ' : 'نسخ النص' }}</span>
+            </button>
+          </div>
+          <p class="muted small mt-2">
+            لا يمكن رفع مرفقات هنا — يرجى إرسال لقطات الشاشة أو الإيصالات داخل محادثة واتساب بعد بدء التواصل.
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq mt-4">
+    <h5 class="mb-3"><i class="pi pi-question-circle me-2"></i>أسئلة شائعة</h5>
+    <div class="faq-item">
+      <div class="q"><i class="pi pi-chevron-left"></i> لم تصلني رسالة تفعيل الحساب</div>
+      <div class="a">تحقّق من مجلد البريد غير الهام، أو أعد الإرسال من صفحة الحساب.</div>
+    </div>
+    <div class="faq-item">
+      <div class="q"><i class="pi pi-chevron-left"></i> ظهرت مشكلة في الدفع</div>
+      <div class="a">أرسل رقم العملية ووسيلة الدفع لنساعدك فورًا.</div>
+    </div>
+  </div>
+</div>

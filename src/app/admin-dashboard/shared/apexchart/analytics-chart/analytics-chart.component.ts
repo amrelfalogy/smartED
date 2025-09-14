@@ -1,12 +1,12 @@
-import { Component, ViewChild } from '@angular/core';
-import { ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexDataLabels, ApexTooltip, ApexStroke, ApexPlotOptions, ApexGrid, ApexOptions } from 'ng-apexcharts';
+import { Component, ViewChild, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexTooltip, ApexStroke, ApexPlotOptions, ApexGrid } from 'ng-apexcharts';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
   chart: ApexChart;
   xaxis: ApexXAxis;
   yaxis: ApexYAxis;
-  stroke: ApexStroke;
+  stroke: any;
   grid: ApexGrid;
   plotOptions: ApexPlotOptions;
   tooltip: ApexTooltip;
@@ -18,73 +18,40 @@ export type ChartOptions = {
   templateUrl: './analytics-chart.component.html',
   styleUrls: ['./analytics-chart.component.css']
 })
-export class AnalyticsChartComponent {
+export class AnalyticsChartComponent implements OnChanges {
+  @ViewChild('chart') chart!: ChartComponent;
 
- @ViewChild('chart') chart!: ChartComponent;
-  public chartOptions: Partial<ChartOptions>;
-  //  constructor
-  constructor() {
+  @Input() title: string = 'تقارير المستخدمين';
+  @Input() categories: string[] = [];
+  @Input() seriesName: string = 'تسجيلات';
+  @Input() data: number[] = [];
+  @Input() color: string = '#FFB814';
+
+  public chartOptions: Partial<ChartOptions> = {
+    chart: { type: 'line', height: 340, toolbar: { show: false }, background: 'transparent' },
+    plotOptions: { bar: { columnWidth: '45%', borderRadius: 4 } },
+    colors: ['#FFB814'],
+    stroke: { curve: 'smooth', width: 2 },
+    grid: { strokeDashArray: 4, borderColor: '#f5f5f5' },
+    series: [{ name: 'تسجيلات', data: [] }],
+    xaxis: { type: 'category', categories: [], labels: { style: { colors: [] as any } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: { show: true },
+    tooltip: { theme: 'light' }
+  };
+
+  ngOnChanges(_: SimpleChanges): void {
     this.chartOptions = {
-      chart: {
-        type: 'line',
-        height: 340,
-        toolbar: {
-          show: false
-        },
-        background: 'transparent'
-      },
-      plotOptions: {
-        bar: {
-          columnWidth: '45%',
-          borderRadius: 4
-        }
-      },
-      colors: ['#FFB814'],
-      stroke: {
-        curve: 'smooth',
-        width: 1.5
-      },
-      grid: {
-        strokeDashArray: 4,
-        borderColor: '#f5f5f5'
-      },
-      series: [
-        {
-          data: [58, 90, 38, 83, 63, 75, 35, 55]
-        }
-      ],
+      ...this.chartOptions,
+      colors: [this.color],
+      series: [{ name: this.seriesName, data: this.data }],
       xaxis: {
-        type: 'datetime',
-        categories: [
-          '2018-05-19T00:00:00.000Z',
-          '2018-06-19T00:00:00.000Z',
-          '2018-07-19T01:30:00.000Z',
-          '2018-08-19T02:30:00.000Z',
-          '2018-09-19T03:30:00.000Z',
-          '2018-10-19T04:30:00.000Z',
-          '2018-11-19T05:30:00.000Z',
-          '2018-12-19T06:30:00.000Z'
-        ],
-        labels: {
-          format: 'MMM',
-          style: {
-            colors: ['#222', '#222', '#222', '#222', '#222', '#222', '#222']
-          }
-        },
-        axisBorder: {
-          show: false
-        },
-        axisTicks: {
-          show: false
-        }
-      },
-      yaxis: {
-        show: false
-      },
-      tooltip: {
-        theme: 'light'
+        ...this.chartOptions.xaxis,
+        type: 'category',
+        categories: this.categories,
+        labels: { style: { colors: new Array(this.categories.length).fill('#222') } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
       }
     };
   }
-
 }

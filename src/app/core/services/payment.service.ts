@@ -1,63 +1,122 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { PaymentPlansResponse, PaymentPlan, CreatePaymentPlanRequest, LessonAccess } from '../models/course-complete.model';
+import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
+import {
+  PaymentPlansResponse,
+  PaymentPlan,
+  CreatePaymentPlanRequest,
+  LessonAccess,
+  CreatePaymentRequest,
+  StudentPayment,
+  PaymentStatsOverview,
+  PaymentStatus,
+  PlanType
+} from '../models/course-complete.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class PaymentService {
-  private baseUrl = '/api'; // This will use your proxy
+  private baseUrl = '/api';
 
   constructor(private http: HttpClient) {}
 
-  // ✅ Get payment plans
-  getPaymentPlans(lessonType?: string): Observable<PaymentPlansResponse> {
-    let params = new HttpParams();
-    if (lessonType) {
-      params = params.set('lessonType', lessonType);
-    }
-    return this.http.get<PaymentPlansResponse>(`${this.baseUrl}/payments/plans`, { params });
+  // Plans with robust fallback:
+  // 1) Try ?type=<type>&lessonType=<lessonType>
+  // 2) If 4xx/5xx, try ?type=<type>&lesson_type=<lessonType>
+  // 3) If still failing, try ?type=<type> only
+  getPaymentPlans(lessonType?: string, type?: PlanType): Observable<PaymentPlansResponse> {
+    const buildParams = (opts: { type?: PlanType; lessonTypeKey?: 'lessonType' | 'lesson_type'; lessonType?: string }) => {
+      let params = new HttpParams();
+      if (opts.type) params = params.set('type', opts.type);
+      if (opts.lessonType && opts.lessonTypeKey) params = params.set(opts.lessonTypeKey, opts.lessonType);
+      return params;
+    };
+
+    const url = `${this.baseUrl}/payments/plans`;
+
+    // First attempt: lessonType as camelCase (current FE expectation)
+    const firstParams = buildParams({ type, lessonTypeKey: lessonType ? 'lessonType' : undefined, lessonType });
+    return this.http.get<PaymentPlansResponse>(url, { params: firstParams }).pipe(
+      catchError(err => {
+        if (!lessonType) {
+          // No lessonType provided → propagate the error
+          return throwError(() => err);
+        }
+
+        // Second attempt: snake_case key
+        const secondParams = buildParams({ type, lessonTypeKey: 'lesson_type', lessonType });
+        return this.http.get<PaymentPlansResponse>(url, { params: secondParams }).pipe(
+          catchError(err2 => {
+            // Final attempt: type only
+            const thirdParams = buildParams({ type, lessonTypeKey: undefined, lessonType: undefined });
+            return this.http.get<PaymentPlansResponse>(url, { params: thirdParams });
+          })
+        );
+      })
+    );
   }
 
-  // ✅ Create payment plan
   createPaymentPlan(planData: CreatePaymentPlanRequest): Observable<PaymentPlan> {
-    return this.http.post<PaymentPlan>(`${this.baseUrl}/payments/plans`, planData);
+    return this.http.post<PaymentPlan>(`${this.baseUrl}/payments/plans`, {
+      ...planData,
+      currency: 'EGP'
+    });
   }
 
-  // ✅ Check lesson access
-  checkLessonAccess(lessonId: string): Observable<LessonAccess> {
-    return this.http.get<LessonAccess>(`${this.baseUrl}/content/lessons/${lessonId}/access`);
+  // Access
+  checkLessonAccess(lessonId: string): Observable<any> {
+    return this.http.get(`/api/content/lessons/${lessonId}/access`)
+      .pipe(
+        map(response => {
+          console.log('✅ Lesson access response:', response);
+          return response;
+        }),
+        catchError(error => {
+          console.error('❌ Lesson access error:', error);
+          throw error;
+        })
+      );
   }
 
-  // ✅ Subscribe to plan
-  subscribeToPlan(planId: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/payments/subscribe`, { planId });
+  // Payments (student create)
+  createPayment(payload: CreatePaymentRequest): Observable<any> {
+    return this.http.post(`${this.baseUrl}/payments`, payload);
   }
 
-  // ✅ Process payment
-  processPayment(paymentData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/payments/process`, paymentData);
+  // Lists (role-based)
+  getPayments(params: {
+    page?: number;
+    limit?: number;
+    status?: PaymentStatus | '';
+    method?: string;
+    planType?: PlanType | '';
+    subjectId?: string;
+    lessonId?: string;
+    search?: string;
+  }): Observable<{ payments: any[]; pagination: { total: number; pages: number; currentPage: number; limit: number } }> {
+    let httpParams = new HttpParams();
+    Object.entries(params || {}).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') httpParams = httpParams.set(k, String(v));
+    });
+    return this.http.get<{ payments: any[]; pagination: any }>(`${this.baseUrl}/payments`, { params: httpParams });
   }
-  // ...existing code...
 
-// ✅ Admin: Get payment stats
-getAdminPaymentStats(): Observable<any> {
-  return this.http.get<any>(`${this.baseUrl}/admin/payments/stats`);
-}
+  getPaymentStatsOverview(): Observable<PaymentStatsOverview> {
+    return this.http.get<PaymentStatsOverview>(`${this.baseUrl}/payments/stats/overview`);
+  }
 
-// ✅ Admin: Get payments list
-getAdminPayments(params: { page: number; limit: number; status?: string; search?: string }): Observable<any> {
-  return this.http.get<any>(`${this.baseUrl}/admin/payments`, { params });
-}
+  getPaymentsTotalByStatus(status?: PaymentStatus): Observable<number> {
+    let params = new HttpParams().set('limit', '1').set('page', '1');
+    if (status) params = params.set('status', status);
+    return this.http
+      .get<{ payments: any[]; pagination: { total: number } }>(`${this.baseUrl}/payments`, { params })
+      .pipe(map(res => res.pagination?.total ?? 0));
+  }
 
-// ✅ Admin: Approve payment
-approvePayment(paymentId: string): Observable<any> {
-  return this.http.post(`${this.baseUrl}/payments/${paymentId}/approve`, {});
-}
+  approvePayment(paymentId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/payments/${paymentId}/approve`, {});
+  }
 
-// ✅ Admin: Reject payment
-rejectPayment(paymentId: string): Observable<any> {
-  return this.http.post(`${this.baseUrl}/payments/${paymentId}/reject`, {});
-}
+  rejectPayment(paymentId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/payments/${paymentId}/reject`, {});
+  }
 }

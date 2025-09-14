@@ -94,7 +94,7 @@ export class AuthLoginComponent implements OnInit {
         this.router.navigate(['/admin/dashboard']);
         break;
       default:
-        this.router.navigate(['/courses']);
+        this.router.navigate(['student-dashboard/courses']);
         break;
     }
   }

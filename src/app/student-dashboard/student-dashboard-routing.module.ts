@@ -24,15 +24,22 @@ const routes: Routes = [
         path: 'course-details/:id', 
         loadChildren: () => import('./pages/course-details/course-details.module').then(m => m.CourseDetailsModule)
       },
-      { 
-        path: 'student/all-courses', 
+       // Updated: expose "courses" inside student-dashboard shell
+      {
+        path: 'courses',
         loadChildren: () => import('../features/courses/courses.module').then(m => m.CoursesModule)
       },
 
-      // { 
-      //   path: 'lesson-details/:id', 
-      //   loadChildren: () => import('./pages/lesson-details/lesson-details.module').then(m => m.LessonDetailsModule)
-      // },
+      // Legacy alias (optional): keep if any old links still point here
+      {
+        path: 'student/all-courses',
+        loadChildren: () => import('../features/courses/courses.module').then(m => m.CoursesModule)
+      },
+
+      { 
+        path: 'lesson-details/:id', 
+        loadChildren: () => import('./pages/lesson-details/lesson-details.module').then(m => m.LessonDetailsModule)
+      }
       // { 
       //   path: 'progress', 
       //   loadChildren: () => import('./pages/progress/progress.module').then(m => m.ProgressModule)

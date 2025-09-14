@@ -3,7 +3,7 @@ import { Component, Input, OnInit, TemplateRef, ContentChild } from '@angular/co
 @Component({
   selector: 'app-card-carousel',
   templateUrl: './card-carousel.component.html',
-  styleUrls: ['./card-carousel.component.css']
+  styleUrls: ['./card-carousel.component.scss']
 })
 export class CardCarouselComponent<item = any> implements OnInit {
 

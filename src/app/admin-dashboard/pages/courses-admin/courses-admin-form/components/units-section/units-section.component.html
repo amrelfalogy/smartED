@@ -1,117 +1,89 @@
 <div class="units-section">
-  <!-- Enhanced Section Header -->
   <div class="section-header">
     <div class="header-content">
       <div class="header-main">
-        <h3>
-          <i class="pi pi-bookmark"></i>
-          الوحدات والدروس
-        </h3>
-        <p class="section-description">
-          قم بإنشاء الوحدات التعليمية وإضافة الدروس لكل وحدة
-        </p>
+        <h3><i class="pi pi-bookmark"></i> الوحدات والدروس</h3>
+        <p class="section-description">قم بإنشاء الوحدات التعليمية وإضافة الدروس لكل وحدة</p>
       </div>
-      
-      <!-- Quick Actions -->
       <div class="header-actions">
-        <button 
-          type="button"
-          class="btn btn-primary btn-add-unit"
-          (click)="addUnit()"
-        >
-          <i class="pi pi-plus"></i>
-          إضافة وحدة
+        <button type="button" class="btn btn-primary btn-add-unit" (click)="addUnit()">
+          <i class="pi pi-plus"></i> إضافة وحدة
         </button>
       </div>
     </div>
-    
-    <!-- Enhanced Statistics -->
+
     <div class="section-stats">
       <div class="stats-container">
         <div class="stat-card">
-          <div class="stat-icon">
-            <i class="pi pi-bookmark-fill"></i>
-          </div>
+          <div class="stat-icon"><i class="pi pi-bookmark-fill"></i></div>
           <div class="stat-content">
             <span class="stat-number">{{ unitsFormArray.length }}</span>
             <span class="stat-label">وحدة</span>
           </div>
         </div>
-        
         <div class="stat-card">
-          <div class="stat-icon">
-            <i class="pi pi-play-circle"></i>
-          </div>
+          <div class="stat-icon"><i class="pi pi-play-circle"></i></div>
           <div class="stat-content">
             <span class="stat-number">{{ getTotalLessons() }}</span>
             <span class="stat-label">درس</span>
           </div>
         </div>
-        
         <div class="stat-card">
-          <div class="stat-icon">
-            <i class="pi pi-clock"></i>
-          </div>
+          <div class="stat-icon"><i class="pi pi-clock"></i></div>
           <div class="stat-content">
             <span class="stat-number">{{ formatDuration(getTotalDuration()) }}</span>
             <span class="stat-label">المدة الإجمالية</span>
           </div>
         </div>
-        
-        <!-- Validation Status -->
         <div class="stat-card" [class.valid]="isFormValid" [class.invalid]="!isFormValid">
           <div class="stat-icon">
             <i class="pi pi-check-circle" *ngIf="isFormValid"></i>
             <i class="pi pi-exclamation-triangle" *ngIf="!isFormValid"></i>
           </div>
-          <div class="stat-content">
-            <span class="stat-label">{{ isFormValid ? 'مكتمل' : 'غير مكتمل' }}</span>
-          </div>
+            <div class="stat-content">
+              <span class="stat-label">{{ isFormValid ? 'مكتمل' : 'غير مكتمل' }}</span>
+            </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Form Container -->
   <form [formGroup]="unitsForm" class="units-form">
-    
-    <!-- Units Container -->
     <div class="units-container" formArrayName="units" *ngIf="unitsFormArray.length > 0">
-      
-      <!-- Unit Card -->
-      <div 
-        *ngFor="let unitForm of unitsFormArray.controls; let i = index" 
-        [formGroupName]="i"
+      <div
         class="unit-card"
+        *ngFor="let unitForm of unitsFormArray.controls; let i = index"
+        [formGroupName]="i"
         [class.expanded]="expandedUnit === i"
         [class.invalid]="!unitForm.valid && unitForm.touched"
       >
-        
-        <!-- Enhanced Unit Header -->
         <div class="unit-header" (click)="toggleUnitExpansion(i)">
           <div class="unit-main">
             <div class="unit-badge">
               <span class="unit-number">{{ i + 1 }}</span>
             </div>
-            
             <div class="unit-info">
               <div class="unit-title-container">
                 <h4 class="unit-title">
                   {{ unitForm.get('name')?.value || 'وحدة جديدة' }}
+                  <span
+                    *ngIf="unitForm.get('id')?.value"
+                    class="badge bg-secondary ms-2"
+                    title="لا يمكن تعديل اسم/وصف الوحدة لأن الواجهة الخلفية لا تدعم تعديل الوحدة"
+                  >
+                    غير قابل للتعديل
+                  </span>
                 </h4>
                 <div class="unit-status">
                   <span class="status-badge" [class.valid]="unitForm.valid" [class.invalid]="!unitForm.valid && unitForm.touched">
-                    <i class="pi fa-check" *ngIf="unitForm.valid"></i>
-                    <i class="pi fa-exclamation" *ngIf="!unitForm.valid && unitForm.touched"></i>
+                    <i class="pi" [ngClass]="unitForm.valid ? 'pi-check' : 'pi-exclamation'"></i>
                     {{ unitForm.valid ? 'مكتمل' : 'غير مكتمل' }}
                   </span>
                 </div>
               </div>
-              
               <p class="unit-description">
                 {{ unitForm.get('description')?.value || 'لا يوجد وصف' }}
               </p>
-              
               <div class="unit-meta">
                 <div class="meta-item">
                   <i class="pi pi-video"></i>
@@ -121,40 +93,34 @@
                   <i class="pi pi-clock"></i>
                   <span>{{ formatDuration(getUnitDuration(i)) }}</span>
                 </div>
-                <div class="meta-item" *ngIf="getUnitProgress(i) !== null">
-                  <i class="pi pi-chart-line"></i>
-                  <span>{{ getUnitProgress(i) }}% مكتمل</span>
-                </div>
               </div>
             </div>
           </div>
 
           <div class="unit-actions" (click)="$event.stopPropagation()">
-            <!-- Enhanced Action Buttons -->
             <div class="action-group">
-              <button 
+              <!-- Disable moving existing units since it cannot be persisted -->
+              <button
                 type="button"
                 class="btn btn-action btn-move"
                 (click)="moveUnitUp(i)"
-                [disabled]="!canMoveUnitUp(i)"
+                [disabled]="!canMoveUnitUp(i) || unitForm.get('id')?.value"
                 title="تحريك للأعلى"
               >
                 <i class="pi pi-chevron-up"></i>
               </button>
-              
-              <button 
+              <button
                 type="button"
                 class="btn btn-action btn-move"
                 (click)="moveUnitDown(i)"
-                [disabled]="!canMoveUnitDown(i)"
+                [disabled]="!canMoveUnitDown(i) || unitForm.get('id')?.value"
                 title="تحريك للأسفل"
               >
                 <i class="pi pi-chevron-down"></i>
               </button>
             </div>
-
             <div class="action-group">
-              <button 
+              <button
                 type="button"
                 class="btn btn-action btn-add"
                 (click)="addLesson(i)"
@@ -162,117 +128,86 @@
               >
                 <i class="pi pi-plus"></i>
               </button>
-
-              <button 
+              <!-- Disable deleting existing units unless backend supports DELETE -->
+              <button
                 type="button"
                 class="btn btn-action btn-delete"
                 (click)="removeUnit(i)"
-                [disabled]="unitsFormArray.length <= 1"
+                [disabled]="unitsFormArray.length <= 1 || unitForm.get('id')?.value"
                 title="حذف الوحدة"
               >
                 <i class="pi pi-trash"></i>
               </button>
             </div>
-
-            <!-- Enhanced Expand Icon -->
             <div class="expand-toggle">
               <i class="pi pi-chevron-down expand-icon"></i>
             </div>
           </div>
         </div>
 
-        <!-- Enhanced Unit Content -->
         <div class="unit-content" *ngIf="expandedUnit === i">
-          
-          <!-- Unit Form Fields with Better Layout -->
           <div class="unit-form-section">
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label">
-                  <i class="pi pi-tag"></i>
-                  اسم الوحدة <span class="required">*</span>
-                </label>
-                <input 
+                <label class="form-label"><i class="pi pi-tag"></i> اسم الوحدة <span class="required">*</span></label>
+                <input
                   type="text"
                   class="form-control"
                   formControlName="name"
+                  [readonly]="!!unitForm.get('id')?.value"
                   [class.is-invalid]="isUnitFieldInvalid(i, 'name')"
                   placeholder="أدخل اسم الوحدة"
-                >
+                />
                 <div class="invalid-feedback" *ngIf="isUnitFieldInvalid(i, 'name')">
                   {{ getFieldError(unitForm.get('name')) }}
                 </div>
               </div>
-
               <div class="form-group">
-                <label class="form-label">
-                  <i class="pi pi-sort-numeric-up"></i>
-                  ترتيب الوحدة
-                </label>
-                <input 
-                  type="number"
-                  class="form-control"
-                  formControlName="order"
-                  min="1"
-                  readonly
-                >
+                <label class="form-label"><i class="pi pi-sort-numeric-up"></i> ترتيب الوحدة</label>
+                <input type="number" class="form-control" formControlName="order" readonly />
               </div>
             </div>
-
             <div class="form-group">
               <label class="form-label">
-                <i class="pi pi-align-left"></i>
-                وصف الوحدة <span class="required">*</span>
+                <i class="pi pi-align-left"></i> وصف الوحدة <span class="required">*</span>
               </label>
-              <textarea 
+              <textarea
                 class="form-control"
                 formControlName="description"
+                [readonly]="!!unitForm.get('id')?.value"
                 [class.is-invalid]="isUnitFieldInvalid(i, 'description')"
-                placeholder="أدخل وصف مفصل للوحدة"
                 rows="3"
+                placeholder="أدخل وصفاً للوحدة"
               ></textarea>
               <div class="invalid-feedback" *ngIf="isUnitFieldInvalid(i, 'description')">
                 {{ getFieldError(unitForm.get('description')) }}
               </div>
-              <div class="char-counter">
-                {{ unitForm.get('description')?.value?.length || 0 }}/500 حرف
-              </div>
             </div>
           </div>
 
-          <!-- Lessons Section -->
-           <!-- ...existing code... -->
           <div class="lessons-container" formArrayName="lessons">
             <app-lessons-section
               *ngFor="let lessonForm of getLessonsFormArray(i).controls; let j = index"
               [lessonData]="lessonForm.value"
               [unitId]="unitForm.get('id')?.value || ''"
-              [academicYearId]="academicYearId"
-              [studentYearId]="studentYearId"
               [lessonIndex]="j"
               [isEdit]="true"
               (lessonUpdated)="onLessonUpdated(i, j, $event)"
               (lessonDeleted)="removeLesson(i, j)"
             ></app-lessons-section>
           </div>
-          <!-- ...existing code... -->
         </div>
       </div>
     </div>
 
-    <!-- Enhanced Empty Units State -->
     <div class="empty-units" *ngIf="unitsFormArray.length === 0">
       <div class="empty-content">
         <div class="empty-illustration">
-          <i class=" pi pi-bookmark"></i>
+          <i class="pi pi-bookmark"></i>
         </div>
         <h4>ابدأ بإنشاء الوحدات التعليمية</h4>
-        <p>قم بإنشاء الوحدات التعليمية وإضافة الدروس لكل وحدة لبناء محتوى تعليمي متكامل</p>
-        <button 
-          type="button"
-          class="btn btn-primary btn-lg"
-          (click)="addUnit()"
-        >
+        <p>قم بإضافة أول وحدة لبدء بناء الكورس</p>
+        <button type="button" class="btn btn-primary btn-lg" (click)="addUnit()">
           <i class="pi pi-plus"></i>
           إنشاء أول وحدة
         </button>
@@ -280,7 +215,6 @@
     </div>
   </form>
 
-  <!-- Enhanced Form Status -->
   <div class="form-status" *ngIf="unitsFormArray.length > 0">
     <div class="status-card" [class.valid]="isFormValid" [class.invalid]="!isFormValid">
       <div class="status-icon">

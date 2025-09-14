@@ -1,14 +1,16 @@
 :root {
   --primary-color: #304a6f;
-  --gradient-color: linear-gradient(135deg, #667eea, #764ba2);
+  --gradient-color: linear-gradient(135deg, #304a6f, #365f99);
   --secondary-color: #94afca;
   --light-color: #f2f2f2;
   --dark-color: #212529;
+  --muted: #6b7280;
   --success-color: #198754;
   --danger-color: #dc3545;
   --warning-color: #ffc107;
   --info-color: #0dcaf0;
   --gray-color: #60676d;
+  --bg: #f9fafb;
 }
 body{
     font-family: 'Cairo', sans-serif;

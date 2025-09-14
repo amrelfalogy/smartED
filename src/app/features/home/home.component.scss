@@ -4,6 +4,15 @@
 .header .content{
     margin-top: 95px;
 }
+.header .content h1{
+ font-weight: 800; margin-bottom: 10px; color: var(--primary-color) 
+} 
+.header .content p{
+  max-width: 760px;  font-size: 1.2rem;  color: var(--muted); 
+}
+.header .content .btn{
+ font-size:18px;
+}
 
 /*      FEATURES STYLE        */
 .features .card-item{
@@ -13,6 +22,7 @@
     background-color: #ffffff;
     transition: all 0.5s ease;
     padding: 30px;
+    margin: 10px 0;
 }
 .features .card-item:hover{
         transform: translateY(-25px);
@@ -31,9 +41,13 @@
 
 .features .card-item .icon-box{
     border-radius: 24px;
-    padding: 15px;
+    padding: 26px;
     width: 85px;
     height: 85px;
+}
+.features .card-item .icon-box .pi{
+    font-size: 2rem;
+    color: white;
 }
 .features .card-item .icon-box.teacher{
     background-image: linear-gradient(135deg, #3C8CE7 10%, #00EAFF 100%);
@@ -63,147 +77,274 @@
     pointer-events: none;
 }
 
-/*about section*/
-.about-section {
-  position: relative;
-  min-height: 460px;
-  overflow: hidden;
-  margin: 100px 20px 40px;
+/* How it works */
+.how-it-works {
+  background: var(--bg);
+  padding: 48px 0;
+  margin-top: 120px;
   border-radius: 20px;
-  box-shadow: 0 3px 30px 0 rgba(0, 0, 0, 0.1);
-}
-
-.hero-image-container {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-image: url('/assets/imgs/aboutt.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  
-  // Placeholder background image pattern
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-      radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-  }
-}
-
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.4) 0%,
-    rgba(0, 0, 0, 0.6) 50%,
-    rgba(0, 0, 0, 0.4) 100%
-  );
-  z-index: 1;
-}
-
-.hero-content-overlay {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  transform: translateY(-50%);
-  z-index: 2;
-  
-  h1 {
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  }
-  
-  p {
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  .section-title { text-align: center; color: var(--dark); font-weight: 800; margin-bottom: 20px; }
+  .timeline {
+    display: flex; gap: 14px; justify-content: center;
+    .step {
+      display: flex; grid-template-columns: 62px 1fr; gap: 12px; align-items: flex-start;
+      background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin: 5px 12px; max-width: -webkit-fill-available;
+      .step-icon {
+        position: relative;
+        width: 56px; height: 56px; border-radius: 12px;
+        display: grid; place-items: center;
+        background: var(--bg); color: var(--primary);
+        i { font-size: 1.2rem; }
+        .step-index {
+          position: absolute; bottom: -10px; inset-inline-start: 50%;
+          transform: translateX(-50%);
+          background: var(--primary-color); color: #fff; border-radius: 999px;
+          font-size: 0.6rem; padding: 2px 6px;
+        }
+      }
+      .step-content {
+        h5 { margin: 5px 0 4px; color: var(--dark); font-weight: 800; }
+        p { margin: 0; color: var(--muted); }
+      }
+    }
   }
 }
 
 
-/* home-section */
-
-.course-card-content,.instructor-card-content{
-    cursor: pointer;
+/* Home section shared card content overrides */
+.course-card-content,
+.instructor-card-content {
+  cursor: pointer;
 }
 
 .card-image {
   width: 100%;
-  height: 50%;
+  height: 180px;
   object-fit: cover;
   border-radius: 0;
   margin-bottom: 0;
 }
- .card-info {
-  padding: 1rem 1rem 1.5rem;
+
+.card-info {
+  padding: 1rem 1rem 1.25rem;
   direction: rtl;
   text-align: start;
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
+  font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
 }
 
+/* Instructor row inside course card */
 .instructor-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
-
 .instructor-avatar {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
 }
-
 .instructor-info .instructor-name {
   font-size: 0.85rem;
   color: var(--secondary-color);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.2;
 }
 
-.card-info h4 {
-  margin: 0.5rem 0 1.5rem;
-  font-size: 1.2rem;
-  font-weight: bold;
+/* Course title */
+.course-title {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
   color: var(--dark-color);
   line-height: 1.4;
 }
-.card-info p {
-  
-  font-size: .9rem;
-  color: var(--gray-color);
+
+/* Meta rows */
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.academic-year {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #1d4ed8;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.tags-row {
+  justify-content: space-between;
 }
 
-/* Rating Stars Styling */
-.rating {
-  display: flex;
-  gap: 4px; 
-  margin-top: auto;
+/* Tags and price */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.chip--center {
+  background: #f0f9ff;
+  color: #0ea5e9;
+  border-color: #bae6fd;
+}
+.chip--studio {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+.price {
+  margin-inline-start: auto;
+  font-weight: 600;
+  color: var(--dark-color);
+  display: inline-flex;
   align-items: center;
 }
 
-.rating .pi {
-  font-size: 1.1rem;
-  transition: color 0.2s ease;
+/* Rating */
+.rating {
+  display: flex;
+  gap: 4px;
+  margin-top: auto;
+  align-items: center;
 }
-
 .rating .pi-star-fill {
-  color: #FFc600; 
+  color: #ffc600;
+}
+.rating .pi-star {
+  color: var(--gray-color);
 }
 
-.rating .pi-star {
-  color: var(--gray-color); 
+/* Actions */
+.actions {
+  margin-top: 10px;
+}
+.details-btn {
+  width: 100%;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* Instructors card extras */
+.instructor-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.instructor-name {
+  margin: 0.25rem 0 0.4rem;
+  font-weight: 600;
+  color: var(--dark-color);
+}
+.verified {
+  color: #10b981;
+  font-size: 1rem;
+  vertical-align: middle;
+}
+.specialization,
+.department {
+  margin: 0.15rem 0;
+  color: var(--gray-color);
+  font-size: 0.95rem;
+}
+.teacher-btn {
+  width: 100%;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 60px 0 80px;
+  }
+  .header .row{
+    flex-direction: column-reverse;
+  }
+  .header .content {
+    margin-top: 10px;
+    text-align: center;
+  }
+  .cta-btn {
+    width: 100%;
+  }
+  .header-illustration {
+    max-height: 280px;
+  }
+}
+// ✅ ADD: Loading states for course cards
+.course-card-loading {
+  .loading-placeholder {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+    .loading-image {
+      height: 160px;
+      background: linear-gradient(90deg, #f0f0f0 25%, rgba(255,255,255,0.5) 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    .loading-content {
+      padding: 1rem;
+
+      .loading-line {
+        height: 12px;
+        background: linear-gradient(90deg, #f0f0f0 25%, rgba(255,255,255,0.5) 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        margin-bottom: 8px;
+        border-radius: 6px;
+
+        &.short {
+          width: 70%;
+        }
+      }
+    }
+  }
+}
+
+.course-card-error {
+  .error-content {
+    padding: 2rem;
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+    i {
+      font-size: 2rem;
+      color: #ef4444;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+  }
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

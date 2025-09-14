@@ -5,7 +5,7 @@
     <a 
       href="javascript:" 
       class=" dropdown-toggle arrow-none me-0 user-profile-trigger" 
-      (click)="toggleUserDropdown()"
+      
       title="الملف الشخصي"
     >
       <div class="user-avatar me-2">
@@ -16,7 +16,7 @@
         <span class="user-name">{{ getUserDisplayName() }}</span>
         <small class="user-role">{{ getUserRole() }}</small>
       </div>
-      <i class="pi pi-chevron-down ms-2 chevron-icon" [class.rotated]="showUserDropdown"></i>
+      <!-- <i class="pi pi-chevron-down ms-2 chevron-icon" [class.rotated]="showUserDropdown"></i> -->
     </a>
     
     <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown" [class.show]="showUserDropdown">

@@ -189,11 +189,11 @@
             </div>
           </div>
 
-          <!-- Studio Produced Card -->
+          <!-- Studio Produced Card -->            
           <div class="lesson-type-card" 
-               [class.selected]="selectedLessonType === 'studio_produced'"
-               [class.disabled]="!isLessonTypeAvailable('studio_produced')"
-               (click)="selectLessonType('studio_produced')">
+              [class.selected]="selectedLessonType === 'studio_produced'"
+              [class.disabled]="!isLessonTypeAvailable('studio_produced')"
+              (click)="selectLessonType('studio_produced')">
             
             <div class="card-header">
               <div class="card-icon studio-produced">
@@ -202,6 +202,7 @@
               <div class="card-status" *ngIf="selectedLessonType === 'studio_produced'">
                 <span class="status-badge selected">محدد</span>
               </div>
+              <!-- ✅ Show popular badge only if available -->
               <div class="popular-badge" *ngIf="isLessonTypeAvailable('studio_produced')">الأكثر شعبية</div>
             </div>
             
@@ -278,38 +279,69 @@
         </div>
       </div>
 
-      <!-- ✅ Course Units and Lessons (when lesson type is selected) -->
+      <!-- ✅ Course Units and Lessons (Enhanced UI) -->
       <div class="course-curriculum" *ngIf="selectedLessonType">
-        <div class="curriculum-header">
+        <div class="curriculum-header sticky">
           <h2 class="curriculum-title">
             <i class="pi pi-play-circle me-2"></i>
             {{ getSelectedLessonTypeInfo()?.title }}
           </h2>
+          <div class="lesson-actions">
+            <button class="btn btn-sm"
+                    [class.btn-primary]="isAdminMode"
+                    [class.btn-danger]="!isAdminMode">
+              <span *ngIf="isAdminMode"><i class="pi pi-eye me-1"></i> معاينة</span>
+              <span *ngIf="!isAdminMode "><i class="pi pi-play me-1"></i> ابدأ</span>
+            </button>
+          </div>
           <div class="curriculum-stats">
-            <span class="stat-item">
+            <span class="stat-item chip">
               <i class="pi pi-play-circle"></i>
               {{ getTotalLessons() }} درس
             </span>
-            <span class="stat-item">
+            <span class="stat-item chip">
               <i class="pi pi-clock"></i>
               {{ getTotalDuration() }}
+            </span>
+            <span class="stat-item chip type-chip" *ngIf="selectedLessonType">
+              <i class="pi pi-tag"></i>
+              
+              <button class="chip-clear" aria-label="إزالة التحديد" (click)="selectedLessonType = null; $event.stopPropagation()">
+                <i class="pi pi-times"></i>
+              </button>
             </span>
           </div>
         </div>
 
-        <!-- ✅ Display Units with Filtered Lessons -->
+        <!-- Units as an accessible accordion (no TS needed) -->
         <div class="units-container" *ngIf="getFilteredUnits().length > 0">
-          <div class="unit-card" *ngFor="let unit of getFilteredUnits(); let unitIndex = index">
-            <div class="unit-header">
+          <details
+            class="unit-card"
+            *ngFor="let unit of getFilteredUnits(); let unitIndex = index"
+            [attr.open]="unitIndex === 0 ? true : null"
+          >
+            <summary class="unit-header" >
               <div class="unit-info">
-                <h3 class="unit-title">{{ unit.name }}</h3>
-                <p class="unit-description" *ngIf="unit.description">{{ unit.description }}</p>
+                <div class="unit-title-row">
+                  <h3 class="unit-title" [title]="unit.name">{{ unit.name }}</h3>
+                  <span class="unit-badge">
+                    <i class="pi pi-bookmark"></i>
+                    وحدة {{ unitIndex + 1 }}
+                  </span>
+                </div>
+                <p class="unit-description" *ngIf="unit.description" [title]="unit.description">{{ unit.description }}</p>
               </div>
               <div class="unit-stats">
-                <span class="lessons-count">{{ unit.lessons?.length || 0 }} دروس</span>
+                <span class="lessons-count">
+                  <i class="pi pi-play"></i>
+                  {{ unit.lessons?.length || 0 }} دروس
+                </span>
               </div>
-            </div>
-            
+              <div class="summary-caret" aria-hidden="true">
+                <i class="pi pi-chevron-down"></i>
+              </div>
+            </summary>
+
             <!-- Lessons List -->
             <div class="lessons-list" *ngIf="unit.lessons && unit.lessons.length > 0">
               <div class="lesson-item" 
@@ -318,57 +350,79 @@
                    [class.free]="lesson.isFree"
                    [class.accessible]="isAdminMode || lesson.hasAccess"
                    [class.admin-preview]="isAdminMode">
-                
-                <div class="lesson-content" (click)="startLesson(lesson)">
+
+                <div class="lesson-content" (click)="startLesson(lesson)" tabindex="0" role="button" [attr.aria-label]="'فتح الدرس ' + lesson.title">
                   <div class="lesson-number">
                     <span>{{ lessonIndex + 1 }}</span>
                   </div>
-                  
-                  <div class="lesson-icon">
-                    <i class="pi pi-play-circle" *ngIf="isAdminMode || lesson.isFree || lesson.hasAccess"></i>
-                    <i class="pi pi-lock" *ngIf="!isAdminMode && !lesson.isFree && !lesson.hasAccess"></i>
-                    <i class="pi pi-credit-card" *ngIf="!isAdminMode && lesson.requiresPayment"></i>
-                  </div>
-                  
-                  <div class="lesson-info">
-                    <h4 class="lesson-title">{{ lesson.title }}</h4>
-                    <p class="lesson-description" *ngIf="lesson.description">{{ lesson.description }}</p>
-                    
+
+                  <div class="lesson-body">
+                    <div class="lesson-title-row">
+                      <div class="lesson-icon">
+                        <i class="pi pi-play-circle" *ngIf="isAdminMode || lesson.isFree || lesson.hasAccess"></i>
+                        <i class="pi pi-lock" *ngIf="!isAdminMode && !lesson.isFree && !lesson.hasAccess"></i>
+                        <i class="pi pi-credit-card" *ngIf="!isAdminMode && lesson.requiresPayment"></i>
+                      </div>
+                      <h4 class="lesson-title" [title]="lesson.title">{{ lesson.title }}</h4>
+                    </div>
+
+                    <p class="lesson-description" *ngIf="lesson.description" [title]="lesson.description">
+                      {{ lesson.description }}
+                    </p>
+
                     <div class="lesson-meta">
-                      <span class="duration" *ngIf="lesson.duration">
+                      <span class="meta-chip" *ngIf="lesson.duration">
                         <i class="pi pi-clock"></i>
                         {{ formatDuration(lesson.duration) }}
                       </span>
-                      <span class="difficulty" 
-                            [class]="'difficulty-' + lesson.difficulty"
-                            *ngIf="lesson.difficulty">
+                      <span class="meta-chip difficulty" [class]="'difficulty-' + lesson.difficulty" *ngIf="lesson.difficulty">
                         <i class="pi pi-signal"></i>
                         {{ getDifficultyLabel(lesson.difficulty) }}
                       </span>
-                      <span class="type">
+                      <span class="meta-chip type">
                         <i class="pi pi-video"></i>
                         {{ lesson.lessonType === 'center_recorded' ? 'مركز' : 'استوديو' }}
                       </span>
+                      <span class="meta-chip free-chip" *ngIf="lesson.isFree">
+                        <i class="pi pi-gift"></i>
+                        مجاني
+                      </span>
+                      <span class="meta-chip locked-chip" *ngIf="!isAdminMode && !lesson.isFree && !lesson.hasAccess && !lesson.requiresPayment">
+                        <i class="pi pi-lock"></i>
+                        مقفل
+                      </span>
+                      <span class="meta-chip pay-chip" *ngIf="!isAdminMode && lesson.requiresPayment">
+                        <i class="pi pi-credit-card"></i>
+                        يحتاج دفع
+                      </span>
                     </div>
                   </div>
-                  
+
                   <div class="lesson-actions">
-                    <span class="free-badge" *ngIf="lesson.isFree">مجاني</span>
-                    <span class="premium-badge" *ngIf="!lesson.isFree && (isAdminMode || lesson.hasAccess)">مميز</span>
-                    <button class="btn btn-sm" 
+                    <button class="btn btn-sm"
                             [class.btn-primary]="isAdminMode || lesson.isFree || lesson.hasAccess"
                             [class.btn-warning]="!isAdminMode && lesson.requiresPayment && !lesson.hasAccess"
-                            [class.btn-outline-secondary]="!isAdminMode && !lesson.isFree && !lesson.hasAccess && !lesson.requiresPayment">
-                      <span *ngIf="isAdminMode">معاينة</span>
-                      <span *ngIf="!isAdminMode && (lesson.isFree || lesson.hasAccess)">ابدأ</span>
-                      <span *ngIf="!isAdminMode && lesson.requiresPayment && !lesson.hasAccess">اشترك</span>
-                      <span *ngIf="!isAdminMode && !lesson.isFree && !lesson.hasAccess && !lesson.requiresPayment">مقفل</span>
+                            [class.btn-outline-secondary]="!isAdminMode && !lesson.isFree && !lesson.hasAccess && !lesson.requiresPayment"
+                            (click)="onLessonAction(lesson, $event)">
+                      <span *ngIf="isAdminMode"><i class="pi pi-eye me-1"></i> معاينة</span>
+                      <span *ngIf="!isAdminMode && (lesson.isFree || lesson.hasAccess)"><i class="pi pi-play me-1"></i> ابدأ</span>
+                      <span *ngIf="!isAdminMode && lesson.requiresPayment && !lesson.hasAccess"><i class="pi pi-credit-card me-1"></i> ادفع</span>
+                      <span *ngIf="!isAdminMode && !lesson.isFree && !lesson.hasAccess && !lesson.requiresPayment"><i class="pi pi-lock me-1"></i> مقفل</span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+
+            <!-- No lessons in unit -->
+            <div class="no-lessons-message" *ngIf="!unit.lessons || unit.lessons.length === 0">
+              <div class="no-lessons-content">
+                <i class="pi pi-exclamation-triangle"></i>
+                <h4>لا توجد دروس في هذه الوحدة</h4>
+                <p>سيظهر المحتوى هنا بمجرد إضافة الدروس</p>
+              </div>
+            </div>
+          </details>
         </div>
 
         <!-- No Lessons Message -->
@@ -438,80 +492,6 @@
           <i class="pi pi-credit-card me-2"></i>
           سجل في الدورة
         </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ✅ Payment Plans Modal (unchanged) -->
-  <div class="payment-modal-overlay" *ngIf="showPaymentModal" (click)="closePaymentModal()">
-    <div class="payment-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3 class="modal-title">
-          <i class="pi pi-credit-card me-2"></i>
-          خطط الاشتراك
-        </h3>
-        <button class="modal-close" (click)="closePaymentModal()">
-          <i class="pi pi-times"></i>
-        </button>
-      </div>
-
-      <div class="modal-content">
-        <!-- Loading State -->
-        <div class="loading-plans" *ngIf="loadingPaymentPlans">
-          <i class="pi pi-spinner pi-spin"></i>
-          <p>جاري تحميل خطط الاشتراك...</p>
-        </div>
-
-        <!-- Payment Plans -->
-        <div class="payment-plans" *ngIf="!loadingPaymentPlans && paymentPlans.length > 0">
-          <div class="plan-card" 
-               *ngFor="let plan of paymentPlans"
-               [class.popular]="plan.isPopular">
-            
-            <div class="plan-header">
-              <div class="plan-badge" *ngIf="plan.isPopular">الأكثر شعبية</div>
-              <h4 class="plan-name">{{ plan.name }}</h4>
-              <p class="plan-description">{{ plan.description }}</p>
-            </div>
-
-            <div class="plan-pricing">
-              <div class="price-display">
-                <span class="currency">{{ plan.currency }}</span>
-                <span class="price">{{ plan.price }}</span>
-                <span class="duration">/ {{ getPlanDurationLabel(plan.duration) }}</span>
-              </div>
-              <div class="discount" *ngIf="plan.discountPercentage !== '0.00'">
-                خصم {{ plan.discountPercentage }}%
-              </div>
-            </div>
-
-            <div class="plan-features">
-              <ul>
-                <li *ngFor="let feature of plan.features">
-                  <i class="pi pi-check"></i>
-                  {{ feature }}
-                </li>
-              </ul>
-            </div>
-
-            <div class="plan-action">
-              <button class="btn btn-primary btn-block" 
-                      (click)="subscribeToPlan(plan)">
-                <i class="pi pi-shopping-cart me-2"></i>
-                اختر هذه الخطة
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- No Plans Message -->
-        <div class="no-plans-message" *ngIf="!loadingPaymentPlans && paymentPlans.length === 0">
-          <div class="no-plans-content">
-            <i class="pi pi-exclamation-triangle"></i>
-            <h4>لا توجد خطط متاحة</h4>
-            <p>لا توجد خطط اشتراك متاحة حالياً لهذا النوع من الدروس</p>
-          </div>
-        </div>
       </div>
     </div>
   </div>

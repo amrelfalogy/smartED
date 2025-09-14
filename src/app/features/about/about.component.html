@@ -1,0 +1,151 @@
+<div class="about-page" dir="rtl">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <h1>منصة تعليمية حديثة لرحلة تعلم أفضل</h1>
+      <p>
+        نوفر تجربة تعلم شاملة تجمع بين الحصص المباشرة والدروس المسجلة، بإشراف نخبة من المعلمين،
+        وخطط دفع مرنة تناسب الجميع.
+      </p>
+    </div>
+  </section>
+
+  <!-- Mission & Vision -->
+  <section class="mission container">
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="card mission-card">
+          <div class="icon">
+            <i class="pi pi-bullseye"></i>
+          </div>
+          <h3>رسالتنا</h3>
+          <p>
+            تمكين الطلاب من تحقيق أفضل النتائج عبر محتوى تعليمي موثوق، تفاعلي، وسهل الوصول،
+            مع دعم فني وإنساني مستمر.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card mission-card">
+          <div class="icon">
+            <i class="pi pi-eye"></i>
+          </div>
+          <h3>رؤيتنا</h3>
+          <p>
+            أن نكون الخيار الأول للتعلّم الإلكتروني في المنطقة عبر تقديم تجربة تعليمية عميقة ومؤثرة
+            تركز على الطالب ونتائجه.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="stats">
+    <div class="container">
+      <div class="row g-3">
+        <div class="col-6 col-md-3" *ngFor="let s of stats">
+          <div class="stat-card">
+            <i class="pi" [ngClass]="s.icon"></i>
+            <div class="value">{{s.value}}</div>
+            <div class="label">{{ s.label }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="values container">
+    <h2 class="section-title">قيمنا الأساسية</h2>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-3" *ngFor="let v of values">
+        <div class="value-card">
+          <div class="value-icon">
+            <i class="pi" [ngClass]="v.icon"></i>
+          </div>
+          <h4>{{ v.title }}</h4>
+          <p>{{ v.desc }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how-it-works container">
+    <div class="container">
+      <h2 class="section-title">كيف تعمل منصتنا؟</h2>
+      <div class="timeline row">
+        <div class="step col-md-5 " *ngFor="let step of steps; let i = index">
+          <div class="step-icon">
+            <i class="pi" [ngClass]="step.icon"></i>
+            <span class="step-index">{{ i + 1 }}</span>
+          </div>
+          <div class="step-content">
+            <h5>{{ step.title }}</h5>
+            <p>{{ step.desc }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <!-- CTA -->
+  <section class="cta-section parallax-section row">
+    <div class="col-md-12" style="padding: 0;">
+        <section
+        class="parallax img-fluid"
+        style="background-image: url('assets/imgs/bg.jpg')"
+      >
+      <div class="overlay"></div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="container cta-box">
+                    <h3>جاهز لتبدأ رحلتك التعليمية؟</h3>
+                    <h1>انضم إلى طلابنا وابدأ التعلم الآن مع أفضل المعلمين.</h1>
+                    <div>
+                        <a routerLink="/auth/login" class="btn btn-light">إنشاء حساب</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </section>
+    </div>        
+  </section>
+
+  <!-- Guarantees / Trust -->
+  <section class="trust container">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="trust-card">
+          <i class="pi pi-verified"></i>
+          <div>
+            <h5>معلمون معتمدون</h5>
+            <p>اختيار دقيق للمدرسين ومراجعات دورية للأداء والمحتوى.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="trust-card">
+          <i class="pi pi-lock"></i>
+          <div>
+            <h5>مدفوعات آمنة</h5>
+            <p>وسائل دفع موثوقة وحماية بياناتك وفق أفضل الممارسات.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="trust-card">
+          <i class="pi pi-globe"></i>
+          <div>
+            <h5>وصول دائم</h5>
+            <p>تعلم من أي مكان ومن أي جهاز، دون قيود المكان والوقت.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+</div>

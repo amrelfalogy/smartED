@@ -1,42 +1,135 @@
-<!-- layout.component.html - Final Updated Version -->
+<!-- ✅ UPDATED: layout.component.html - Enhanced responsive navbar -->
 <nav class="navbar navbar-expand-lg">
   <div class="container">
+    <!-- Brand Logo -->
     <a class="navbar-brand d-flex align-items-center" [routerLink]="['/home']">
       <img src="assets/imgs/logo2.png" alt="Logo" style="height: 80px; width: auto;">
     </a>
     
+    <!-- ✅ Auth Section for Mobile - Show beside toggle button -->
+    <div class="d-lg-none d-flex align-items-center mobile-auth-section">
+      <!-- Not Logged In -->
+      <div class="auth-buttons mobile-auth" *ngIf="!isLoggedIn && !isLoading">
+        <button class="btn btn-primary  " (click)="login()">
+          تسجيل دخول
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div class="user-loading mobile-loading" *ngIf="shouldShowLoading()">
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Logged In User Menu for Mobile -->
+      <div class="user-menu-container mobile-user-menu" *ngIf="shouldShowUserInfo()">
+        <div class="user-menu mobile-menu" (click)="toggleUserDropdown()">
+          <div class="user-avatar mobile-avatar">
+            {{ getUserInitials() }}
+          </div>
+          <i class="pi pi-chevron-down ms-1" [class.rotated]="showUserDropdown"></i>
+        </div>
+
+        <!-- Mobile User Dropdown -->
+        <div class="user-dropdown mobile-dropdown" [class.show]="showUserDropdown">
+          <div class="dropdown-header">
+            <div class="user-info">
+              <div class="user-avatar-large">
+                {{ getUserInitials() }}
+              </div>
+              <div class="user-details">
+                <div class="user-name">{{ getUserDisplayName() }}</div>
+                <div class="user-email">{{ currentUser?.email || 'لا يوجد بريد إلكتروني' }}</div>
+                <div class="user-role" *ngIf="currentUser?.role">
+                  <span class="role-badge" [class]="'role-' + (currentUser?.role || '')">
+                    {{ getRoleLabel(currentUser?.role || '') }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <ul>
+            <li class="dropdown-item" (click)="navigateToDashboard(); closeDropdown()" *ngIf="canAccessDashboard()">
+              <a>
+                <i class="{{ getDashboardIcon() }} me-3"></i>
+                {{ getDashboardLabel() }}
+              </a>
+            </li>      
+            <li class="dropdown-item" *ngIf="currentUser?.role === 'student'">
+              <a routerLink="/student-dashboard/my-courses" (click)="closeDropdown()">
+                <i class="pi pi-book me-3"></i>
+                دوراتي
+              </a>
+            </li>
+            <li class="dropdown-item" *ngIf="currentUser?.role === 'student'">
+              <a routerLink="/student-dashboard/my-payments" (click)="closeDropdown()">
+                <i class="pi pi-credit-card me-3"></i>
+                مدفوعاتي
+              </a>
+            </li>
+            <li class="dropdown-item">
+              <a routerLink="/support" (click)="closeDropdown()">
+                <i class="pi pi-question-circle me-3"></i>
+                المساعدة
+              </a>
+            </li>
+            <div class="dropdown-divider"></div>
+            <li class="dropdown-item logout-item" (click)="logout(); closeDropdown()" [class.disabled]="isLoggingOut">
+              <a>
+                <i class="pi pi-sign-out me-3" *ngIf="!isLoggingOut"></i>
+                <i class="pi pi-spinner pi-spin me-3" *ngIf="isLoggingOut"></i>
+                {{ isLoggingOut ? 'جاري الخروج...' : 'خروج' }}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ✅ Collapse Toggle Button -->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"
+      (click)= "onNavbarToggle()">
       <span class="navbar-toggler-icon"></span>
     </button>
     
+    <!-- ✅ Collapsible Content - Only Navigation Links -->
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav m-auto">
         <li class="nav-item">
-          <a class="nav-link" [routerLink]="['/home']" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">الرئيســية</a>
+          <a class="nav-link" [routerLink]="['/home']" routerLinkActive="active"
+           [routerLinkActiveOptions]="{exact: true}" (click)="closeNavbar()">الرئيســية</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" [routerLink]="['/courses']" routerLinkActive="active">الكورســات</a>
+          <a class="nav-link" [routerLink]="['/about']" routerLinkActive="active" 
+          [routerLinkActiveOptions]="{exact: true}" (click)="closeNavbar()">من نحن</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">المعلميــن</a>
+          <a class="nav-link" [routerLink]="['/courses']" routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: true}" (click)="closeNavbar()" >الكورســات</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [routerLink]="['/instructors']" routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: true}" (click)="closeNavbar()">المعلميــن</a>
         </li>
       </ul>
       
-      <!-- Authentication Section -->
-      <div class="d-flex align-items-center">
+      <!-- ✅ Desktop Auth Section - Only show on large screens -->
+      <div class="d-none d-lg-flex align-items-center desktop-auth-section">
         
         <!-- Not Logged In -->
         <div class="auth-buttons" *ngIf="!isLoggedIn && !isLoading">
-          <button class="btn btn-outline-primary ms-2" (click)="login()">
+          <button class="btn btn-outline-primary me-2" (click)="login()">
             تسجيل الدخول
           </button>
-          <button class="btn btn-primary" (click)="register()">
+          <button class="btn btn-primary me-2" (click)="register()">
             إنشاء حساب
           </button>
         </div>
 
-        <!-- Loading State - Show while authentication is being verified -->
+        <!-- Loading State -->
         <div class="user-loading" *ngIf="shouldShowLoading()">
           <div class="spinner-border spinner-border-sm" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -44,18 +137,18 @@
           <span class="ms-2">جاري التحميل...</span>
         </div>
 
-        <!-- Logged In - User Menu (Only show when user data is loaded) -->
+        <!-- Desktop User Menu -->
         <div class="user-menu-container" *ngIf="shouldShowUserInfo()">
           <div class="user-menu" (click)="toggleUserDropdown()">
             <div class="user-avatar">
               {{ getUserInitials() }}
             </div>
-            <span class="user-name d-none d-md-inline">{{ getUserDisplayName() }}</span>
+            <span class="user-name d-none d-xl-inline">{{ getUserDisplayName() }}</span>
             <i class="pi pi-chevron-down ms-2" [class.rotated]="showUserDropdown"></i>
           </div>
 
-          <!-- Dropdown Menu -->
-          <div class="user-dropdown" [class.show]="showUserDropdown">
+          <!-- Desktop User Dropdown -->
+          <div class="user-dropdown desktop-dropdown" [class.show]="showUserDropdown">
             <div class="dropdown-header">
               <div class="user-info">
                 <div class="user-avatar-large">
@@ -64,7 +157,6 @@
                 <div class="user-details">
                   <div class="user-name">{{ getUserDisplayName() }}</div>
                   <div class="user-email">{{ currentUser?.email || 'لا يوجد بريد إلكتروني' }}</div>
-                  <!-- ✅ Add role badge for better UX -->
                   <div class="user-role" *ngIf="currentUser?.role">
                     <span class="role-badge" [class]="'role-' + (currentUser?.role || '')">
                       {{ getRoleLabel(currentUser?.role || '') }}
@@ -75,52 +167,31 @@
             </div>
             
             <ul>
-              <li class="dropdown-item">
-                <a>
-                  <i class="pi pi-user me-3"></i>
-                  الملف الشخصي
-                </a>
-              </li>
-              
-              <!-- ✅ Updated dashboard menu item - shows for both admin and student -->
               <li class="dropdown-item" (click)="navigateToDashboard()" *ngIf="canAccessDashboard()">
                 <a>
                   <i class="{{ getDashboardIcon() }} me-3"></i>
                   {{ getDashboardLabel() }}
                 </a>
-              </li>
-
-              <!-- ✅ Additional student-specific menu items -->
+              </li>      
               <li class="dropdown-item" *ngIf="currentUser?.role === 'student'">
                 <a routerLink="/student-dashboard/my-courses" (click)="closeDropdown()">
                   <i class="pi pi-book me-3"></i>
                   دوراتي
                 </a>
               </li>
-
               <li class="dropdown-item" *ngIf="currentUser?.role === 'student'">
                 <a routerLink="/student-dashboard/my-payments" (click)="closeDropdown()">
                   <i class="pi pi-credit-card me-3"></i>
                   مدفوعاتي
                 </a>
               </li>
-
               <li class="dropdown-item">
-                <a>
-                  <i class="pi pi-cog me-3"></i>
-                  الإعدادات
-                </a>
-              </li>
-
-              <li class="dropdown-item">
-                <a>
+                <a routerLink="/support" (click)="closeDropdown()">
                   <i class="pi pi-question-circle me-3"></i>
                   المساعدة
                 </a>
               </li>
-
               <div class="dropdown-divider"></div>
-              
               <li class="dropdown-item logout-item" (click)="logout()" [class.disabled]="isLoggingOut">
                 <a>
                   <i class="pi pi-sign-out me-3" *ngIf="!isLoggingOut"></i>
@@ -131,7 +202,6 @@
             </ul>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -139,5 +209,97 @@
 
 <!-- Backdrop for closing dropdown -->
 <div class="dropdown-backdrop" *ngIf="showUserDropdown" (click)="closeDropdown()"></div>
+<div class="navbar-backdrop" *ngIf="isNavbarOpen" (click)="closeNavbar()"></div>
 
 <router-outlet></router-outlet>
+
+<!-- Footer remains the same -->
+<footer>
+  <div class="container">
+    <div class="row">
+      <!-- Get in Touch Column -->
+      <div class="col-sm-3">
+        <h3 class="footer-title">
+          تواصل معنا
+        </h3>
+        <div class="footer-links">
+          <div class="contact-item">
+            <i class="pi pi-envelope"></i>
+            <a href="mailto:info@smarted.com">
+              info@smarted.com
+            </a>
+          </div>
+          <div class="contact-item">
+            <i class="pi pi-phone" ></i>
+            <a href="tel:+201094969418" dir="ltr" style="font-size: 16px; unicode-bidi: plaintext;">
+              +201 016 852 128
+            </a>
+          </div>
+          <a
+            style="text-decoration: none; color: inherit"
+            class="contact-item"
+            href="https://wa.me/201090160332"
+          >
+            <i class="pi pi-whatsapp"></i>
+            <a href="https://wa.me/201090160332" dir="ltr" style="unicode-bidi: plaintext;">
+              +201 016 852 128
+            </a>
+          </a>
+        </div>
+      </div>
+
+      <!-- Information Column -->
+      <div class="col-sm-3">
+        <h3 class="footer-title">
+          معلومات
+        </h3>
+        <ul class="footer-links">
+          <li>
+            <a routerLink="about">من نحن</a>
+          </li>
+          <li>
+            <a routerLink="courses">الدورات</a>
+          </li>
+          <li>
+            <a routerLink="support">المساعدة</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Support Column -->
+      <div class="col-sm-3">
+        <h3 class="footer-title">الدعم الفني</h3>
+        <ul class="footer-links">
+          <li>            
+            <a routerLink="support"> الاسئلة الشائعه</a>
+          </li>
+          <li>
+            <a routerLink="support"> مركز المساعدة</a>
+          </li>
+          <li>
+            <a routerLink="support"> خدمة العملاء </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Policies Column -->
+      <div class="col-sm-3">
+        <h3 class="footer-title">السياسات</h3>
+        <ul class="footer-links">
+          <li>
+              سياسة الخصوصية
+          </li>
+           <li>
+              الشروط والاحكام
+          </li>
+          <li>
+              سياسة الدفع
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="sub-footer text-center">
+   © Copyright {{ currentYear }} SmartED. All rights reserved.
+  </div>
+</footer>

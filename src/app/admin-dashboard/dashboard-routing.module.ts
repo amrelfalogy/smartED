@@ -40,6 +40,11 @@ const routes: Routes = [
             component: CoursesAdminFormComponent,
             data: { title: 'تعديل الكورس', breadcrumb: 'تعديل', mode: 'edit' }
           },
+          { 
+            path: ':id/students', 
+            component: CoursesAdminListComponent, // or create StudentsListComponent
+            data: { title: 'طلاب الكورس', breadcrumb: 'الطلاب', mode: 'students' }
+          }
           
         ]
       },
@@ -47,6 +52,11 @@ const routes: Routes = [
         path: 'course-details/:id', 
         loadChildren: () => import('../student-dashboard/pages/course-details/course-details.module').then(m => m.CourseDetailsModule),
         data: { title: 'تفاصيل الكورس', breadcrumb: 'التفاصيل', mode: 'admin' }
+      },
+      { 
+        path: 'lesson-details/:id', 
+        loadChildren: () => import('../student-dashboard/pages/lesson-details/lesson-details.module').then(m => m.LessonDetailsModule),
+        data: { title: 'معاينة الدرس', breadcrumb: 'معاينة الدرس', mode: 'admin' }
       },
       {
         path: 'payments',

@@ -1,118 +1,133 @@
 <div class="container">
-<div class="row" dir="ltr">
-    <div class="col-md-6 col-xl-3" *ngFor="let analytic of AnalyticEcommerce; trackBy: trackByAnalytic">
+  <div class="row" >
+    <!-- KPI Cards -->
+    <div class="col-md-6 col-xl-3" *ngFor="let k of kpis; trackBy: trackByKpi">
       <app-card [showHeader]="false" blockClass="dashboard-card">
-        <h6 class="mb-2 f-w-400 text-muted">{{ analytic.title }}</h6>
-        <h4 class="mb-3">
-          {{ analytic.amount }}
-          <span class="badge {{ analytic.background }} border {{ analytic.border }} ">
-            {{ analytic.percentage }}
-          </span>
-        </h4>
-        <p class="mb-0 text-muted text-sm">
-          You made an extra
-          <span class="{{ analytic.color }}">{{ analytic.number }}</span>
-          this year
-        </p>
+        <div class="d-flex align-items-center">
+          <div class="kpi-icon-container {{ k.background}} ms-3">
+            <i class="pi {{ k.icon }}"></i>
+          </div>
+          <div class="kpi-content flex-grow-1">
+            <h6 class="mb-2 f-w-400 text-muted">{{ k.title }}</h6>
+          </div>
+        </div>
+        <h4 class="mb-0" style="font-size:1.5rem; padding: 20px 5px 0px; ">{{ k.amount }}</h4>
       </app-card>
     </div>
-  <div class="col-md-12 col-xl-8">
-    <app-monthly-bar-chart />
-  </div>
-  <div class="col-md-12 col-xl-4">
-    <app-income-overview-chart />
-  </div>
 
- 
+    <!-- Charts Row -->
+    <div class="col-md-12 col-xl-8">
+      <app-monthly-bar-chart
+        [title]="'الإيراد اليومي'"
+        [weekCategories]="weekCategories"
+        [weekData]="weekRevenue"
+        [monthCategories]="monthCategories"
+        [monthData]="monthRevenue"
+      ></app-monthly-bar-chart>
+    </div>
+    <div class="col-md-12 col-xl-4">
+      <app-income-overview-chart
+        [title]="'نظرة عامة على الدخل'"
+        [subtitle]="'حسب طريقة الدفع'"
+        [labels]="byMethodLabels"
+        [data]="byMethodRevenue"
+      ></app-income-overview-chart>
+    </div>
 
-  <div class="col-md-12 col-xl-8">
-    <h5 class="mb-3">Recent Orders</h5>
-    <div class="card tbl-card">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th>TRACKING NO.</th>
-              <th>PRODUCT NAME</th>
-              <th>STATUS</th>
-              <th class="text-end">TOTAL ORDER</th>
-              <th class="text-end">TOTAL AMOUNT</th>
-            </tr>
-          </thead>
-          <tbody>
-            
-              <tr *ngFor="let order of recentOrder; trackBy: trackByOrder">
-                <td>
-                  <a href="javascript:" class="text-muted">{{ order.id }}</a>
+    <!-- Recent Payments -->
+    <div class="col-md-12 col-xl-8">
+      <h5 class="mb-3">أحدث المدفوعات</h5>
+      <div class="card tbl-card">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>رقم الدفع</th>
+                <th>الطالب</th>
+                <th>الخطة</th>
+                <th>الحالة</th>
+                <th class="text-end">المبلغ</th>
+                <th class="text-end">التاريخ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="isLoadingPayments">
+                <td colspan="6" class="text-center">
+                  <i class="pi pi-spinner pi-spin"></i> جاري التحميل...
                 </td>
-                <td>{{ order.name }}</td>
+              </tr>
+              <tr *ngFor="let p of recentPayments; trackBy: trackByPayment">
+                <td><a href="javascript:" class="text-muted">{{ p.id }}</a></td>
+                <td>{{ p.student }}</td>
+                <td>{{ p.planType }}</td>
                 <td>
                   <span class="d-block">
-                    <i class="badge-circle {{ order.status_type }} f-10 m-r-5"></i>
-                    {{ order.status }}
+                    <i class="badge-circle"
+                       [ngClass]="{
+                         'bg-success': p.status === 'approved',
+                         'bg-warning': p.status === 'pending',
+                         'bg-danger': p.status === 'rejected'
+                       }"></i>
+                    {{ p.status === 'approved' ? 'موافق' : p.status === 'pending' ? 'معلق' : 'مرفوض' }}
                   </span>
                 </td>
-                <td class="text-end">{{ order.quantity }}</td>
-                <td class="text-end">{{ order.amount }}</td>
+                <td class="text-end">{{ p.amount }}</td>
+                <td class="text-end">{{ p.createdAt }}</td>
               </tr>
-            
-          </tbody>
-        </table>
+              <tr *ngIf="!isLoadingPayments && recentPayments.length === 0">
+                <td colspan="6" class="text-center text-muted">لا توجد بيانات</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="col-md-12 col-xl-4">
-    <app-analytics-chart />
-  </div>
 
-  <div class="col-md-12 col-xl-8">
-    <app-sales-report-chart />
-  </div>
-  <div class="col-md-12 col-xl-4">
-    <h5 class="mb-3">Transaction History</h5>
-    <div class="card">
-      <div class="list-group list-group-flush">
-        
-          <a href="javascript:" class="list-group-item list-group-item-action px-3" *ngFor="let history of transaction; trackBy: trackByTransaction">
+    <!-- Right Column: Users Analytics + Plan Type Chart -->
+    <div class="col-md-12 col-xl-4">
+      <app-analytics-chart
+        [title]="'تسجيلات المستخدمين'"
+        [categories]="registrationCategories"
+        [seriesName]="'تسجيلات جديدة'"
+        [data]="registrationData"
+        [color]="'#FFB814'"
+      ></app-analytics-chart>
+
+      <h5 class="mb-3 mt-4">أحدث المستخدمين</h5>
+      <div class="card">
+        <div class="list-group list-group-flush">
+          <div class="list-group-item px-3" *ngIf="isLoadingUsers">
+            <i class="pi pi-spinner pi-spin"></i> جاري التحميل...
+          </div>
+          <a href="javascript:" class="list-group-item list-group-item-action px-3"
+             *ngFor="let u of recentUsers; trackBy: trackByUser">
             <div class="d-flex">
-              <div class="flex-shrink-0">
-                <div class="avatar avatar-s rounded-circle {{ history.background }}">
-                </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-1">{{ u.name }} <small class="text-muted">({{ u.role }})</small></h6>
+                <p class="mb-0 text-muted">{{ u.email }}</p>
               </div>
-              <div class="flex-grow-1 ms-3">
-                <h6 class="mb-1">{{ history.title }}</h6>
-                <p class="mb-0 text-muted">{{ history.time }}</p>
-              </div>
-              <div class="flex-shrink-0 text-end">
-                <h6 class="mb-1">{{ history.amount }}</h6>
-                <p class="mb-0 text-muted">{{ history.percentage }}</p>
+              <div class="text-end">
+                <span class="badge" [ngClass]="u.isActive ? 'bg-success' : 'bg-secondary'">
+                  {{ u.isActive ? 'نشط' : 'غير نشط' }}
+                </span>
+                <div class="text-muted small">{{ u.createdAt }}</div>
               </div>
             </div>
           </a>
-        
+          <div class="list-group-item text-center text-muted" *ngIf="!isLoadingUsers && recentUsers.length === 0">
+            لا توجد بيانات
+          </div>
+        </div>
       </div>
     </div>
-    <!-- <div class="card">
-      <div class="card-body">
-        <div class="row justify-content-between">
-          <div class="col-auto">
-            <h5>Help & Support Chat</h5>
-            <p class="mb-3">Typical replay within 5 min</p>
-          </div>
-          <div class="col-auto">
-            <div class="user-group mb-3">
-              <img src="assets/images/user/avatar-1.jpg" alt="image" />
-              <img src="assets/images/user/avatar-2.jpg" alt="image" />
-              <img src="assets/images/user/avatar-3.jpg" alt="image" />
-            </div>
-          </div>
-        </div>
-        <div class="d-grid">
-          <div class="btn btn-primary">Need Help?</div>
-        </div>
-      </div>
-    </div> -->
+
+    <!-- Plan type revenue/counts -->
+    <div class="col-md-12 col-xl-8">
+      <app-sales-report-chart
+        [categories]="planTypeLabels"
+        [revenueSeries]="planTypeRevenue"
+        [countSeries]="planTypeCounts"
+      ></app-sales-report-chart>
+    </div>
   </div>
-  <!-- [ sample-page ] end -->
-</div>
 </div>

@@ -3,26 +3,29 @@
     margin-bottom: 2rem;
     .page-title { color: #2c3e50; font-weight: 600; margin-bottom: 0.5rem; }
     .page-description { color: #6c757d; margin: 0; }
-    .header-actions .btn { border-radius: 8px; font-weight: 500; }
+    .header-actions .btn { font-weight: 500; }
   }
-  .stat-card .stat-card-content {
-    display: flex; align-items: center; gap: 1rem;
+   .stat-card-content {
+    display: flex; align-items: center; gap: 1rem; direction: rtl;
+  }
     .stat-icon {
-      width: 60px; height: 60px; border-radius: 12px;
+      width: 50px; 
+      height: 50px; 
+      border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(var(--bs-primary-rgb), 0.1);
-      i { font-size: 1.5rem; }
-      &.text-warning { background: rgba(var(--bs-warning-rgb), 0.1); }
-      &.text-success { background: rgba(var(--bs-success-rgb), 0.1); }
-      &.text-danger { background: rgba(var(--bs-danger-rgb), 0.1); }
-      &.text-info { background: rgba(var(--bs-info-rgb), 0.1); }
+      font-size: 1.5rem; color: white;
+      &.bg-primary { background: linear-gradient(135deg, #3498db, #2980b9); }
+      &.bg-warning { background: linear-gradient(135deg, #f39c12, #e67e22); }
+      &.bg-success { background: linear-gradient(135deg, #27ae60, #229954); }
+      &.bg-danger { background: linear-gradient(135deg, #dc3545, #d63444); }
+      &.bg-info { background: linear-gradient(135deg, #17a2b8, #138496); }
+      
     }
     .stat-details {
-      flex: 1;
+      flex: 1; padding: 0 5px ;
       .stat-value { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; color: #2c3e50; }
-      .stat-label { font-size: 0.875rem; margin: 0; }
+      .stat-label { font-size: 1rem; margin: 0; }
     }
-  }
   .filters-section {
     .search-box .input-group {gap: 3px;}
     .search-box .input-group .input-group-text { background: #f8f9fa; border-color: #dee2e6; }

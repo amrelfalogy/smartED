@@ -1,0 +1,121 @@
+<!-- ✅ ADD: These sections to lesson-details.component.html -->
+
+<!-- Enhanced Header with Course Context -->
+<div class="lesson-header">
+  <div class="navigation">
+    <button class="btn btn-ghost" (click)="backToCourse()">
+      <i class="pi pi-arrow-right me-2"></i>
+      {{ courseInfo?.name || 'العودة للكورس' }}
+    </button>
+  </div>
+  
+  <div class="lesson-info" *ngIf="lesson">
+    <div class="lesson-meta">
+      <span class="lesson-type-badge" [class]="'type-' + lesson.lessonType">
+        {{ getLessonTypeLabel(lesson.lessonType) }}
+      </span>
+      <span class="difficulty-badge" [class]="'difficulty-' + lesson.difficulty">
+        {{ getDifficultyLabel(lesson.difficulty) }}
+      </span>
+      <span class="duration-info" *ngIf="lesson.duration">
+        <i class="pi pi-clock"></i>
+        {{ formatDuration(lesson.duration) }}
+      </span>
+    </div>
+    
+    <h1 class="lesson-title">{{ lesson.title }}</h1>
+    <p class="lesson-description" *ngIf="lesson.description">{{ lesson.description }}</p>
+  </div>
+
+  <!-- Admin Actions -->
+  <div class="admin-actions" *ngIf="isAdminMode">
+    <button class="btn btn-outline-primary" (click)="editLesson()">
+      <i class="pi pi-pencil me-2"></i>
+      تعديل الدرس
+    </button>
+  </div>
+</div>
+
+<!-- Enhanced Video Player -->
+<div class="video-player" *ngIf="activeTab === 'video' && videoUrls.length > 0">
+  <div class="player-container">
+    <video 
+      [src]="videoUrls[currentVideoIndex]" 
+      controls 
+      playsinline
+      (play)="onVideoPlay()"
+      (pause)="onVideoPause()"
+      (ended)="onVideoEnded()"
+      class="main-video">
+    </video>
+    
+    <!-- Video Controls -->
+    <div class="video-controls" *ngIf="videoUrls.length > 1">
+      <button 
+        class="btn btn-sm btn-outline-secondary" 
+        [disabled]="currentVideoIndex === 0"
+        (click)="previousVideo()">
+        <i class="pi pi-step-backward"></i>
+      </button>
+      
+      <span class="video-counter">
+        {{ currentVideoIndex + 1 }} من {{ videoUrls.length }}
+      </span>
+      
+      <button 
+        class="btn btn-sm btn-outline-secondary" 
+        [disabled]="currentVideoIndex === videoUrls.length - 1"
+        (click)="nextVideo()">
+        <i class="pi pi-step-forward"></i>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Video Playlist -->
+  <div class="video-playlist" *ngIf="videoUrls.length > 1">
+    <h4>قائمة التشغيل</h4>
+    <div class="playlist-items">
+      <div 
+        class="playlist-item"
+        *ngFor="let video of videoUrls; let i = index"
+        [class.active]="i === currentVideoIndex"
+        (click)="selectVideo(i)">
+        <i class="pi pi-play-circle"></i>
+        <span>فيديو {{ i + 1 }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Access Control -->
+<div class="access-control" *ngIf="!isAdminOrSupport && !hasAccess">
+  <div class="access-info">
+    <i class="pi pi-lock"></i>
+    <h3>هذا المحتوى محمي</h3>
+    <p>يرجى الاشتراك للوصول إلى محتوى هذا الدرس</p>
+  </div>
+  
+  <div class="payment-options">
+    <button class="btn btn-primary" (click)="navigateToPayment('lesson')">
+      <i class="pi pi-credit-card me-2"></i>
+      شراء هذا الدرس
+    </button>
+    <button class="btn btn-success" (click)="navigateToPayment('monthly')">
+      <i class="pi pi-calendar me-2"></i>
+      اشتراك شهري
+    </button>
+  </div>
+</div>
+
+<!-- No Content State -->
+<div class="no-content-state" *ngIf="!hasAnyContent && !isLoading">
+  <i class="pi pi-inbox"></i>
+  <h3>لا يوجد محتوى متاح</h3>
+  <p>لم يتم رفع محتوى لهذا الدرس بعد</p>
+  <button 
+    *ngIf="isAdminMode" 
+    class="btn btn-primary"
+    (click)="editLesson()">
+    إضافة محتوى
+  </button>
+</div>

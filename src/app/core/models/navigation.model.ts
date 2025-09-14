@@ -154,7 +154,7 @@ export const StudentNavigationItems: NavigationItem[] = [
         type: 'item',
         classes: 'nav-item',
         url: '/student-dashboard/my-courses',
-        icon: 'pi pi-book-open',
+        icon: 'pi pi-book',
         breadcrumbs: false,
         role: ['student']
       },
@@ -164,7 +164,7 @@ export const StudentNavigationItems: NavigationItem[] = [
         type: 'item',
         classes: 'nav-item',
         url: '/student-dashboard/courses',
-        icon: 'pi pi-books',
+        icon: 'pi pi-list',
         breadcrumbs: false,
         role: ['student']
       },
@@ -187,22 +187,22 @@ export const StudentNavigationItems: NavigationItem[] = [
     icon: 'pi pi-credit-card',
     role: ['student'],
     children: [
-      {
-        id: 'my-payments',
-        title: 'مدفوعاتي',
-        type: 'item',
-        classes: 'nav-item',
-        url: '/student-dashboard/my-payments',
-        icon: 'pi pi-receipt',
-        breadcrumbs: false,
-        role: ['student']
-      },
+      // {
+      //   id: 'my-payments',
+      //   title: 'مدفوعاتي',
+      //   type: 'item',
+      //   classes: 'nav-item',
+      //   url: '/student-dashboard/my-payments',
+      //   icon: 'pi pi-receipt',
+      //   breadcrumbs: false,
+      //   role: ['student']
+      // },
       {
         id: 'payment-history',
         title: 'سجل المدفوعات',
         type: 'item',
         classes: 'nav-item',
-        url: '/student-dashboard/payment-history',
+        url: '/student-dashboard/my-payments',
         icon: 'pi pi-history',
         breadcrumbs: false,
         role: ['student']
