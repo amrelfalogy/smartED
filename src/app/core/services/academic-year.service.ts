@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { AcademicYear, StudentYear } from '../models/academic-year.model';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AcademicYearService {
-  private baseUrl = '/api/academic/academic-years'; // for academic years
+  private baseUrl = `${environment.apiUrl}/academic/academic-years`;
 
   constructor(private http: HttpClient) {}
 

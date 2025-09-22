@@ -1,0 +1,332 @@
+<div class="activation-codes-management">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="pi pi-key me-3"></i>
+        رموز التفعيل
+      </h1>
+      <p class="page-description">إدارة رموز التفعيل للدروس والمواد</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openGeneratorModal()">
+        <i class="pi pi-plus me-2"></i>
+        إنشاء رمز جديد
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-section">
+    <div class="row g-4">
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon total">
+            <i class="pi pi-key"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">
+              <span *ngIf="!isLoadingStats">{{ stats.totalCodes }}</span>
+              <div *ngIf="isLoadingStats" class="stat-loading">
+                <div class="spinner-border spinner-border-sm"></div>
+              </div>
+            </h3>
+            <p class="stat-label">إجمالي الرموز</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon active">
+            <i class="pi pi-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">
+              <span *ngIf="!isLoadingStats">{{ stats.activeCodes }}</span>
+              <div *ngIf="isLoadingStats" class="stat-loading">
+                <div class="spinner-border spinner-border-sm"></div>
+              </div>
+            </h3>
+            <p class="stat-label">رموز نشطة</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon used">
+            <i class="pi pi-user"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">
+              <span *ngIf="!isLoadingStats">{{ stats.usedCodes }}</span>
+              <div *ngIf="isLoadingStats" class="stat-loading">
+                <div class="spinner-border spinner-border-sm"></div>
+              </div>
+            </h3>
+            <p class="stat-label">رموز مستخدمة</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon unused">
+            <i class="pi pi-clock"></i>
+          </div>
+          <div class="stat-content">
+            <h3 class="stat-number">
+              <span *ngIf="!isLoadingStats">{{ stats.unusedCodes }}</span>
+              <div *ngIf="isLoadingStats" class="stat-loading">
+                <div class="spinner-border spinner-border-sm"></div>
+              </div>
+            </h3>
+            <p class="stat-label">رموز غير مستخدمة</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="alert alert-success" *ngIf="success">
+    <i class="pi pi-check-circle me-2"></i>
+    {{ success }}
+    <button class="btn btn-sm btn-ghost ms-auto" (click)="clearMessages()">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <div class="alert alert-danger" *ngIf="error">
+    <i class="pi pi-exclamation-triangle me-2"></i>
+    {{ error }}
+    <button class="btn btn-sm btn-ghost ms-auto" (click)="clearMessages()">
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="content-card">
+    <div class="card-body">
+      <div class="filters-section">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="form-label">البحث</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="pi pi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  class="form-control"
+                  [formControl]="searchControl"
+                  placeholder="البحث في الرموز..."
+                >
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label class="form-label">نوع المحتوى</label>
+              <select class="form-select" [(ngModel)]="selectedContentType" (ngModelChange)="onContentTypeChange($event)">
+                <option value="">جميع الأنواع</option>
+                <option value="lesson">درس</option>
+                <option value="subject">مادة</option>
+                <option value="unit">وحدة</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label class="form-label">الحالة</label>
+              <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="onStatusChange($event)">
+                <option value="">جميع الحالات</option>
+                <option value="active">نشط</option>
+                <option value="inactive">غير نشط</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group">
+              <label class="form-label">&nbsp;</label>
+              <div class="results-count">
+                {{ totalItems }} رمز
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Codes Table -->
+  <div class="content-card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="pi pi-list me-2"></i>
+        رموز التفعيل
+      </h3>
+    </div>
+    <div class="card-body">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">جاري التحميل...</span>
+        </div>
+        <p>جاري تحميل الرموز...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && codes.length === 0" class="empty-state">
+        <i class="pi pi-key"></i>
+        <h4>لا توجد رموز تفعيل</h4>
+        <p *ngIf="searchControl.value">لم يتم العثور على رموز مطابقة للبحث</p>
+        <p *ngIf="!searchControl.value">لم يتم إنشاء أي رموز تفعيل بعد</p>
+        <button class="btn btn-primary" (click)="openGeneratorModal()">
+          <i class="pi pi-plus me-2"></i>
+          إنشاء أول رمز
+        </button>
+      </div>
+
+      <!-- Codes Table -->
+      <div class="table-responsive" *ngIf="!isLoading && codes.length > 0">
+        <table class="table table-hover codes-table">
+          <thead>
+            <tr>
+              <th>الرمز</th>
+              <th>النوع</th>
+              <th>الاستخدام</th>
+              <th>الحالة</th>
+              <th>تاريخ الإنشاء</th>
+              <th>تاريخ الانتهاء</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let code of codes; trackBy: trackByCodeId" class="code-row">
+              <td class="code-cell">
+                <div class="code-info">
+                  <div class="code-value">
+                    <code class="activation-code">{{ code.code }}</code>
+                    <button
+                      class="btn btn-sm btn-ghost copy-btn"
+                      (click)="copyCodeToClipboard(code.code)"
+                      title="نسخ الرمز"
+                    >
+                      <i class="pi pi-copy"></i>
+                    </button>
+                  </div>
+                  <div class="code-meta" *ngIf="code.name">
+                    <small class="text-muted">{{ code.name }}</small>
+                  </div>
+                </div>
+              </td>
+              <td class="content-type-cell">
+                <span class="content-type-badge" [class]="'type-' + code.contentType">
+                  <i class="pi" [ngClass]="{
+                    'pi-play-circle': code.contentType === 'lesson',
+                    'pi-book': code.contentType === 'subject',
+                    'pi-bookmark': code.contentType === 'unit'
+                  }"></i>
+                  {{ getContentTypeLabel(code.contentType) }}
+                </span>
+              </td>
+              <td class="usage-cell">
+                <div class="usage-info">
+                  <div class="usage-text">
+                    {{ code.currentUses }} / {{ code.maxUses }}
+                  </div>
+                  <div class="usage-progress">
+                    <div class="progress-bar" [style.width.%]="getUsagePercentage(code)"></div>
+                  </div>
+                  <small class="usage-label" *ngIf="code.allowMultipleUses">
+                    متعدد الاستخدامات
+                  </small>
+                </div>
+              </td>
+              <td class="status-cell">
+                <span class="status-badge" [class]="'status-' + getCodeStatus(code).color">
+                  {{ getCodeStatus(code).label }}
+                </span>
+              </td>
+              <td class="date-cell">
+                <div class="date-info">
+                  {{ formatDate(code.createdAt) }}
+                </div>
+              </td>
+              <td class="expiry-cell">
+                <div class="date-info">
+                  {{ formatDate(code.expiresAt) }}
+                </div>
+              </td>
+              <td class="actions-cell">
+                <div class="action-buttons">
+                  <button
+                    class="btn btn-sm btn-outline-primary"
+                    (click)="viewCodeDetails(code)"
+                    title="عرض التفاصيل"
+                  >
+                    <i class="pi pi-eye"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="deleteCode(code)"
+                    title="حذف"
+                  >
+                    <i class="pi pi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <!-- Replace the problematic pagination section with this corrected version -->
+      <div class="pagination-section" *ngIf="!isLoading && totalPages > 1">
+        <nav>
+          <ul class="pagination justify-content-center">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
+                <i class="pi pi-chevron-right"></i>
+              </button>
+            </li>
+            
+            <!-- ✅ FIXED: Show first few pages -->
+            <li
+              class="page-item"
+              *ngFor="let page of getVisiblePageNumbers(); let i = index"
+              [class.active]="page === currentPage"
+            >
+              <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+            </li>
+            
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages">
+                <i class="pi pi-chevron-left"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Code Generator Modal -->
+<app-code-generator-modal
+  *ngIf="showGeneratorModal"
+  [isVisible]="showGeneratorModal"
+  (close)="closeGeneratorModal()"
+  (codeGenerated)="onCodeGenerated($event)"
+>
+</app-code-generator-modal>
+
+<!-- Code Details Modal -->
+<app-code-details-modal
+  *ngIf="showDetailsModal && selectedCodeDetails"
+  [isVisible]="showDetailsModal"
+  [codeDetails]="selectedCodeDetails"
+  (close)="closeDetailsModal()"
+>
+</app-code-details-modal>

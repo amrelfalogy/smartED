@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
 import { tap, catchError, map, finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { environment } from 'src/environments/environment';
 
 export interface LoginRequest {
   email: string;
@@ -35,6 +36,8 @@ export interface User {
   role: string;
   bio?: string;
   address?: string;
+  profilePicture?: string; // ✅ NEW
+  avatar?: string; // ✅ NEW
 }
 
 export interface ChangePasswordRequest {
@@ -54,7 +57,7 @@ export interface UpdateProfileRequest {
   providedIn: 'root'
 })
 export class AuthService {
-  private baseUrl = '/api';
+  private baseUrl = `${environment.apiUrl}`;
   private tokenKey = 'authToken';
   private userKey = 'currentUser';
   
@@ -190,7 +193,6 @@ export class AuthService {
   // ===== USER DATA MANAGEMENT =====
   // ✅ NEW: Normalize user data structure
   private normalizeUserData(userData: any): User {
-    // Handle nested user structure: {user: {...}} or direct structure: {...}
     const user = userData?.user || userData;
     
     if (!user) {
@@ -205,8 +207,16 @@ export class AuthService {
       phone: user.phone,
       role: user.role,
       bio: user.bio || '',
-      address: user.address || ''
+      address: user.address || '',
+      profilePicture: user.profilePicture || null, // ✅ NEW
+      avatar: user.avatar || null // ✅ NEW
     };
+  }
+
+  // ✅ NEW: Get user profile image URL
+  getUserProfileImage(): string {
+    const user = this.getCurrentUser();
+    return user?.profilePicture || user?.avatar || '';
   }
 
   // ✅ UPDATED: Set current user with normalization

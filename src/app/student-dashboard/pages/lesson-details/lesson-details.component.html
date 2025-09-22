@@ -1,121 +1,320 @@
-<!-- ✅ ADD: These sections to lesson-details.component.html -->
-
-<!-- Enhanced Header with Course Context -->
-<div class="lesson-header">
-  <div class="navigation">
-    <button class="btn btn-ghost" (click)="backToCourse()">
+<!-- Enhanced Lesson Details Layout -->
+<div class="lesson-details-container">
+  
+  <!-- Breadcrumb Navigation -->
+  <nav class="lesson-breadcrumb">
+    <button class="btn btn-link breadcrumb-btn" (click)="backToCourse()">
       <i class="pi pi-arrow-right me-2"></i>
       {{ courseInfo?.name || 'العودة للكورس' }}
     </button>
-  </div>
-  
-  <div class="lesson-info" *ngIf="lesson">
-    <div class="lesson-meta">
-      <span class="lesson-type-badge" [class]="'type-' + lesson.lessonType">
-        {{ getLessonTypeLabel(lesson.lessonType) }}
-      </span>
-      <span class="difficulty-badge" [class]="'difficulty-' + lesson.difficulty">
-        {{ getDifficultyLabel(lesson.difficulty) }}
-      </span>
-      <span class="duration-info" *ngIf="lesson.duration">
-        <i class="pi pi-clock"></i>
-        {{ formatDuration(lesson.duration) }}
-      </span>
+    <span class="breadcrumb-separator">/</span>
+    <span class="current-lesson">{{ lesson?.title || 'الدرس الحالي' }}</span>
+  </nav>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">جاري التحميل...</span>
     </div>
-    
-    <h1 class="lesson-title">{{ lesson.title }}</h1>
-    <p class="lesson-description" *ngIf="lesson.description">{{ lesson.description }}</p>
+    <p class="loading-text">جاري تحميل بيانات الدرس...</p>
   </div>
 
-  <!-- Admin Actions -->
-  <div class="admin-actions" *ngIf="isAdminMode">
-    <button class="btn btn-outline-primary" (click)="editLesson()">
-      <i class="pi pi-pencil me-2"></i>
-      تعديل الدرس
+  <!-- Error State -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="pi pi-exclamation-triangle me-2"></i>
+    {{ errorMessage }}
+    <button class="btn btn-outline-danger btn-sm ms-3" (click)="retryLoading()">
+      <i class="pi pi-refresh me-1"></i>
+      إعادة المحاولة
     </button>
   </div>
-</div>
 
-<!-- Enhanced Video Player -->
-<div class="video-player" *ngIf="activeTab === 'video' && videoUrls.length > 0">
-  <div class="player-container">
-    <video 
-      [src]="videoUrls[currentVideoIndex]" 
-      controls 
-      playsinline
-      (play)="onVideoPlay()"
-      (pause)="onVideoPause()"
-      (ended)="onVideoEnded()"
-      class="main-video">
-    </video>
+  <!-- Success Message (for admin preview) -->
+  <div class="alert alert-info" *ngIf="successMessage">
+    <i class="pi pi-info-circle me-2"></i>
+    {{ successMessage }}
+  </div>
+
+  <!-- Main Content - Only show when lesson is loaded and user has access -->
+  <div class="lesson-content" *ngIf="lesson && (isAdminOrSupport || hasAccess)">
     
-    <!-- Video Controls -->
-    <div class="video-controls" *ngIf="videoUrls.length > 1">
-      <button 
-        class="btn btn-sm btn-outline-secondary" 
-        [disabled]="currentVideoIndex === 0"
-        (click)="previousVideo()">
-        <i class="pi pi-step-backward"></i>
-      </button>
+    <!-- Lesson Header -->
+    <div class="lesson-header-card">
+      <div class="lesson-info">
+        <div class="lesson-meta-tags">
+          <!-- Lesson Type Badge -->
+          <span class="badge badge-type" [class]="'badge-type-' + (lesson.lessonType || 'video')">
+            <i class="pi" [ngClass]="{
+              'pi-play-circle': lesson.lessonType === 'video',
+              'pi-file-pdf': lesson.lessonType === 'pdf' || lesson.lessonType === 'document',
+              'pi-users': lesson.lessonType === 'live',
+              'pi-file-edit': lesson.lessonType === 'text' || lesson.lessonType === 'assignment',
+              'pi-question-circle': lesson.lessonType === 'quiz'
+            }"></i>
+            {{ getLessonTypeLabel(lesson.lessonType) }}
+          </span>
+
+          <!-- Difficulty Badge -->
+          <span class="badge badge-difficulty" [class]="'badge-difficulty-' + (lesson.difficulty || 'beginner')">
+            {{ getDifficultyLabel(lesson.difficulty) }}
+          </span>
+
+          <!-- Duration -->
+          <span class="badge badge-duration" *ngIf="lesson.duration">
+            <i class="pi pi-clock me-1"></i>
+            {{ formatDuration(lesson.duration) }}
+          </span>
+
+          <!-- Free Badge -->
+          <span class="badge badge-free" *ngIf="lesson.isFree">
+            <i class="pi pi-gift me-1"></i>
+            مجاني
+          </span>
+        </div>
+
+        <h1 class="lesson-title">{{ lesson.title }}</h1>
+        
+        <p class="lesson-description" *ngIf="lesson.description">
+          {{ lesson.description }}
+        </p>
+
+        <!-- Admin Actions -->
+        <div class="admin-actions" *ngIf="isAdminMode">
+          <button class="btn btn-outline-primary me-2" (click)="editLesson()">
+            <i class="pi pi-pencil me-1"></i>
+            تعديل الدرس
+          </button>
+          <button class="btn btn-outline-success" (click)="generateActivationCode()">
+            <i class="pi pi-key me-1"></i>
+            إنشاء رمز تفعيل
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="lesson-content-area">
       
-      <span class="video-counter">
-        {{ currentVideoIndex + 1 }} من {{ videoUrls.length }}
-      </span>
-      
-      <button 
-        class="btn btn-sm btn-outline-secondary" 
-        [disabled]="currentVideoIndex === videoUrls.length - 1"
-        (click)="nextVideo()">
-        <i class="pi pi-step-forward"></i>
-      </button>
+      <!-- Video Content -->
+      <div class="content-section video-section" *ngIf="lesson.lessonType === 'video' && videoUrls.length > 0">
+        <div class="video-player-container">
+          <div class="video-player">
+            <video 
+              [src]="videoUrls[currentVideoIndex]"
+              controls
+              playsinline
+              controlslist="nodownload"
+              preload="metadata"
+              (play)="onVideoPlay()"
+              (pause)="onVideoPause()"
+              (ended)="onVideoEnded()"
+              (loadedmetadata)="onVideoLoaded()"
+              class="lesson-video"
+            >
+              <source [src]="videoUrls[currentVideoIndex]" type="video/mp4">
+              المتصفح الخاص بك لا يدعم تشغيل الفيديو.
+            </video>
+
+            <!-- Video Loading Overlay -->
+            <div class="video-loading-overlay" *ngIf="isVideoLoading">
+              <div class="spinner-border text-light" role="status"></div>
+              <p class="text-light mt-2">جاري تحميل الفيديو...</p>
+            </div>
+          </div>
+
+          <!-- Video Controls (if multiple videos) -->
+          <div class="video-controls" *ngIf="videoUrls.length > 1">
+            <button class="btn btn-sm btn-outline-secondary" 
+                    [disabled]="currentVideoIndex === 0" 
+                    (click)="previousVideo()">
+              <i class="pi pi-step-backward"></i>
+              السابق
+            </button>
+            
+            <span class="video-counter">
+              الفيديو {{ currentVideoIndex + 1 }} من {{ videoUrls.length }}
+            </span>
+            
+            <button class="btn btn-sm btn-outline-secondary" 
+                    [disabled]="currentVideoIndex === videoUrls.length - 1" 
+                    (click)="nextVideo()">
+              التالي
+              <i class="pi pi-step-forward"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Session Content -->
+      <div class="content-section live-section" *ngIf="lesson.lessonType === 'live'">
+        <div class="live-session-card">
+          <div class="live-header">
+            <div class="live-status">
+              <i class="pi pi-circle-fill text-danger blink"></i>
+              جلسة مباشرة
+            </div>
+            <div class="session-time" *ngIf="lesson.scheduledAt">
+              <i class="pi pi-calendar me-2"></i>
+              {{ lesson.scheduledAt | date:'EEEE، d MMMM yyyy' }}
+              <span class="time">{{ lesson.scheduledAt | date:'h:mm a' }}</span>
+            </div>
+          </div>
+
+          <div class="live-content">
+            <h3>{{ lesson.title }}</h3>
+            <p *ngIf="lesson.description">{{ lesson.description }}</p>
+
+            <!-- Zoom Access -->
+            <div class="zoom-access" *ngIf="lesson.zoomUrl">
+              <div class="zoom-info">
+                <div class="zoom-details">
+                  <div class="detail-item" *ngIf="lesson.zoomMeetingId">
+                    <label>معرف الاجتماع:</label>
+                    <span class="meeting-id">{{ lesson.zoomMeetingId }}</span>
+                    <button class="btn btn-sm btn-ghost" (click)="copyToClipboard(lesson.zoomMeetingId)">
+                      <i class="pi pi-copy"></i>
+                    </button>
+                  </div>
+                  <div class="detail-item" *ngIf="lesson.zoomPasscode">
+                    <label>رمز المرور:</label>
+                    <span class="passcode">{{ lesson.zoomPasscode }}</span>
+                    <button class="btn btn-sm btn-ghost" (click)="copyToClipboard(lesson.zoomPasscode)">
+                      <i class="pi pi-copy"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="zoom-actions">
+                <a class="btn btn-success btn-lg" 
+                   [href]="lesson.zoomUrl" 
+                   target="_blank" 
+                   rel="noopener noreferrer">
+                  <i class="pi pi-external-link me-2"></i>
+                  الانضمام للجلسة
+                </a>
+                <small class="text-muted d-block mt-2">
+                  سيتم فتح Zoom في نافذة جديدة
+                </small>
+              </div>
+            </div>
+
+            <!-- No Zoom Link Available -->
+            <div class="alert alert-warning" *ngIf="!lesson.zoomUrl">
+              <i class="pi pi-exclamation-triangle me-2"></i>
+              رابط الجلسة غير متوفر حالياً. يرجى التواصل مع المدرس.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Content -->
+      <div class="content-section document-section" *ngIf="docUrls.length > 0">
+        <div class="document-card">
+          <div class="document-header">
+            <h3>
+              <i class="pi pi-file-pdf me-2"></i>
+              المستندات المرفقة
+            </h3>
+          </div>
+          <div class="document-list">
+            <div class="document-item" *ngFor="let doc of docUrls; let i = index">
+              <div class="doc-info">
+                <i class="pi pi-file-pdf text-danger"></i>
+                <div class="doc-details">
+                  <span class="doc-name">{{ lesson.pdfFileName || ('مستند ' + (i + 1)) }}</span>
+                  <span class="doc-size" *ngIf="lesson.pdfFileSize">
+                    {{ formatFileSize(lesson.pdfFileSize) }}
+                  </span>
+                </div>
+              </div>
+              <div class="doc-actions">
+                <a class="btn btn-outline-primary" 
+                   [href]="doc" 
+                   target="_blank" 
+                   rel="noopener">
+                  <i class="pi pi-eye me-1"></i>
+                  عرض
+                </a>
+                <a class="btn btn-primary" 
+                   [href]="doc" 
+                   download>
+                  <i class="pi pi-download me-1"></i>
+                  تحميل
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text/Assignment Content -->
+      <div class="content-section text-section" 
+           *ngIf="(lesson.lessonType === 'text' || lesson.lessonType === 'assignment') && lesson.content">
+        <div class="text-content-card">
+          <div class="text-content" [innerHTML]="lesson.content"></div>
+        </div>
+      </div>
+
     </div>
   </div>
-  
-  <!-- Video Playlist -->
-  <div class="video-playlist" *ngIf="videoUrls.length > 1">
-    <h4>قائمة التشغيل</h4>
-    <div class="playlist-items">
-      <div 
-        class="playlist-item"
-        *ngFor="let video of videoUrls; let i = index"
-        [class.active]="i === currentVideoIndex"
-        (click)="selectVideo(i)">
-        <i class="pi pi-play-circle"></i>
-        <span>فيديو {{ i + 1 }}</span>
+
+  <!-- Access Control for Students -->
+  <div class="access-control" *ngIf="lesson && !isAdminOrSupport && !hasAccess">
+    <div class="access-card">
+      <div class="lock-icon">
+        <i class="pi pi-lock"></i>
+      </div>
+      <h3>هذا المحتوى محمي</h3>
+      <p>يجب الاشتراك أو شراء هذا الدرس للوصول إلى محتواه</p>
+      
+      <div class="access-actions">
+        <button class="btn btn-primary btn-lg" (click)="navigateToPayment('lesson')">
+          <i class="pi pi-credit-card me-2"></i>
+          شراء هذا الدرس
+          <span class="price" *ngIf="lesson.price && lesson.price > 0">
+            - {{ lesson.price }} {{ lesson.currency || 'جنيه' }}
+          </span>
+        </button>
+        
+        <button class="btn btn-success btn-lg" (click)="navigateToPayment('subject')">
+          <i class="pi pi-book me-2"></i>
+          شراء المادة كاملة
+        </button>
+
+        <div class="activation-option">
+          <p class="text-muted">أم لديك رمز تفعيل؟</p>
+          <button class="btn btn-outline-info" (click)="openActivationModal()">
+            <i class="pi pi-key me-2"></i>
+            استخدام رمز التفعيل
+          </button>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- No Content State -->
+  <div class="no-content" *ngIf="lesson && !hasAnyContent && !isLoading">
+    <div class="no-content-card">
+      <i class="pi pi-inbox"></i>
+      <h3>لا يوجد محتوى متاح</h3>
+      <p>لم يتم رفع محتوى لهذا الدرس بعد</p>
+      <button *ngIf="isAdminMode" class="btn btn-primary" (click)="editLesson()">
+        <i class="pi pi-plus me-2"></i>
+        إضافة محتوى
+      </button>
+    </div>
+  </div>
+
 </div>
 
-<!-- Enhanced Access Control -->
-<div class="access-control" *ngIf="!isAdminOrSupport && !hasAccess">
-  <div class="access-info">
-    <i class="pi pi-lock"></i>
-    <h3>هذا المحتوى محمي</h3>
-    <p>يرجى الاشتراك للوصول إلى محتوى هذا الدرس</p>
-  </div>
-  
-  <div class="payment-options">
-    <button class="btn btn-primary" (click)="navigateToPayment('lesson')">
-      <i class="pi pi-credit-card me-2"></i>
-      شراء هذا الدرس
-    </button>
-    <button class="btn btn-success" (click)="navigateToPayment('monthly')">
-      <i class="pi pi-calendar me-2"></i>
-      اشتراك شهري
-    </button>
-  </div>
-</div>
-
-<!-- No Content State -->
-<div class="no-content-state" *ngIf="!hasAnyContent && !isLoading">
-  <i class="pi pi-inbox"></i>
-  <h3>لا يوجد محتوى متاح</h3>
-  <p>لم يتم رفع محتوى لهذا الدرس بعد</p>
-  <button 
-    *ngIf="isAdminMode" 
-    class="btn btn-primary"
-    (click)="editLesson()">
-    إضافة محتوى
-  </button>
-</div>
+<!-- Activation Code Modal -->
+<app-activation-code-input
+  *ngIf="showActivationModal"
+  [lessonId]="lessonId"
+  [label]="'تفعيل الدرس: ' + lesson?.title"
+  (activationSuccess)="onActivationSuccess($event)"
+  (activationError)="onActivationError($event)"
+  (close)="closeActivationModal()"
+>
+</app-activation-code-input>

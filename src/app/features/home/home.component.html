@@ -1,20 +1,19 @@
-<!-- ✅ UPDATED: home.component.html - With Real Data Loading States -->
-<div class="container">
-    <div class="header">
-        <div class="row">
-            <div class="col-md-6 content">
+<div class="header">
+    <div class="row">
+            <!-- <div class="col-md-6 content">
                 <h1>ابدأ رحلتك التعليمية بالطريقة التي تناسبك</h1>
                 <p>
                     منصتنا توفر لك دروسًا تفاعلية وشاملة من نخبة المعلمين، مصممة لترتقي بمستواك الدراسي وتُحقق لك أفضل النتائج.
                 </p>
                 <a class="btn btn-primary btn-lg" style="width:175px;" routerLink="/courses">ابدأ الآن</a>
-            </div>
-            <div class="col-md-6 text-center">
-                <img src="assets/imgs/Model2.png" alt="header" class="img-fluid header-illustration">
+            </div> -->
+            <div class="col-12 text-center">
+                <img src="assets/imgs/header.jpeg" alt="header" class="img-fluid header-illustration">
             </div>
         </div>
     </div>
-
+    
+    <div class="container">
     <!-- Features -->
     <div class="features">
         <div class="row">
@@ -56,6 +55,7 @@
             </div>
         </div>
     </div>
+
     <!-- How it works -->
     <section class="how-it-works container">
         <div class="container">
@@ -74,8 +74,9 @@
         </div>
         </div>
     </section>
+
     <section class="home-section">
-        <!-- ✅ Newest Subjects Carousel with Real Data -->
+        <!-- ✅ Newest Subjects Carousel with Real Data (unchanged) -->
         <app-card-carousel
             [items]="courses"
             sectionTitle="أحدث المواد"
@@ -157,44 +158,89 @@
             </ng-template>
         </app-card-carousel>
 
-        <!-- Instructors Carousel (Keep existing demo data for now) -->
+        <!-- ✅ NEW: Real Teachers Carousel -->
         <app-card-carousel
-            [items]="instructors"
-            sectionTitle="أعضاء هيئة التدريس"
+            [items]="teachers"
+            sectionTitle="فريق المعلمين المتميز"
             sectionHint="نخبة من أفضل المدرسين والأكاديميين"
-            viewAllText="عرض جميع المدرسين"
-            viewAllLink="/instructors">
-            <ng-template #cardTemplate let-instructor>
-                <div class="instructor-card-content" (click)="viewInstructor(instructor)">
-                    <div class="instructor-photo-container">
-                        <img [src]="instructor.photo" alt="Instructor photo" class="card-image" />
+            viewAllText="عرض جميع المعلمين"
+            viewAllLink="/teachers">
+            <ng-template #cardTemplate let-teacher>
+                <!-- ✅ Loading State -->
+                <div *ngIf="isLoadingTeachers" class="teacher-card-loading">
+                    <div class="loading-placeholder">
+                        <div class="loading-avatar"></div>
+                        <div class="loading-content">
+                            <div class="loading-line"></div>
+                            <div class="loading-line short"></div>
+                            <div class="loading-line medium"></div>
+                        </div>
                     </div>
-                    <div class="card-info">
-                        <div class="instructor-header">
-                            <h4 class="instructor-name">
-                                {{ instructor.name }}
-                                <i class="pi pi-verified verified" *ngIf="instructor.verified"></i>
+                </div>
+
+                <!-- ✅ Error State -->
+                <div *ngIf="teachersError && !isLoadingTeachers" class="teacher-card-error">
+                    <div class="error-content">
+                        <i class="pi pi-exclamation-triangle"></i>
+                        <p>{{ teachersError }}</p>
+                        <button class="btn btn-sm btn-outline-primary" (click)="retryLoadTeachers()">
+                            <i class="pi pi-refresh me-1"></i>
+                            إعادة المحاولة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ✅ Teacher Card with Real Data -->
+                <div *ngIf="!isLoadingTeachers && !teachersError" class="teacher-card-content" (click)="viewTeacher(teacher)">
+                    <div class="teacher-photo-container">
+                        <img 
+                            *ngIf="teacher.profilePicture || teacher.avatar"
+                            [src]="teacher.profilePicture || teacher.avatar" 
+                            [alt]="teacher.firstName + ' ' + teacher.lastName"
+                            class="card-image teacher-photo"
+                            (error)="onImageError($event)" />
+                        
+                        <!-- ✅ Teacher Placeholder -->
+                        <div *ngIf="!teacher.profilePicture && !teacher.avatar" class="teacher-placeholder">
+                            <span class="teacher-initials">
+                                {{ (teacher.firstName?.charAt(0) || '') + (teacher.lastName?.charAt(0) || '') }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-info teacher-info">
+                        <div class="teacher-header">
+                            <h4 class="teacher-name">
+                                {{ teacher.firstName }} {{ teacher.lastName }}
+                                <i class="pi pi-verified verified" *ngIf="teacher.verified"></i>
                             </h4>
                         </div>
+                        
                         <p class="specialization">
                             <i class="pi pi-briefcase me-1"></i>
-                            {{ instructor.specialization }}
+                            {{ teacher.specialization || 'معلم متخصص' }}
                         </p>
-                        <p class="department">
-                            <i class="pi pi-building me-1"></i>
-                            {{ instructor.department }}
+                        
+                        <p class="experience" *ngIf="teacher.experience">
+                            <i class="pi pi-clock me-1"></i>
+                            {{ teacher.experience }} سنة خبرة
                         </p>
 
-                        <div class="rating">
+                        <p class="teacher-bio" *ngIf="teacher.bio">
+                            {{ teacher.bio.length > 80 ? (teacher.bio.substring(0, 80) + '...') : teacher.bio }}
+                        </p>
+
+                        <div class="rating" *ngIf="teacher.rating">
                             <i
                                 *ngFor="let star of [].constructor(5); let i = index"
                                 class="pi"
-                                [ngClass]="i < instructor.rating ? 'pi-star-fill' : 'pi-star'"
+                                [ngClass]="i < teacher.rating ? 'pi-star-fill' : 'pi-star'"
                             ></i>
+                            <span class="rating-count">({{ teacher.rating }}.0)</span>
                         </div>
 
                         <div class="actions">
-                            <button class="btn btn-outline-primary teacher-btn" (click)="viewInstructor(instructor); $event.stopPropagation()">
+                            <button class="btn btn-outline-primary teacher-btn" (click)="viewTeacher(teacher); $event.stopPropagation()">
                                 <i class="pi pi-user me-2"></i>
                                 عرض الملف
                             </button>
@@ -203,5 +249,7 @@
                 </div>
             </ng-template>
         </app-card-carousel>
+
+       
     </section>
 </div>

@@ -51,6 +51,82 @@
       </div>
     </div>
 
+    <!-- Pricing + Session Type -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label class="form-label">نوع التقديم <span class="required">*</span></label>
+          <select class="form-select" formControlName="sessionType" [class.is-invalid]="isFieldInvalid('sessionType')">
+            <option value="">اختر نوع التقديم</option>
+            <option value="recorded">مسجل - المركز</option>
+            <option value="studio">منتج - الاستوديو</option>
+          </select>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('sessionType')">
+            {{ getFieldError('sessionType') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="form-group">
+          <label class="form-label">سعر المادة (جنيه)</label>
+          <div class="input-group">
+            <input
+              type="number"
+              class="form-control"
+              formControlName="price"
+              min="0"
+              step="1"
+              placeholder="0"
+              [class.is-invalid]="isFieldInvalid('price')"
+            />
+            <span class="input-group-text">EGP</span>
+          </div>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('price')">
+            {{ getFieldError('price') }}
+          </div>
+          <small class="form-text text-muted">اتركها 0 إذا كانت المادة مجانية</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teacher assignment (admin/support only) -->
+    <div class="row" *ngIf="currentUserRole === 'admin' || currentUserRole === 'support'">
+      <div class="col-md-6">
+        <div class="form-group">
+          <label class="form-label">المعلم المسؤول</label>
+
+          <div class="search-teacher input-group mb-2">
+            <span class="input-group-text"><i class="pi pi-search"></i></span>
+            <input type="text" class="form-control" [formControl]="teacherSearch" placeholder="ابحث باسم/بريد المعلم..." />
+          </div>
+
+            <!-- ✅ Teacher dropdown - properly bound to form -->
+            <select class="form-select" formControlName="teacherId" [class.is-invalid]="isFieldInvalid('teacherId')">
+              <option value="">اختر معلم</option>
+              <option *ngFor="let teacher of teachers; trackBy: trackByTeacherId" [value]="teacher.id">
+                {{ getTeacherDisplayName(teacher) }}
+              </option>
+            </select>
+
+            <!-- ✅ Validation feedback -->
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('teacherId')">
+              {{ getFieldError('teacherId') }}
+            </div>
+
+          <small class="text-muted d-block mt-1" *ngIf="isLoadingTeachers">
+            <i class="pi pi-spinner pi-spin me-1"></i> جاري تحميل المعلمين...
+          </small>
+          <small class="text-muted d-block mt-1" *ngIf="!isLoadingTeachers && teachers.length === 0">
+            لا يوجد معلمون مطابقون لعملية البحث
+          </small>
+          <small class="text-success d-block mt-1" *ngIf="!isLoadingTeachers && teachers.length > 0">
+            {{ teachers.length }} معلم متاح
+          </small>
+        </div>
+      </div>
+    </div>
+
     <div class="form-group">
       <label class="form-label">وصف المادة <span class="required">*</span></label>
       <textarea
@@ -68,10 +144,10 @@
       </div>
     </div>
 
-    <!-- Difficulty and Duration are hidden in UI; we still keep them in the form with defaults -->
     <input type="hidden" formControlName="difficulty" />
     <input type="hidden" formControlName="duration" />
 
+    <!-- Image upload/URL block (unchanged except validations integrated) -->
     <div class="form-group">
       <label class="form-label">صورة المادة <span class="required">*</span></label>
 

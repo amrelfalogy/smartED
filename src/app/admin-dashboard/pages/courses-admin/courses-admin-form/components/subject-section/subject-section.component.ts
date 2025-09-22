@@ -1,9 +1,11 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, FormControl } from '@angular/forms';
 import { Subject as RxSubject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { Subject as CourseSubject } from 'src/app/core/models/course-complete.model';
+import { User } from 'src/app/core/models/user.model';
 import { FileUploadService } from 'src/app/core/services/file-upload.service';
+import { UserService } from 'src/app/core/services/user.service';
 
 @Component({
   selector: 'app-subject-section',
@@ -15,6 +17,11 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
   @Input() isEdit = false;
   @Input() selectedAcademicYearId: string | null = null;
   @Input() selectedStudentYearId: string | null = null;
+
+  // Optional: current user context
+  @Input() currentUserId: string | null = null;
+  @Input() currentUserRole: 'admin' | 'teacher' | 'support' | 'student' | null = null;
+
   @Output() subjectUpdated = new EventEmitter<CourseSubject>();
 
   subjectForm!: FormGroup;
@@ -23,17 +30,24 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
   isUploading = false;
   uploadProgress = 0;
 
+  // Teachers dropdown data/search
+  teachers: User[] = [];
+  teacherSearch = new FormControl('');
+  isLoadingTeachers = false;
+
   private destroy$ = new RxSubject<void>();
 
   constructor(
     private fb: FormBuilder,
-    private fileUploadService: FileUploadService
+    private fileUploadService: FileUploadService,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
     this.buildForm();
     this.patchInitial();
     this.subscribeChanges();
+    this.initTeachersIfAdmin();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -43,6 +57,11 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
         studentYearId: this.selectedStudentYearId || ''
       }, { emitEvent: true });
     }
+    // Auto-assign teacherId if user is a teacher
+    if (this.subjectForm && this.currentUserRole === 'teacher' && this.currentUserId) {
+      const existing = this.subjectForm.get('teacherId')?.value;
+      if (!existing) this.subjectForm.patchValue({ teacherId: this.currentUserId }, { emitEvent: true });
+    }
   }
 
   ngOnDestroy(): void {
@@ -51,7 +70,6 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private buildForm(): void {
-    // Defaults: difficulty = intermediate, duration = 4_months
     const defaultDifficulty = this.subjectData?.difficulty || 'intermediate';
     const defaultDuration = this.subjectData?.duration || '4_months';
 
@@ -60,11 +78,20 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
       description: [this.subjectData?.description || '', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]],
       academicYearId: [this.subjectData?.academicYearId || this.selectedAcademicYearId || ''],
       studentYearId: [this.subjectData?.studentYearId || this.selectedStudentYearId || ''],
-      difficulty: [defaultDifficulty], // hidden field
-      duration: [defaultDuration],     // hidden field
+      difficulty: [defaultDifficulty],
+      duration: [defaultDuration],
       imageUrl: [this.subjectData?.imageUrl || '', this.imageValidator()],
-      order: [this.subjectData?.order || 1, [Validators.required, Validators.min(1)]]
+      order: [this.subjectData?.order || 1, [Validators.required, Validators.min(1)]],
+      sessionType: [(this.subjectData as any)?.sessionType || 'recorded', [Validators.required]],
+      price: [((this.subjectData as any)?.price ?? 0), [Validators.min(0)]],
+      teacherId: [this.subjectData?.teacherId || '']
     });
+
+    // If current user is a teacher, auto fill teacherId
+    if (this.currentUserRole === 'teacher' && this.currentUserId && !this.subjectForm.get('teacherId')?.value) {
+      this.subjectForm.patchValue({ teacherId: this.currentUserId }, { emitEvent: false });
+    }
+    
   }
 
   private patchInitial(): void {
@@ -78,30 +105,111 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
     this.subjectForm.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(val => {
+        const normalizedTeacherId = (val.teacherId ?? '').toString().trim();
+        const teacherPatch = normalizedTeacherId ? { teacherId: normalizedTeacherId } : {};
         const updated: CourseSubject = {
           ...this.subjectData,
           ...val,
+          ...teacherPatch,
           difficulty: val.difficulty || 'intermediate',
           duration: val.duration || '4_months',
           imageUrl: this.imagePreview || val.imageUrl,
           academicYearId: this.selectedAcademicYearId || val.academicYearId || undefined,
           studentYearId: this.selectedStudentYearId || val.studentYearId || undefined,
-          status: this.subjectData.status
-        };
+          status: this.subjectData.status,
+          ...(val.price !== undefined ? { price: Number(val.price) } : {}),
+          ...(val.sessionType ? { sessionType: val.sessionType } as any : {})
+        } as any;
+
+        if (!normalizedTeacherId && 'teacherId' in updated) {
+          delete (updated as any).teacherId; // never send null
+        }
+
         this.subjectUpdated.emit(updated);
       });
   }
+
+  private initTeachersIfAdmin(): void {
+    if (this.currentUserRole === 'admin' || this.currentUserRole === 'support') {
+      this.loadTeachers('');
+      this.teacherSearch.valueChanges
+        .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+        .subscribe(q => this.loadTeachers(q || ''));
+    }
+  }
+  
+
+ // ✅ REPLACE: Teachers loading method
+  private loadTeachers(search: string): void {
+    console.log('📡 Loading teachers with search:', search);
+    
+    this.isLoadingTeachers = true;
+    
+    const params = { 
+      search: search.trim(), 
+      page: 1, 
+      limit: 50 
+    };
+    
+    console.log('📡 UserService.getTeachers params:', params);
+    
+    this.userService.getTeachers(params).subscribe({
+      next: (response) => {
+        console.log('✅ Teachers loaded successfully:', response);
+        
+        this.teachers = response.users || [];
+        this.isLoadingTeachers = false;
+        
+        console.log('👨‍🏫 Teachers array updated:', {
+          count: this.teachers.length,
+          teachers: this.teachers.map(t => ({ 
+            id: t.id, 
+            name: this.getTeacherDisplayName(t),
+            email: t.email 
+          }))
+        });
+      },
+      error: (error) => {
+        console.error('❌ Failed to load teachers:', error);
+        
+        this.teachers = [];
+        this.isLoadingTeachers = false;
+        
+        // Show user-friendly error
+        console.error('Teachers loading error details:', {
+          status: error.status,
+          message: error.message,
+          url: error.url
+        });
+      }
+    });
+  }
+
+  // ✅ ADD: Helper methods for template
+  trackByTeacherId(index: number, teacher: User): string {
+    return teacher.id;
+  }
+
+  getTeacherDisplayName(teacher: User): string {
+    const firstName = teacher.firstName || '';
+    const lastName = teacher.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    if (fullName) {
+      return teacher.email ? `${fullName} ` : fullName;
+    }
+    
+    return `معلم #${teacher.id.substring(0, 8)}`;
+  }
+
 
   onImageSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('يرجى اختيار صورة صحيحة');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      alert('الحد الأقصى لحجم الصورة 5 ميجابايت');
+    const validation = this.fileUploadService.validateFile(file, 'image');
+    if (!validation.isValid) {
+      alert(validation.error || 'ملف غير صالح');
       return;
     }
 
@@ -121,7 +229,7 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
       },
       error: (error) => {
         console.error('Upload error:', error);
-        alert('فشل في رفع الصورة. يرجى المحاولة مرة أخرى.');
+        alert(error?.message || 'فشل في رفع الصورة. يرجى المحاولة مرة أخرى.');
         this.isUploading = false;
         this.uploadProgress = 0;
       }
@@ -197,6 +305,7 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
     if (c.errors['maxlength']) return 'النص طويل جداً';
     if (c.errors['invalidUrl']) return 'رابط غير صالح';
     if (c.errors['invalidImage']) return 'تعذر تحميل الصورة';
+    if (c.errors['min']) return 'القيمة يجب أن تكون 0 أو أكبر';
     return 'قيمة غير صالحة';
   }
 

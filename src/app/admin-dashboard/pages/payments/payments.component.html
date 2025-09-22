@@ -18,7 +18,7 @@
   <!-- Statistics Cards -->
   <div class="row mb-4">
     <div  *ngFor="let stat of [
-      { title: 'إجمالي المدفوعات', value: stats.totalPayments, icon: 'pi-credit-card', color: 'bg-primary', isCurrency: true, isWide: true },
+      { title: 'إجمالي المدفوعات', value: stats.totalPayments, icon: 'pi-credit-card', color: 'bg-primary', isCurrency: false, isWide: true },
       { title: 'إجمالي الإيرادات', value: stats.totalRevenue, icon: 'pi-wallet', color: 'bg-info', isCurrency: true, isWide: true },
       { title: 'في الانتظار', value: stats.pendingPayments, icon: 'pi-clock', color: 'bg-warning' },
       { title: 'موافق عليه', value: stats.approvedPayments, icon: 'pi-check-circle', color: 'bg-success' },
@@ -32,7 +32,7 @@
           </div>
           <div class="stat-details">
             <h4 class="stat-value">
-              {{ stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString('en-US') }}
+              {{ stat.isCurrency ? formatCurrency(stat.value) : (stat.value || 0) | number:'1.0-0' }}
             </h4>
             <p class="stat-label text-muted">{{ stat.title }}</p>
           </div>
@@ -136,9 +136,9 @@
               <tr *ngFor="let payment of paginatedPayments; trackBy: trackByPayment">
                 <td>
                   <div class="payment-id">
-                    <strong class="text-primary">{{ payment.id }}</strong>
-                    <small class="d-block text-muted" *ngIf="payment.transactionReference">
-                      {{ payment.transactionReference }}
+                    <strong class="text-primary">{{ payment.id.substring(0, 8) }}...</strong>
+                    <small class="d-block text-muted" *ngIf="payment.transactionId">
+                      {{ payment.transactionId }}
                     </small>
                   </div>
                 </td>
@@ -152,22 +152,22 @@
                   <span class="fw-bold">{{ formatCurrency(payment.amount, payment.currency) }}</span>
                 </td>
                 <td>
-                  <span class="badge bg-light text-dark">{{ payment.educationalStage }}</span>
+                  <span class="badge bg-light text-dark">{{ payment.planType === 'subject' ? 'مادة' : 'درس' }}</span>
                 </td>
-                <td>{{ payment.studentGrade }}</td>
+                <td>{{ payment.targetName }}</td>
                 <td>
-                  <span class="badge bg-primary text-white">{{ payment.paymentPlan }}</span>
+                  <span class="badge bg-primary text-white">{{ payment.paymentMethod }}</span>
                 </td>
                 <td>
                   <span class="badge" [class]="'bg-' + getStatusColor(payment.status)">
                     {{ getStatusLabel(payment.status) }}
                   </span>
                 </td>
-                <td>{{ payment.subscriptionType }}</td>
                 <td>
-                  <div class="payment-method">
-                    {{ payment.paymentMethod }}
-                  </div>
+                  <span class="badge bg-secondary">{{ getPlanTypeLabel(payment.planType) }}</span>
+                </td>
+                <td>
+                  <div class="payment-method">{{ payment.paymentMethod }}</div>
                 </td>
                 <td>
                   <small>{{ formatDate(payment.createdAt) }}</small>
@@ -268,14 +268,14 @@
                   <label>البريد الإلكتروني:</label>
                   <span>{{ selectedPayment.studentEmail }}</span>
                 </div>
-                <div class="detail-item">
+                <!-- <div class="detail-item">
                   <label>المرحلة التعليمية:</label>
                   <span>{{ selectedPayment.educationalStage }}</span>
                 </div>
                 <div class="detail-item">
                   <label>الصف الدراسي:</label>
                   <span>{{ selectedPayment.studentGrade }}</span>
-                </div>
+                </div> -->
               </div>
             </div>
 
@@ -295,9 +295,9 @@
                   <label>طريقة الدفع:</label>
                   <span>{{ selectedPayment.paymentMethod }}</span>
                 </div>
-                <div class="detail-item" *ngIf="selectedPayment.transactionReference">
+                <div class="detail-item" *ngIf="selectedPayment.referenceNumber">
                   <label>رقم المرجع:</label>
-                  <span class="text-muted">{{ selectedPayment.transactionReference }}</span>
+                  <span class="text-muted">{{ selectedPayment.referenceNumber }}</span>
                 </div>
               </div>
             </div>
@@ -308,11 +308,15 @@
                 <h6 class="section-title">معلومات الاشتراك</h6>
                 <div class="detail-item">
                   <label>نوع الاشتراك:</label>
-                  <span>{{ selectedPayment.subscriptionType }}</span>
+                  <span class="badge bg-secondary">{{ getPlanTypeLabel(selectedPayment.planType) }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>العنصر:</label>
+                  <span>{{ selectedPayment.paymentMethod }}</span>
                 </div>
                 <div class="detail-item">
                   <label>خطة الدفع:</label>
-                  <span class="badge bg-info text-white">{{ selectedPayment.paymentPlan }}</span>
+                  <span class="badge bg-info text-white">{{ selectedPayment.planType }}</span>
                 </div>
               </div>
             </div>
@@ -383,4 +387,5 @@
 <div class="modal-backdrop fade" 
      [class.show]="showPaymentDetails" 
      *ngIf="showPaymentDetails"
-     (click)="closeDetails()"></div>
+     (click)="closeDetails()">
+</div>

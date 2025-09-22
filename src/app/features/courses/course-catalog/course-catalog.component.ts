@@ -9,6 +9,8 @@ import { SubjectService } from 'src/app/core/services/subject.service';
 import { AcademicYearService } from 'src/app/core/services/academic-year.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 
+type SessionFilter = 'all' | 'recorded' | 'studio';
+
 @Component({
   selector: 'app-course-catalog',
   templateUrl: './course-catalog.component.html',
@@ -32,6 +34,7 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
   // Filters
   selectedAcademicYearId: string | null = null;
   selectedStudentYearId: string | null = null;
+  selectedSessionType: SessionFilter = 'all';
   searchTerm = '';
   selectedDifficulty: string | null = null;
 
@@ -158,10 +161,16 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  selectSessionType(filter: SessionFilter): void {
+    this.selectedSessionType = filter;
+    this.applyFilters();
+  }
+
   resetFilters(): void {
     this.selectedAcademicYearId = null;
     this.selectedStudentYearId = null;
-    this.selectedDifficulty = null;
+       this.selectedDifficulty = null;
+    this.selectedSessionType = 'all';
     this.searchTerm = '';
     this.applyFilters();
   }
@@ -179,6 +188,14 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
 
     if (this.selectedDifficulty) {
       filtered = filtered.filter(s => s.difficulty === this.selectedDifficulty);
+    }
+
+    // sessionType is on subject
+    if (this.selectedSessionType !== 'all') {
+      filtered = filtered.filter(s => {
+        const st = this.getSubjectSessionType(s);
+        return st === this.selectedSessionType || (this.selectedSessionType === 'recorded' && st === 'center_recorded');
+      });
     }
 
     if (this.searchTerm.trim()) {
@@ -299,6 +316,33 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
     return sy?.displayName || sy?.name || 'غير محدد';
   }
 
+  getSessionTypeLabel(s?: string): string {
+    switch (s) {
+      case 'recorded':
+      case 'center_recorded':
+        return 'مسجل - المركز';
+      case 'studio':
+        return 'منتج - الاستوديو';
+      case 'live':
+      case 'zoom':
+      case 'teams':
+      case 'webinar':
+        return 'مباشر';
+      default:
+        return 'غير محدد';
+    }
+  }
+
+  // NEW: subject helpers to safely read backend fields
+  getSubjectSessionType(subject: CourseSubject | any): string | undefined {
+    return (subject as any)?.sessionType;
+  }
+
+  getSubjectPrice(subject: CourseSubject | any): number | null {
+    const v = (subject as any)?.price;
+    return v !== undefined && v !== null ? Number(v) : null;
+  }
+
   getDifficultyLabel(difficulty?: string): string {
     switch (difficulty) {
       case 'beginner': return 'مبتدئ';
@@ -363,7 +407,8 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
     return !!(this.selectedAcademicYearId ||
       this.selectedStudentYearId ||
       this.selectedDifficulty ||
-      this.searchTerm.trim());
+      this.searchTerm.trim() ||
+      this.selectedSessionType !== 'all');
   }
 
   get activeFiltersCount(): number {
@@ -372,6 +417,7 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
     if (this.selectedStudentYearId) count++;
     if (this.selectedDifficulty) count++;
     if (this.searchTerm.trim()) count++;
+    if (this.selectedSessionType !== 'all') count++;
     return count;
   }
 

@@ -123,6 +123,8 @@
         [isEdit]="isEdit"
         [selectedAcademicYearId]="selectedAcademicYearId || null"
         [selectedStudentYearId]="selectedStudentYearId || null"
+        [currentUserId]="currentUserId"
+        [currentUserRole]="currentUserRole" 
         (subjectUpdated)="onSubjectUpdated($event)"
       ></app-subject-section>
     </div>
@@ -147,6 +149,8 @@
             <div class="summary-item"><label>الاسم:</label><span>{{ courseData.subject.name }}</span></div>
             <div class="summary-item"><label>المستوى:</label><span>{{ courseData.subject.difficulty }}</span></div>
             <div class="summary-item"><label>المدة:</label><span>{{ courseData.subject.duration }}</span></div>
+            <div class="summary-item"><label>نوع التقديم:</label><span>{{ courseData.subject.sessionType || 'غير محدد' }}</span></div>
+            <div class="summary-item"><label>السعر:</label><span>{{ courseData.subject.price || 0 }} جنيه</span></div>
             <div class="summary-item"><label>الحالة:</label><span>{{ courseData.subject.status || 'draft' }}</span></div>
             <div class="summary-item"><label>الترتيب:</label><span>{{ courseData.subject.order }}</span></div>
           </div>
@@ -209,6 +213,25 @@
       {{ successMsg }}
     </div>
   </div>
+
+  <!-- ✅ Add this after messages container for debugging -->
+<div class="debug-section" *ngIf="!isLoading && false" style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+  <h5>Debug Info</h5>
+  <p><strong>Step 1 Valid:</strong> {{ formState.steps[0].isValid }}</p>
+  <p><strong>Step 2 Valid:</strong> {{ formState.steps[1].isValid }}</p>
+  <p><strong>Can Go Next:</strong> {{ canGoNext }}</p>
+  <p><strong>Units Count:</strong> {{ courseData.units.length }}</p>
+  <div *ngFor="let unit of courseData.units; let i = index">
+    <p><strong>Unit {{ i + 1 }}:</strong> {{ unit.name || 'No name' }} ({{ unit.lessons?.length || 0 }} lessons)</p>
+    <div *ngFor="let lesson of unit.lessons; let j = index" style="margin-left: 20px;">
+      <p><strong>Lesson {{ j + 1 }}:</strong> {{ lesson.title || 'No title' }} 
+        - Type: {{ lesson.lessonType }} 
+        - Video: {{ lesson.videoUrl ? 'Yes' : 'No' }} 
+        - PDF: {{ lesson.pdfUrl ? 'Yes' : 'No' }}
+      </p>
+    </div>
+  </div>
+</div>
 
 <div class="form-actions">
   <div class="actions-left">

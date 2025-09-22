@@ -1,8 +1,9 @@
-<h5 class="mb-3">Sales Report</h5>
+<!-- ✅ UPDATE: sales-report-chart.component.html - Fix Arabic labels -->
+<h5 class="mb-3">تقرير المبيعات</h5>
 <div class="card">
   <div class="card-body">
-    <h6 class="mb-2 f-w-400 text-muted">This Week Statistics</h6>
-    <h3 class="mb-0">$7,650</h3>
+    <h6 class="mb-2 f-w-400 text-muted">إحصائيات هذا الأسبوع</h6>
+    <h3 class="mb-0">{{ getTotalRevenue() }}</h3>
     <div id="chart">
       <apx-chart
         #chart

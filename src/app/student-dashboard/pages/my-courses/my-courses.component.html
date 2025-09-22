@@ -3,235 +3,420 @@
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">
-        <i class="pi pi-book me-3"></i>
-        دوراتي
+        <i class="pi pi-graduation-cap me-3"></i>
+        المحتوى الخاص بي
       </h1>
       <p class="page-description">
-        تابع تقدمك في الدورات المسجل بها واستكمل رحلتك التعليمية
+        تابع تقدمك في المواد والدروس المتاحة لك
       </p>
     </div>
     
     <div class="header-actions">
-      <div class="sort-dropdown">
-        <label class="sort-label">ترتيب حسب:</label>
-        <select class="form-select" (change)="sortCourses($any($event.target).value)">
-          <option value="recent">الأحدث</option>
-          <option value="progress">التقدم</option>
-          <option value="name">الاسم</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- Progress Stats -->
-  <div class="stats-section">
-    <div class="row">
-      <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stat-card">
-          <div class="stat-icon courses">
-            <i class="pi pi-graduation-cap"></i>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-number">{{ stats.totalCourses }}</h3>
-            <p class="stat-label">إجمالي الدورات</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stat-card">
-          <div class="stat-icon completion">
-            <i class="pi pi-chart-pie"></i>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-number">{{ stats.completionRate }}%</h3>
-            <p class="stat-label">معدل الإنجاز</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stat-card">
-          <div class="stat-icon progress">
-            <i class="pi pi-chart-line"></i>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-number">{{ stats.averageProgress }}%</h3>
-            <p class="stat-label">متوسط التقدم</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-3 col-md-6 mb-4">
-        <div class="stat-card">
-          <div class="stat-icon hours">
-            <i class="pi pi-clock"></i>
-          </div>
-          <div class="stat-content">
-            <h3 class="stat-number">{{ stats.totalHoursStudied }}</h3>
-            <p class="stat-label">ساعات الدراسة</p>
-          </div>
-        </div>
-      </div>
+      <button class="btn btn-outline-primary" (click)="exploreMore()">
+        <i class="pi pi-search me-2"></i>
+        استكشف المزيد
+      </button>
     </div>
   </div>
 
   <!-- Loading State -->
   <div class="loading-container" *ngIf="isLoading">
     <div class="loading-spinner">
-      <i class="pi pi-spinner fa-spin"></i>
-      <p>جاري تحميل دوراتك...</p>
+      <div class="spinner-border text-primary" role="status"></div>
+      <p>جاري تحميل المحتوى...</p>
     </div>
   </div>
 
-  <!-- Courses List -->
-  <div class="courses-section" *ngIf="!isLoading">
-    <div class="courses-grid">
-      <div class="course-card" *ngFor="let course of courses">
-        <!-- Course Header -->
-        <div class="course-header">
-          <div class="course-image-container">
-            <img [src]="course.courseImage" [alt]="course.courseName" class="course-image" onerror="this.src='assets/imgs/course-placeholder.jpg'">
-            <div class="status-overlay">
-              <span class="status-badge" [class]="'badge-' + getStatusColor(course.status)">
-                {{ getStatusLabel(course.status) }}
-              </span>
-            </div>
-          </div>
-          
-          <div class="course-info">
-            <h3 class="course-title">{{ course.courseName }}</h3>
-            <p class="course-instructor">
-              <i class="pi pi-user-tie"></i>
-              {{ course.instructor }}
-            </p>
-            
-            <div class="course-meta">
-              <span class="meta-item">
-                <i class="pi pi-calendar"></i>
-                سُجلت {{ formatDate(course.enrollmentDate) }}
-              </span>
-              <span class="meta-item">
-                <i class="pi pi-eye"></i>
-                آخر زيارة {{ formatDate(course.lastAccessedDate) }}
-              </span>
-            </div>
-          </div>
+  <!-- Error State -->
+  <div class="alert alert-danger" *ngIf="error && !isLoading">
+    <i class="pi pi-exclamation-triangle me-2"></i>
+    {{ error }}
+    <button class="btn btn-outline-danger btn-sm ms-2" (click)="loadAllData()">
+      <i class="pi pi-refresh me-1"></i>
+      إعادة المحاولة
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-container" *ngIf="!isLoading && !error">
+    <!-- Navigation Tabs -->
+    <div class="content-tabs">
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'overview'"
+        (click)="switchTab('overview')">
+        <i class="pi pi-chart-pie me-2"></i>
+        نظرة عامة
+      </button>
+      
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'subjects'"
+        (click)="switchTab('subjects')">
+        <i class="pi pi-book me-2"></i>
+        المواد ({{ subjects.length }})
+      </button>
+      
+      <button 
+        class="tab-button" 
+        [class.active]="activeTab === 'lessons'"
+        (click)="switchTab('lessons')">
+        <i class="pi pi-play-circle me-2"></i>
+        الدروس ({{ filteredLessons.length }})
+      </button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'overview'">
+      
+      <!-- Quick Access Section -->
+      <div class="quick-access-section">
+        <div class="section-header">
+          <h3>وصول سريع</h3>
+          <p>ابدأ من حيث توقفت</p>
         </div>
 
-        <!-- Progress Section -->
-        <div class="progress-section">
-          <div class="progress-header">
-            <div class="progress-stats">
-              <span class="completed-lessons">{{ course.completedLessons }}</span>
-              <span class="separator">/</span>
-              <span class="total-lessons">{{ course.totalLessons }}</span>
-              <span class="lessons-label">درس</span>
+        <div class="quick-access-grid">
+          <!-- Recent Subjects -->
+          <div class="quick-section subjects-preview">
+            <div class="section-title">
+              <i class="pi pi-book me-2"></i>
+              آخر المواد
             </div>
-            <div class="progress-percentage" [class]="'text-' + getProgressColor(course.progressPercentage)">
-              {{ course.progressPercentage }}%
+            <div class="items-preview">
+              <div class="preview-item" 
+                   *ngFor="let subject of subjects.slice(0, 3)"
+                   (click)="viewSubject(subject)">
+                <img [src]="subject.imageUrl || 'assets/imgs/aboutt.jpg'" 
+                     [alt]="subject.name"
+                     class="item-image">
+                <div class="item-info">
+                  <h5 class="item-title">{{ subject.name }}</h5>
+                  <div class="item-progress">
+                    <span class="progress-text">{{ subject.progressPercentage }}% مكتمل</span>
+                    <div class="progress-bar mini">
+                      <div class="progress-fill bg-success" 
+                           [style.width.%]="subject.progressPercentage">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="show-all-btn" (click)="switchTab('subjects')" *ngIf="subjects.length > 3">
+                <i class="pi pi-arrow-left"></i>
+                <span>عرض كل المواد ({{ subjects.length }})</span>
+              </div>
             </div>
           </div>
-          
-          <div class="progress-bar-container">
-            <div class="progress-bar">
-              <div class="progress-fill" 
-                   [class]="'bg-' + getProgressColor(course.progressPercentage)"
-                   [style.width.%]="course.progressPercentage">
+
+          <!-- Recent Lessons -->
+          <div class="quick-section lessons-preview">
+            <div class="section-title">
+              <i class="pi pi-play-circle me-2"></i>
+              آخر الدروس
+            </div>
+            <div class="items-preview">
+              <div class="preview-item lesson-preview" 
+                   *ngFor="let lesson of lessons.slice(0, 3)"
+                   (click)="startLesson(lesson)">
+                <div class="lesson-type-icon" [class]="'type-' + lesson.lessonType">
+                  <i class="pi" [ngClass]="getLessonTypeIcon(lesson.lessonType)"></i>
+                </div>
+                <div class="item-info">
+                  <h5 class="item-title">{{ lesson.title }}</h5>
+                  <p class="item-subtitle">{{ lesson.subjectName }} - {{ lesson.unitName }}</p>
+                  <div class="lesson-meta">
+                    <span class="duration">
+                      <i class="pi pi-clock"></i>
+                      {{ formatDuration(lesson.duration) }}
+                    </span>
+                    <span class="difficulty" [class]="'text-' + getDifficultyColor(lesson.difficulty)">
+                      {{ getDifficultyLabel(lesson.difficulty) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="show-all-btn" (click)="switchTab('lessons')" *ngIf="lessons.length > 3">
+                <i class="pi pi-arrow-left"></i>
+                <span>عرض كل الدروس ({{ lessons.length }})</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Next Lesson -->
-        <div class="next-lesson" *ngIf="course.nextLesson && course.status === 'active'">
-          <div class="next-lesson-header">
-            <i class="pi pi-play-circle"></i>
-            <span>الدرس التالي</span>
-          </div>
-          <div class="lesson-info">
-            <h5 class="lesson-title">{{ course.nextLesson.title }}</h5>
-            <p class="lesson-unit">{{ course.nextLesson.unit }}</p>
+    <!-- Subjects Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'subjects'">
+      <!-- Subjects Grid -->
+      <div class="subjects-section" *ngIf="hasSubjects">
+        <div class="subjects-grid">
+          <div class="subject-card" *ngFor="let subject of subjects; trackBy: trackSubjectById">
+            <!-- Subject Header -->
+            <div class="subject-header">
+              <div class="subject-image-container">
+                <img [src]="subject.imageUrl || 'assets/imgs/aboutt.jpg'" 
+                     [alt]="subject.name" 
+                     class="subject-image">
+                <div class="subject-overlay">
+                  <span class="subscription-badge" 
+                        [class]="'badge-' + (subject.subscriptionStatus === 'active' ? 'success' : 'warning')">
+                    <i class="pi" [ngClass]="subject.subscriptionStatus === 'active' ? 'pi-check-circle' : 'pi-clock'"></i>
+                    {{ subject.subscriptionStatus === 'active' ? 'نشط' : 'منتهي' }}
+                  </span>
+                </div>
+              </div>
+              
+              <div class="subject-info">
+                <h3 class="subject-title">{{ subject.name }}</h3>
+                <p class="subject-instructor" *ngIf="subject.instructorName">
+                  <i class="pi pi-user-tie"></i>
+                  {{ subject.instructorName }}
+                </p>
+                
+                <div class="subject-meta">
+                  <span class="meta-item">
+                    <i class="pi pi-calendar"></i>
+                    اشتراك {{ formatDate(subject.subscribedAt) }}
+                  </span>
+                  <span class="meta-item" *ngIf="subject.sessionType">
+                    <i class="pi pi-tag"></i>
+                    {{ getSessionTypeLabel(subject.sessionType) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section">
+              <div class="progress-header">
+                <div class="progress-stats">
+                  <span class="completed-lessons">{{ subject.completedLessons }}</span>
+                  <span class="separator">/</span>
+                  <span class="total-lessons">{{ subject.totalLessons }}</span>
+                  <span class="lessons-label">درس</span>
+                </div>
+                <div class="progress-percentage" [class]="'text-' + getDifficultyColor(subject.difficulty)">
+                  {{ subject.progressPercentage }}%
+                </div>
+              </div>
+              
+              <div class="progress-bar-container">
+                <div class="progress-bar">
+                  <div class="progress-fill bg-success"
+                       [style.width.%]="subject.progressPercentage">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subject Actions -->
+            <div class="subject-actions">
+              <button class="btn btn-primary" 
+                      (click)="continueSubject(subject)">
+                <i class="pi pi-play me-2"></i>
+                متابعة التعلم
+              </button>
+              
+              <button class="btn btn-outline-secondary" 
+                      (click)="viewSubject(subject)">
+                <i class="pi pi-info-circle me-2"></i>
+                التفاصيل
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Course Actions -->
-        <div class="course-actions">
+      <!-- Empty Subjects State -->
+      <div class="empty-state" *ngIf="!hasSubjects">
+        <div class="empty-content">
+          <i class="pi pi-book-open"></i>
+          <h4>لم تشترك في أي مادة بعد</h4>
+          <p>ابحث عن المواد المتاحة وابدأ رحلتك التعليمية</p>
+          <button class="btn btn-primary" (click)="exploreMore()">
+            <i class="pi pi-search me-2"></i>
+            تصفح المواد
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lessons Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'lessons'">
+      <!-- Filters Section -->
+      <div class="filters-section">
+        <div class="filters-header">
+          <h4>
+            <i class="pi pi-filter me-2"></i>
+            تصفية الدروس
+          </h4>
+          <button class="btn btn-outline-secondary btn-sm" 
+                  (click)="clearFilters()" 
+                  [disabled]="!hasActiveFilters">
+            <i class="pi pi-times me-1"></i>
+            مسح الفلاتر
+          </button>
+        </div>
+
+        <div class="filters-grid">
+          <!-- Search -->
+          <div class="filter-group search-filter">
+            <label class="filter-label">البحث</label>
+            <div class="search-input">
+              <i class="pi pi-search"></i>
+              <input type="text" 
+                     class="form-control"
+                     [(ngModel)]="searchQuery"
+                     (input)="onSearchChange()"
+                     placeholder="ابحث في الدروس...">
+            </div>
+          </div>
+
+          <!-- Subject Filter -->
+          <div class="filter-group">
+            <label class="filter-label">المادة</label>
+            <select class="form-select" 
+                    [(ngModel)]="subjectFilter"
+                    (ngModelChange)="onSubjectFilterChange($event)">
+              <option value="all">جميع المواد</option>
+              <option *ngFor="let subject of subjects" [value]="subject.id">
+                {{ subject.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Lesson Type Filter -->
+          <div class="filter-group">
+            <label class="filter-label">نوع الدرس</label>
+            <select class="form-select" 
+                    [(ngModel)]="lessonTypeFilter"
+                    (ngModelChange)="onLessonTypeFilterChange($event)">
+              <option *ngFor="let type of lessonTypes" [value]="type.value">
+                {{ type.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Difficulty Filter -->
+          <div class="filter-group">
+            <label class="filter-label">المستوى</label>
+            <select class="form-select" 
+                    [(ngModel)]="difficultyFilter"
+                    (ngModelChange)="onDifficultyFilterChange($event)">
+              <option value="all">جميع المستويات</option>
+              <option value="beginner">مبتدئ</option>
+              <option value="intermediate">متوسط</option>
+              <option value="advanced">متقدم</option>
+            </select>
+          </div>
+
+          <!-- Sort By -->
+          <div class="filter-group">
+            <label class="filter-label">ترتيب حسب</label>
+            <select class="form-select" 
+                    [(ngModel)]="sortBy"
+                    (ngModelChange)="onSortChange($event)">
+              <option value="recent">الأحدث</option>
+              <option value="name">الاسم</option>
+              <option value="progress">التقدم</option>
+              <option value="difficulty">المستوى</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Lessons -->
+      <div class="loading-state" *ngIf="isLoadingLessons">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p>جاري تحميل الدروس...</p>
+      </div>
+
+      <!-- Lessons Grid -->
+      <div class="lessons-section" *ngIf="!isLoadingLessons && hasLessons">
+        <div class="lessons-grid">
+          <div class="lesson-card" 
+               *ngFor="let lesson of filteredLessons; trackBy: trackLessonById"
+               (click)="startLesson(lesson)">
+            
+            <!-- Lesson Header -->
+            <div class="lesson-header">
+              <div class="lesson-type-badge" [class]="'type-' + lesson.lessonType">
+                <i class="pi" [ngClass]="getLessonTypeIcon(lesson.lessonType)"></i>
+                <span>{{ getLessonTypeLabel(lesson.lessonType) }}</span>
+              </div>
+              
+              <div class="lesson-status">
+                <span class="access-badge" [class]="'badge-' + getAccessMethodColor(lesson.accessMethod)">
+                  {{ getAccessMethodLabel(lesson.accessMethod) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Lesson Content -->
+            <div class="lesson-content">
+              <h4 class="lesson-title">{{ lesson.title }}</h4>
+              <p class="lesson-description">{{ lesson.description }}</p>
+              
+              <div class="lesson-path">
+                <span class="subject-name">{{ lesson.subjectName }}</span>
+                <i class="pi pi-angle-left"></i>
+                <span class="unit-name">{{ lesson.unitName }}</span>
+              </div>
+            </div>
+
+            <!-- Lesson Footer -->
+            <div class="lesson-footer">
+              <div class="lesson-meta">
+                <span class="duration">
+                  <i class="pi pi-clock"></i>
+                  {{ formatDuration(lesson.duration) }}
+                </span>
+                <span class="difficulty" [class]="'text-' + getDifficultyColor(lesson.difficulty)">
+                  <i class="pi pi-signal"></i>
+                  {{ getDifficultyLabel(lesson.difficulty) }}
+                </span>
+              </div>
+
+              <!-- Progress Indicator -->
+              <div class="progress-indicator" *ngIf="lesson.progressPercentage">
+                <div class="progress-bar mini">
+                  <div class="progress-fill bg-primary" 
+                       [style.width.%]="lesson.progressPercentage">
+                  </div>
+                </div>
+                <span class="progress-text">{{ lesson.progressPercentage }}%</span>
+              </div>
+
+              <!-- Completed Badge -->
+              <div class="completed-badge" *ngIf="lesson.isCompleted">
+                <i class="pi pi-check-circle"></i>
+                <span>مكتمل</span>
+              </div>
+            </div>
+
+            <!-- Last Accessed -->
+            <div class="last-accessed" *ngIf="lesson.lastAccessedAt">
+              <i class="pi pi-eye"></i>
+              <span>آخر زيارة {{ formatDate(lesson.lastAccessedAt) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty Lessons State -->
+      <div class="empty-state" *ngIf="!isLoadingLessons && !hasLessons">
+        <div class="empty-content">
+          <i class="pi pi-play-circle"></i>
+          <h4>{{ hasActiveFilters ? 'لا توجد دروس تطابق البحث' : 'لا توجد دروس متاحة' }}</h4>
+          <p>{{ hasActiveFilters ? 'جرب تعديل الفلاتر للعثور على المزيد' : 'اشترك في المواد للوصول للدروس' }}</p>
           <button class="btn btn-primary" 
-                  *ngIf="course.status === 'active'"
-                  (click)="continueCourse(course)">
-            <i class="pi pi-play me-2"></i>
-            متابعة التعلم
+                  (click)="hasActiveFilters ? clearFilters() : exploreMore()">
+            <i class="pi" [ngClass]="hasActiveFilters ? 'pi-times' : 'pi-search'"></i>
+            {{ hasActiveFilters ? 'مسح الفلاتر' : 'تصفح المواد' }}
           </button>
-          
-          <button class="btn btn-success" 
-                  *ngIf="course.status === 'completed'"
-                  (click)="viewCourseDetails(course.courseId)">
-            <i class="pi pi-certificate me-2"></i>
-            مكتمل
-          </button>
-          
-          <button class="btn btn-warning" 
-                  *ngIf="course.status === 'paused'"
-                  (click)="continueCourse(course)">
-            <i class="pi pi-play me-2"></i>
-            استكمال الدورة
-          </button>
-          
-          <button class="btn btn-outline-secondary" 
-                  (click)="viewCourseDetails(course.courseId)">
-            <i class="pi pi-info-circle me-2"></i>
-            التفاصيل
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div class="empty-state" *ngIf="courses.length === 0">
-      <div class="empty-content">
-        <i class="pi pi-book-open"></i>
-        <h4>لم تسجل في أي دورة بعد</h4>
-        <p>ابحث عن الدورات المتاحة وابدأ رحلتك التعليمية</p>
-        <button class="btn btn-primary" routerLink="/student-dashboard/all-courses">
-          <i class="pi pi-search me-2"></i>
-          تصفح الدورات
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Quick Actions -->
-  <div class="quick-actions-section" *ngIf="!isLoading && courses.length > 0">
-    <div class="content-card">
-      <div class="card-header">
-        <h5 class="card-title">
-          <i class="pi pi-bolt me-2"></i>
-          إجراءات سريعة
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="actions-grid">
-          <button class="action-btn" routerLink="/student-dashboard/courses">
-            <div class="action-icon">
-              <i class="pi pi-plus"></i>
-            </div>
-            <div class="action-content">
-              <h6>دورة جديدة</h6>
-              <p>استكشف المزيد من الدورات</p>
-            </div>
-          </button>
-
-          <button class="action-btn" routerLink="/student-dashboard/my-payments">
-            <div class="action-icon">
-              <i class="pi pi-credit-card"></i>
-            </div>
-            <div class="action-content">
-              <h6>المدفوعات</h6>
-              <p>إدارة الاشتراكات</p>
-            </div>
-          </button>
-
         </div>
       </div>
     </div>

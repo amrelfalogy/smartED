@@ -1,0 +1,90 @@
+<div class="profile-picture-upload" 
+     [class]="sizeClass + ' ' + shapeClass"
+     [class.can-edit]="canEdit"
+     [class.uploading]="isUploading"
+     [class.deleting]="isDeleting"
+     [class.drag-over]="isDragOver">
+  
+  <!-- Picture Container -->
+  <div class="picture-container"
+       (dragover)="onDragOver($event)"
+       (dragleave)="onDragLeave($event)"
+       (drop)="onDrop($event)">
+    
+    <!-- Current Picture -->
+    <div class="current-picture">
+      <!-- Profile Image -->
+      <img 
+        *ngIf="profileImageUrl" 
+        [src]="profileImageUrl" 
+        [alt]="userDisplayName"
+        class="profile-image"
+        loading="lazy">
+      
+      <!-- Avatar Placeholder -->
+      <div *ngIf="!profileImageUrl" class="avatar-placeholder">
+        <span class="initials">{{ userInitials }}</span>
+      </div>
+      
+      <!-- Loading/Processing Overlay -->
+      <div *ngIf="isUploading || isDeleting" class="loading-overlay">
+        <div class="spinner">
+          <i class="pi pi-spinner pi-spin"></i>
+        </div>
+        <span class="loading-text">
+          {{ isUploading ? 'جاري الرفع...' : 'جاري الحذف...' }}
+        </span>
+      </div>
+      
+      <!-- Drag Over Overlay -->
+      <div *ngIf="isDragOver && canEdit && canUploadPicture" class="drag-overlay">
+        <i class="pi pi-upload"></i>
+        <span>اتركه لرفع الصورة</span>
+      </div>
+    </div>
+    
+    <!-- Edit Controls -->
+    <div *ngIf="canEdit && canUploadPicture && !isUploading && !isDeleting" class="edit-controls">
+      <!-- Upload Button -->
+      <label class="upload-btn" 
+             [title]="profileImageUrl ? 'تغيير الصورة' : 'رفع صورة'"
+             [attr.aria-label]="profileImageUrl ? 'تغيير صورة الملف الشخصي' : 'رفع صورة الملف الشخصي'">
+        <i class="pi pi-camera"></i>
+        <input 
+          type="file" 
+          accept="image/jpeg,image/png,image/webp"
+          (change)="onFileSelected($event)"
+          class="file-input">
+      </label>
+      
+      <!-- Delete Button -->
+      <button 
+        *ngIf="profileImageUrl"
+        type="button" 
+        class="delete-btn"
+        (click)="deleteProfilePicture()"
+        [title]="'حذف الصورة'"
+        [attr.aria-label]="'حذف صورة الملف الشخصي'">
+        <i class="pi pi-trash"></i>
+      </button>
+    </div>
+  </div>
+  
+  <!-- User Name (if showName is true) -->
+  <div *ngIf="showName && user" class="user-name">
+    <h5 class="name">{{ userDisplayName }}</h5>
+    <span class="role">{{ user.role === 'teacher' ? 'معلم' : user.role === 'admin' ? 'مدير' : user.role }}</span>
+  </div>
+  
+  <!-- Error Message -->
+  <div *ngIf="uploadError" class="error-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>{{ uploadError }}</span>
+  </div>
+  
+  <!-- Upload Instructions (for drag & drop) -->
+  <div *ngIf="canEdit && canUploadPicture && size === 'lg'" class="upload-instructions">
+    <p>اسحب وأفلت صورة هنا أو انقر لاختيار ملف</p>
+    <small>PNG, JPG, WebP حتى 10MB</small>
+  </div>
+</div>

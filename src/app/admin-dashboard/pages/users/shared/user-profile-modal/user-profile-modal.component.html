@@ -1,0 +1,357 @@
+<div class="user-profile-modal" *ngIf="isVisible && user" [class.show]="isVisible">
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="user-header-info">
+          <!-- ✅ NEW: Profile Picture Upload Component -->
+          <div class="user-profile-section">
+            <app-profile-picture-upload
+              [user]="user"
+              [size]="'lg'"
+              [allowEdit]="true"
+              [showName]="false"
+              [shape]="'circle'"
+              (pictureUpdated)="onProfilePictureUpdated($event)"
+              (pictureDeleted)="onProfilePictureDeleted()"
+              (error)="onProfilePictureError($event)">
+            </app-profile-picture-upload>
+            
+            <!-- Profile Picture Error -->
+            <div *ngIf="profilePictureError" class="profile-picture-error">
+              <small class="text-danger">
+                <i class="pi pi-exclamation-triangle me-1"></i>
+                {{ profilePictureError }}
+              </small>
+            </div>
+          </div>
+          
+          <div class="user-info">
+            <h4 class="user-name">{{ getUserDisplayName() }}</h4>
+            <p class="user-email">{{ user.email }}</p>
+            <div class="user-badges">
+              <span class="badge" [class]="getRoleBadgeClass()">
+                {{ getRoleDisplayName() }}
+              </span>
+              <span class="badge ms-1" [class.bg-success]="user.emailVerified" [class.bg-warning]="!user.emailVerified">
+                {{ user.emailVerified ? 'بريد مُفعل' : 'بريد غير مُفعل' }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary btn-sm me-2" 
+            (click)="toggleEditMode()"
+            *ngIf="!isEditMode && user.role !== 'admin'">
+            <i class="pi pi-pencil me-1"></i>
+            تعديل
+          </button>
+          
+          <button 
+            type="button" 
+            class="btn btn-outline-danger btn-sm me-2"
+            (click)="showDeleteDialog()"
+            *ngIf="!isEditMode && user.role !== 'admin'">
+            <i class="pi pi-trash me-1"></i>
+            حذف
+          </button>
+          
+          <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- View Mode -->
+        <div *ngIf="!isEditMode" class="user-details-view">
+          <div class="row">
+            <!-- Basic Information -->
+            <div class="col-md-6">
+              <div class="info-section">
+                <h6 class="section-title">المعلومات الأساسية</h6>
+                <div class="info-item">
+                  <label>الاسم الكامل:</label>
+                  <span>{{ getUserDisplayName() }}</span>
+                </div>
+                <div class="info-item">
+                  <label>البريد الإلكتروني:</label>
+                  <span>{{ user.email }}</span>
+                </div>
+                <div class="info-item" *ngIf="user.phone">
+                  <label>رقم الهاتف:</label>
+                  <span>{{ user.phone }}</span>
+                </div>
+                <div class="info-item">
+                  <label>الحالة:</label>
+                  <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+                    {{ user.isActive ? 'نشط' : 'غير نشط' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="col-md-6">
+              <div class="info-section">
+                <h6 class="section-title">معلومات إضافية</h6>
+                <div class="info-item" *ngIf="user.dateOfBirth">
+                  <label>تاريخ الميلاد:</label>
+                  <span>{{ formatDate(user.dateOfBirth) }}</span>
+                </div>
+                <div class="info-item" *ngIf="user.address">
+                  <label>العنوان:</label>
+                  <span>{{ user.address }}</span>
+                </div>
+                <div class="info-item">
+                  <label>تاريخ التسجيل:</label>
+                  <span>{{ formatDate(user.createdAt) }}</span>
+                </div>
+                <div class="info-item" *ngIf="user.lastLogin">
+                  <label>آخر دخول:</label>
+                  <span>{{ formatDate(user.lastLogin) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bio Section -->
+          <div class="row" *ngIf="user.bio">
+            <div class="col-12">
+              <div class="info-section">
+                <h6 class="section-title">نبذة شخصية</h6>
+                <div class="bio-content">
+                  {{ user.bio }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ✅ NEW: Extended Bio Section -->
+          <div class="row" *ngIf="user.bioLong">
+            <div class="col-12">
+              <div class="info-section">
+                <h6 class="section-title">السيرة الذاتية</h6>
+                <div class="bio-long-content">
+                  {{ user.bioLong }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin Actions -->
+          <div class="row mt-3" *ngIf="user.role !== 'admin'">
+            <div class="col-12">
+              <div class="admin-actions">
+                <button 
+                  type="button" 
+                  class="btn btn-outline-primary btn-sm"
+                  (click)="toggleUserStatus()"
+                  [disabled]="isLoading">
+                  <i class="pi pi-spinner pi-spin me-1" *ngIf="isLoading"></i>
+                  <i class="pi me-1" [class.pi-lock]="user.isActive" [class.pi-unlock]="!user.isActive" *ngIf="!isLoading"></i>
+                  {{ user.isActive ? 'تعطيل الحساب' : 'تفعيل الحساب' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Mode -->
+        <div *ngIf="isEditMode" class="user-details-edit">
+          <form [formGroup]="userForm" (ngSubmit)="saveUser()">
+            <div class="row">
+              <!-- Basic Information -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">الاسم الأول *</label>
+                  <input 
+                    type="text" 
+                    class="form-control"
+                    formControlName="firstName"
+                    [class.is-invalid]="isFieldInvalid('firstName')">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('firstName')">
+                    {{ getFieldError('firstName') }}
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">اسم العائلة *</label>
+                  <input 
+                    type="text" 
+                    class="form-control"
+                    formControlName="lastName"
+                    [class.is-invalid]="isFieldInvalid('lastName')">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('lastName')">
+                    {{ getFieldError('lastName') }}
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">البريد الإلكتروني</label>
+                  <input 
+                    type="email" 
+                    class="form-control"
+                    formControlName="email"
+                    readonly
+                    [disabled]="true">
+                  <small class="text-muted">لا يمكن تغيير البريد الإلكتروني</small>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">رقم الهاتف</label>
+                  <input 
+                    type="text" 
+                    class="form-control"
+                    formControlName="phone"
+                    [class.is-invalid]="isFieldInvalid('phone')">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('phone')">
+                    {{ getFieldError('phone') }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Additional Information -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">تاريخ الميلاد</label>
+                  <input 
+                    type="date" 
+                    class="form-control"
+                    formControlName="dateOfBirth">
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">العنوان</label>
+                  <input 
+                    type="text" 
+                    class="form-control"
+                    formControlName="address"
+                    [class.is-invalid]="isFieldInvalid('address')">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('address')">
+                    {{ getFieldError('address') }}
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <div class="form-check">
+                    <input 
+                      type="checkbox" 
+                      class="form-check-input"
+                      formControlName="isActive"
+                      id="isActiveCheck">
+                    <label class="form-check-label" for="isActiveCheck">
+                      حساب نشط
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bio Section -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">نبذة شخصية</label>
+                  <textarea 
+                    class="form-control" 
+                    rows="3"
+                    formControlName="bio"
+                    [class.is-invalid]="isFieldInvalid('bio')"
+                    placeholder="نبذة مختصرة..."></textarea>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('bio')">
+                    {{ getFieldError('bio') }}
+                  </div>
+                </div>
+              </div>
+              
+              <!-- ✅ NEW: Extended Bio -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">السيرة الذاتية</label>
+                  <textarea 
+                    class="form-control" 
+                    rows="3"
+                    formControlName="bioLong"
+                    [class.is-invalid]="isFieldInvalid('bioLong')"
+                    placeholder="سيرة ذاتية مفصلة..."></textarea>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('bioLong')">
+                    {{ getFieldError('bioLong') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer" *ngIf="isEditMode">
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary"
+          (click)="toggleEditMode()"
+          [disabled]="isSaving">
+          إلغاء
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary"
+          (click)="saveUser()"
+          [disabled]="userForm.invalid || isSaving">
+          <i class="pi pi-spinner pi-spin me-1" *ngIf="isSaving"></i>
+          <i class="pi pi-check me-1" *ngIf="!isSaving"></i>
+          {{ isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal (unchanged) -->
+<div class="delete-confirmation-modal" *ngIf="showDeleteConfirmation" [class.show]="showDeleteConfirmation">
+  <div class="modal-backdrop" (click)="hideDeleteDialog()"></div>
+  
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">
+          <i class="pi pi-exclamation-triangle me-2"></i>
+          تأكيد حذف المستخدم
+        </h5>
+      </div>
+      
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه!
+        </div>
+        
+        <p>هل أنت متأكد من رغبتك في حذف المستخدم <strong>{{ getUserDisplayName() }}</strong>؟</p>
+        
+        <p class="text-muted">لتأكيد الحذف، اكتب <code>DELETE</code> في الحقل أدناه:</p>
+        
+        <input 
+          type="text" 
+          class="form-control"
+          [(ngModel)]="deleteConfirmationText"
+          placeholder="اكتب DELETE للتأكيد">
+      </div>
+      
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary"
+          (click)="hideDeleteDialog()"
+          [disabled]="isDeleting">
+          إلغاء
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-danger"
+          (click)="confirmDelete()"
+          [disabled]="deleteConfirmationText !== 'DELETE' || isDeleting">
+          <i class="pi pi-spinner pi-spin me-1" *ngIf="isDeleting">

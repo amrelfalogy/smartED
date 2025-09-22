@@ -1,3 +1,4 @@
+// ✅ UPDATE: analytics-chart.component.ts - Better Arabic labels
 import { Component, ViewChild, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexTooltip, ApexStroke, ApexPlotOptions, ApexGrid } from 'ng-apexcharts';
 
@@ -27,30 +28,69 @@ export class AnalyticsChartComponent implements OnChanges {
   @Input() data: number[] = [];
   @Input() color: string = '#FFB814';
 
-  public chartOptions: Partial<ChartOptions> = {
-    chart: { type: 'line', height: 340, toolbar: { show: false }, background: 'transparent' },
-    plotOptions: { bar: { columnWidth: '45%', borderRadius: 4 } },
-    colors: ['#FFB814'],
-    stroke: { curve: 'smooth', width: 2 },
-    grid: { strokeDashArray: 4, borderColor: '#f5f5f5' },
-    series: [{ name: 'تسجيلات', data: [] }],
-    xaxis: { type: 'category', categories: [], labels: { style: { colors: [] as any } }, axisBorder: { show: false }, axisTicks: { show: false } },
-    yaxis: { show: true },
-    tooltip: { theme: 'light' }
-  };
+  public chartOptions: Partial<ChartOptions> = {};
 
   ngOnChanges(_: SimpleChanges): void {
     this.chartOptions = {
-      ...this.chartOptions,
+      chart: { 
+        type: 'line', 
+        height: 340, 
+        toolbar: { show: false }, 
+        background: 'transparent',
+        fontFamily: 'Arial, sans-serif'
+      },
+      plotOptions: { 
+        bar: { columnWidth: '45%', borderRadius: 4 } 
+      },
       colors: [this.color],
-      series: [{ name: this.seriesName, data: this.data }],
+      stroke: { 
+        curve: 'smooth', 
+        width: 3,
+        lineCap: 'round'
+      },
+      grid: { 
+        strokeDashArray: 4, 
+        borderColor: '#f5f5f5',
+        xaxis: {
+          lines: {
+            show: true
+          }
+        }
+      },
+      series: [{ 
+        name: this.seriesName, 
+        data: this.data.length ? this.data : [0] 
+      }],
       xaxis: {
-        ...this.chartOptions.xaxis,
         type: 'category',
-        categories: this.categories,
-        labels: { style: { colors: new Array(this.categories.length).fill('#222') } },
+        categories: this.categories.length ? this.categories : ['لا توجد بيانات'],
+        labels: { 
+          style: { 
+            colors: new Array(this.categories.length || 1).fill('#666'),
+            fontSize: '11px'
+          } 
+        },
         axisBorder: { show: false },
         axisTicks: { show: false }
+      },
+      yaxis: { 
+        show: true,
+        labels: {
+          style: {
+            colors: ['#666']
+          },
+          formatter: function (val) {
+            return Math.floor(val).toString();
+          }
+        }
+      },
+      tooltip: { 
+        theme: 'light',
+        y: {
+          formatter: function (val) {
+            return Math.floor(val) + ' تسجيل';
+          }
+        }
       }
     };
   }

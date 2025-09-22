@@ -14,6 +14,7 @@ export interface FilterOptions {
   status: 'all' | 'draft' | 'published';
   academicYear: 'all' | string;
   studentYear: 'all' | string;
+  sessionType: 'all' | 'recorded' | 'studio';
   sortBy: 'name' | 'createdAt' | 'updatedAt';
   sortOrder: 'asc' | 'desc';
 }
@@ -42,6 +43,7 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
   statusFilter = new FormControl('all');
   academicYearFilter = new FormControl('all');
   studentYearFilter = new FormControl('all');
+  sessionTypeFilter = new FormControl('all');
   sortControl = new FormControl('createdAt');
   sortOrderControl = new FormControl('desc');
 
@@ -50,6 +52,7 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
     status: 'all',
     academicYear: 'all',
     studentYear: 'all',
+    sessionType: 'all',
     sortBy: 'createdAt',
     sortOrder: 'desc'
   };
@@ -178,6 +181,14 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(studentYear => {
         this.filters.studentYear = studentYear || 'all';
+               this.currentPage = 1;
+        this.applyFilters();
+      });
+
+    this.sessionTypeFilter.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(st => {
+        this.filters.sessionType = (st || 'all') as any;
         this.currentPage = 1;
         this.applyFilters();
       });
@@ -270,6 +281,13 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(course =>
         course.studentYearId === this.filters.studentYear
       );
+    }
+
+    if (this.filters.sessionType !== 'all') {
+      filtered = filtered.filter(course => {
+        const st = this.getSubjectSessionType(course);
+        return st === this.filters.sessionType || (this.filters.sessionType === 'recorded' && st === 'center_recorded');
+      });
     }
 
     filtered.sort((a, b) => {
@@ -384,7 +402,6 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
         }
       } catch (e: any) {
         // If 404, that's OK — really deleted
-        // Many backends return 404 after delete — treat as success
       }
 
       // Also optimistically remove from UI in case backend uses soft delete fields
@@ -451,6 +468,7 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
     this.statusFilter.setValue('all', { emitEvent: false });
     this.academicYearFilter.setValue('all', { emitEvent: false });
     this.studentYearFilter.setValue('all', { emitEvent: false });
+    this.sessionTypeFilter.setValue('all', { emitEvent: false });
     this.sortControl.setValue('createdAt', { emitEvent: false });
     this.sortOrderControl.setValue('desc', { emitEvent: false });
 
@@ -459,6 +477,7 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
       status: 'all',
       academicYear: 'all',
       studentYear: 'all',
+      sessionType: 'all',
       sortBy: 'createdAt',
       sortOrder: 'desc'
     };
@@ -531,6 +550,33 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
     return studentYear?.displayName || 'غير محدد';
   }
 
+  getSessionTypeLabel(s?: string): string {
+    switch (s) {
+      case 'recorded':
+      case 'center_recorded':
+        return 'مسجل - المركز';
+      case 'studio':
+        return 'منتج - الاستوديو';
+      case 'live':
+      case 'zoom':
+      case 'teams':
+      case 'webinar':
+        return 'مباشر';
+      default:
+        return 'غير محدد';
+    }
+  }
+
+  // NEW: subject helpers to safely read backend fields in TS (avoid template casts)
+  getSubjectSessionType(subject: Subject | any): string | undefined {
+    return (subject as any)?.sessionType;
+  }
+
+  getSubjectPrice(subject: Subject | any): number | null {
+    const v = (subject as any)?.price;
+    return v !== undefined && v !== null ? Number(v) : null;
+  }
+
   // ============ GETTERS ============
   get hasSelectedCourses(): boolean {
     return this.selectedCourses.length > 0;
@@ -566,6 +612,7 @@ export class CoursesAdminListComponent implements OnInit, OnDestroy {
     if (this.filters.status !== 'all') count++;
     if (this.filters.academicYear !== 'all') count++;
     if (this.filters.studentYear !== 'all') count++;
+    if (this.filters.sessionType !== 'all') count++;
     return count;
   }
 }

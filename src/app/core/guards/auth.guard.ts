@@ -63,14 +63,28 @@ export class AuthGuard implements CanActivate {
     );
   }
 
-  private hasRequiredRole(userRole: string, requiredRole: string): boolean {
-    if (requiredRole === 'admin') {
-      return userRole === 'admin' || userRole === 'support';
+  // ✅ FIXED: auth.guard.ts - Better role checking
+  private hasRequiredRole(userRole: string, requiredRole: string | string[]): boolean {
+    console.log('🛡️ Role check:', { userRole, requiredRole });
+    
+    // If requiredRole is an array, check if userRole is in the array
+    if (Array.isArray(requiredRole)) {
+      return requiredRole.includes(userRole);
     }
-    else if(requiredRole === 'student') {
-      return userRole === 'student';
+    
+    // If requiredRole is a string, handle specific cases
+    switch (requiredRole) {
+      case 'admin':
+        return userRole === 'admin'; // ✅ Only admin can access admin-only routes
+      case 'support':
+        return userRole === 'support' || userRole === 'admin'; // ✅ Both support and admin can access support routes
+      case 'student':
+        return userRole === 'student';
+      case 'admin_or_support': // ✅ New role for shared access
+        return userRole === 'admin' || userRole === 'support';
+      default:
+        return userRole === requiredRole;
     }
-    return userRole === requiredRole;
   }
 }
 

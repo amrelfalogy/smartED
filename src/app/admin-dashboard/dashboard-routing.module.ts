@@ -5,6 +5,8 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { CoursesAdminListComponent } from './pages/courses-admin/courses-admin-list/courses-admin-list.component';
 import { CoursesAdminFormComponent } from './pages/courses-admin/courses-admin-form/courses-admin-form.component';
 import { PaymentsComponent } from './pages/payments/payments.component';
+import {ActivationCodesComponent} from './pages/activation-codes/activation-codes.component';
+import { AuthGuard } from '../core/guards/auth.guard';
 
 const routes: Routes = [
   {
@@ -19,11 +21,17 @@ const routes: Routes = [
       { 
         path: 'dashboard', 
         component: DashboardComponent,
-        data: { title: 'لوحة التحكم', breadcrumb: 'الرئيسية' }
+        canActivate: [AuthGuard],
+        data: { title: 'لوحة التحكم', breadcrumb: 'الرئيسية',
+           role: 'admin_or_support' 
+        }
       },
       { 
-        path: 'courses', 
-        data: { title: 'إدارة الكورسات', breadcrumb: 'الكورسات' },
+        path: 'courses', canActivate: [AuthGuard],
+        data: { 
+          title: 'إدارة الدورات', breadcrumb: 'الدورات',
+          role: 'admin_or_support'
+        },
         children: [
           { 
             path: '', 
@@ -40,18 +48,22 @@ const routes: Routes = [
             component: CoursesAdminFormComponent,
             data: { title: 'تعديل الكورس', breadcrumb: 'تعديل', mode: 'edit' }
           },
-          { 
-            path: ':id/students', 
-            component: CoursesAdminListComponent, // or create StudentsListComponent
-            data: { title: 'طلاب الكورس', breadcrumb: 'الطلاب', mode: 'students' }
-          }
+          // { 
+          //   path: ':id/students', 
+          //   component: CoursesAdminListComponent, // or create StudentsListComponent
+          //   data: { title: 'طلاب الكورس', breadcrumb: 'الطلاب', mode: 'students' }
+          // }
           
         ]
       },
       { 
         path: 'course-details/:id', 
         loadChildren: () => import('../student-dashboard/pages/course-details/course-details.module').then(m => m.CourseDetailsModule),
-        data: { title: 'تفاصيل الكورس', breadcrumb: 'التفاصيل', mode: 'admin' }
+        data: { 
+          title: 'تفاصيل الكورس', 
+          breadcrumb: 'التفاصيل',
+          mode: 'admin' }
+          
       },
       { 
         path: 'lesson-details/:id', 
@@ -61,8 +73,32 @@ const routes: Routes = [
       {
         path: 'payments',
         component: PaymentsComponent,
-        data: { title: 'المدفوعات', breadcrumb: 'المدفوعات' }
-      }
+        canActivate: [AuthGuard],
+        data: { 
+          title: 'المدفوعات', 
+          breadcrumb: 'المدفوعات',
+          role: 'admin' // ✅ Only admin can access payments
+        }
+      },
+      {
+        path: 'activation-codes',
+        component: ActivationCodesComponent,
+        canActivate: [AuthGuard],
+        data: { 
+          title: 'رموز التفعيل', 
+          breadcrumb: 'رموز التفعيل',
+          role: 'admin' // ✅ Only admin can access activation codes
+        }
+      },
+      {
+        path: 'users',
+        loadChildren: () => import('./pages/users/users.module').then(m => m.UsersModule),
+        canActivate: [AuthGuard],
+        data: { 
+          title: 'User Management',
+          role: 'admin' // ✅ Only admin can access user management
+        }
+      },
     ]
   }
 ];

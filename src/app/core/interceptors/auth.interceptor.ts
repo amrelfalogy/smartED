@@ -10,6 +10,7 @@ import {
 import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { environment } from 'src/environments/environment';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -85,7 +86,7 @@ export class AuthInterceptor implements HttpInterceptor {
   private attemptTokenRefresh(): Observable<string> {
     return new Observable(observer => {
       // Make refresh token request
-      fetch('/api/auth/refresh', {
+      fetch(`${environment.apiUrl}/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

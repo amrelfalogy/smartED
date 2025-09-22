@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export interface AdminDashboardOverview {
   period: number;
@@ -17,7 +18,7 @@ export interface UsersAnalytics {
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-  private baseUrl = '/api';
+  private baseUrl = `${environment.apiUrl}`;
 
   constructor(private http: HttpClient) {}
 

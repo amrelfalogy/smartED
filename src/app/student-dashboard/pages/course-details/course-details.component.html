@@ -42,7 +42,7 @@
             [src]="course.imageUrl" 
             [alt]="course.name" 
             class="course-image" 
-            onerror="this.src='assets/imgs/course-placeholder.jpg'"
+            onerror="this.src='assets/imgs/aboutt.jpg'"
           >
           <div class="course-overlay">
             <div class="enrollment-status" [class]="enrollmentStatus" *ngIf="showEnrollmentActions">
@@ -85,6 +85,38 @@
             <div class="meta-item" *ngIf="hasLessons">
               <i class="pi pi-play-circle"></i>
               <span>{{ lessons.length }} درس</span>
+            </div>
+            <div class="meta-item" *ngIf="course.sessionType">
+              <i class="pi pi-tag"></i>
+              <span>
+                {{
+                  course.sessionType === 'center_recorded' || course.sessionType === 'recorded' ? 'مسجل - المركز' :
+                  course.sessionType === 'studio' ? 'منتج - الاستوديو' :
+                  course.sessionType === 'live' || course.sessionType === 'zoom' ? 'مباشر' : 'غير محدد'
+                }}
+              </span>
+            </div>
+          </div>
+
+          <!-- ✅ NEW: Header Enrollment Actions -->
+          <div class="header-enrollment-actions" *ngIf="canEnroll && hasLessons">
+            <div class="enrollment-summary" *ngIf="hasPartialAccess">
+              <div class="access-indicator">
+                <i class="pi pi-info-circle"></i>
+                <span>لديك وصول لبعض الدروس</span>
+              </div>
+            </div>
+            
+            <div class="enrollment-buttons">
+              <button 
+                class="btn btn-enrollment-primary"
+                (click)="navigateToPlanSubject()"
+              >
+                <i class="pi pi-credit-card me-2"></i>
+                <span class="btn-text">
+                  {{ hasPartialAccess ? 'اشترك في المادة كاملة' : 'سجل في المادة' }}
+                </span>
+              </button>            
             </div>
           </div>
         </div>
@@ -131,23 +163,21 @@
 
     <!-- ✅ Content Based on Available Data -->
     <div *ngIf="hasLessons" class="course-curriculum-container">
-      <!-- Lesson Type Selection -->
-      <div class="lesson-type-selection">
+      <!-- Session Type Display (subject-level) -->
+      <div class="lesson-type-selection" *ngIf="course?.sessionType">
         <div class="section-header">
           <h2 class="section-title">
             <i class="pi pi-list me-2"></i>
-            اختر نوع الدروس
+            نوع تقديم المحتوى
           </h2>
-          <p class="section-description">اختر نوع الدروس التي تريد الوصول إليها</p>
+          <p class="section-description">هذا الكورس يقدم محتواه بطريقة واحدة</p>
         </div>
 
         <div class="lesson-type-cards">
           <!-- Center Recorded Card -->
           <div class="lesson-type-card" 
                [class.selected]="selectedLessonType === 'center_recorded'"
-               [class.disabled]="!isLessonTypeAvailable('center_recorded')"
-               (click)="selectLessonType('center_recorded')">
-            
+               [class.disabled]="course.sessionType !== 'center_recorded' && course.sessionType !== 'recorded'">
             <div class="card-header">
               <div class="card-icon center-recorded">
                 <i class="pi pi-video"></i>
@@ -156,45 +186,16 @@
                 <span class="status-badge selected">محدد</span>
               </div>
             </div>
-            
             <div class="card-content">
               <h3 class="card-title">الدروس المسجلة - المركز</h3>
               <p class="card-description">دروس مسجلة في المركز التعليمي بجودة عالية مع شرح تفصيلي</p>
-              
-              <div class="card-features">
-                <span class="feature-item">
-                  <i class="pi pi-check"></i>
-                  جودة عالية HD
-                </span>
-                <span class="feature-item">
-                  <i class="pi pi-check"></i>
-                  شرح تفصيلي
-                </span>
-                <span class="feature-item">
-                  <i class="pi pi-check"></i>
-                  إمكانية الإعادة
-                </span>
-              </div>
-            </div>
-            
-            <div class="card-action">
-              <button class="btn" 
-                      [class.btn-primary]="selectedLessonType !== 'center_recorded'"
-                      [class.btn-success]="selectedLessonType === 'center_recorded'"
-                      [disabled]="!isLessonTypeAvailable('center_recorded')">
-                <i class="pi pi-play-circle me-2"></i>
-                <span *ngIf="selectedLessonType !== 'center_recorded'">اختر</span>
-                <span *ngIf="selectedLessonType === 'center_recorded'">محدد</span>
-              </button>
             </div>
           </div>
 
           <!-- Studio Produced Card -->            
           <div class="lesson-type-card" 
-              [class.selected]="selectedLessonType === 'studio_produced'"
-              [class.disabled]="!isLessonTypeAvailable('studio_produced')"
-              (click)="selectLessonType('studio_produced')">
-            
+               [class.selected]="selectedLessonType === 'studio_produced'"
+               [class.disabled]="course.sessionType !== 'studio'">
             <div class="card-header">
               <div class="card-icon studio-produced">
                 <i class="pi pi-play-circle"></i>
@@ -202,43 +203,15 @@
               <div class="card-status" *ngIf="selectedLessonType === 'studio_produced'">
                 <span class="status-badge selected">محدد</span>
               </div>
-              <!-- ✅ Show popular badge only if available -->
-              <div class="popular-badge" *ngIf="isLessonTypeAvailable('studio_produced')">الأكثر شعبية</div>
+              <div class="popular-badge" *ngIf="course.sessionType === 'studio'">الأكثر شعبية</div>
             </div>
-            
             <div class="card-content">
               <h3 class="card-title">الدروس المنتجة - الاستوديو</h3>
               <p class="card-description">دروس منتجة في الاستوديو بجودة احترافية مع مؤثرات بصرية</p>
-              
-              <div class="card-features">
-                <span class="feature-item">
-                  <i class="pi pi-check"></i>
-                  جودة 4K احترافية
-                </span>
-                <span class="feature-item">
-                  <i class="pi pi-check"></i>
-                  مؤثرات بصرية
-                </span>
-                <span class="feature-item">
-                  <i class="pi pi-check"></i>
-                  محتوى تفاعلي
-                </span>
-              </div>
-            </div>
-            
-            <div class="card-action">
-              <button class="btn" 
-                      [class.btn-primary]="selectedLessonType !== 'studio_produced'"
-                      [class.btn-success]="selectedLessonType === 'studio_produced'"
-                      [disabled]="!isLessonTypeAvailable('studio_produced')">
-                <i class="pi pi-star me-2"></i>
-                <span *ngIf="selectedLessonType !== 'studio_produced'">اختر</span>
-                <span *ngIf="selectedLessonType === 'studio_produced'">محدد</span>
-              </button>
             </div>
           </div>
 
-          <!-- Live Zoom Card (Disabled) -->
+          <!-- Live Zoom Card (Disabled placeholder) -->
           <div class="lesson-type-card disabled">
             <div class="card-header">
               <div class="card-icon zoom-meeting">
@@ -248,43 +221,20 @@
                 <span class="status-badge disabled">قريباً</span>
               </div>
             </div>
-            
             <div class="card-content">
               <h3 class="card-title">الجلسات المباشرة - Zoom</h3>
               <p class="card-description">جلسات تفاعلية مباشرة عبر Zoom مع إمكانية الأسئلة والمناقشة</p>
-              
-              <div class="card-features">
-                <span class="feature-item disabled">
-                  <i class="pi pi-times"></i>
-                  تفاعل مباشر
-                </span>
-                <span class="feature-item disabled">
-                  <i class="pi pi-times"></i>
-                  أسئلة وأجوبة
-                </span>
-                <span class="feature-item disabled">
-                  <i class="pi pi-times"></i>
-                  جلسات جماعية
-                </span>
-              </div>
-            </div>
-            
-            <div class="card-action">
-              <button class="btn btn-secondary" disabled>
-                <i class="pi pi-lock me-2"></i>
-                غير متاح
-              </button>
             </div>
           </div>
         </div>
       </div>
 
       <!-- ✅ Course Units and Lessons (Enhanced UI) -->
-      <div class="course-curriculum" *ngIf="selectedLessonType">
+      <div class="course-curriculum">
         <div class="curriculum-header sticky">
           <h2 class="curriculum-title">
             <i class="pi pi-play-circle me-2"></i>
-            {{ getSelectedLessonTypeInfo()?.title }}
+            محتوى الدورة
           </h2>
           <div class="lesson-actions">
             <button class="btn btn-sm"
@@ -297,27 +247,28 @@
           <div class="curriculum-stats">
             <span class="stat-item chip">
               <i class="pi pi-play-circle"></i>
-              {{ getTotalLessons() }} درس
+              {{ lessons.length }} درس
             </span>
             <span class="stat-item chip">
               <i class="pi pi-clock"></i>
               {{ getTotalDuration() }}
             </span>
-            <span class="stat-item chip type-chip" *ngIf="selectedLessonType">
+            <span class="stat-item chip type-chip" *ngIf="course?.sessionType">
               <i class="pi pi-tag"></i>
-              
-              <button class="chip-clear" aria-label="إزالة التحديد" (click)="selectedLessonType = null; $event.stopPropagation()">
-                <i class="pi pi-times"></i>
-              </button>
+              {{
+                course.sessionType === 'center_recorded' || course.sessionType === 'recorded' ? 'مسجل - المركز' :
+                course.sessionType === 'studio' ? 'منتج - الاستوديو' :
+                course.sessionType === 'live' || course.sessionType === 'zoom' ? 'مباشر' : 'غير محدد'
+              }}
             </span>
           </div>
         </div>
 
         <!-- Units as an accessible accordion (no TS needed) -->
-        <div class="units-container" *ngIf="getFilteredUnits().length > 0">
+        <div class="units-container" *ngIf="units.length > 0">
           <details
             class="unit-card"
-            *ngFor="let unit of getFilteredUnits(); let unitIndex = index"
+            *ngFor="let unit of units; let unitIndex = index"
             [attr.open]="unitIndex === 0 ? true : null"
           >
             <summary class="unit-header" >
@@ -379,9 +330,13 @@
                         <i class="pi pi-signal"></i>
                         {{ getDifficultyLabel(lesson.difficulty) }}
                       </span>
-                      <span class="meta-chip type">
-                        <i class="pi pi-video"></i>
-                        {{ lesson.lessonType === 'center_recorded' ? 'مركز' : 'استوديو' }}
+                      <span class="meta-chip type" *ngIf="course?.sessionType">
+                        <i class="pi pi-tag"></i>
+                        {{
+                          course.sessionType === 'center_recorded' || course.sessionType === 'recorded' ? 'مركز'
+                          : course.sessionType === 'studio' ? 'استوديو'
+                          : course.sessionType === 'live' || course.sessionType === 'zoom' ? 'مباشر' : 'غير محدد'
+                        }}
                       </span>
                       <span class="meta-chip free-chip" *ngIf="lesson.isFree">
                         <i class="pi pi-gift"></i>
@@ -426,7 +381,7 @@
         </div>
 
         <!-- No Lessons Message -->
-        <div class="no-lessons-message" *ngIf="getFilteredUnits().length === 0">
+        <div class="no-lessons-message" *ngIf="units.length === 0">
           <div class="no-lessons-content">
             <i class="pi pi-exclamation-triangle"></i>
             <h4>لا توجد دروس متاحة</h4>
@@ -435,34 +390,38 @@
         </div>
       </div>
 
-      <!-- ✅ Selection Prompt when no lesson type selected -->
-      <div class="course-curriculum" *ngIf="!selectedLessonType">
-        <div class="curriculum-header">
-          <h2 class="curriculum-title">
-            <i class="pi pi-list-ul me-2"></i>
-            محتوى الدورة
-          </h2>
-          <div class="curriculum-stats">
-            <span class="stat-item">
-              <i class="pi pi-play-circle"></i>
-              {{ lessons.length }} درس متاح
-            </span>
-            <span class="stat-item" *ngIf="hasUnits">
-              <i class="pi pi-bookmark"></i>
-              {{ units.length }} وحدة
-            </span>
+      <!-- ✅ Enhanced Enrollment CTA (Students Only) -->
+      <div class="enrollment-cta" *ngIf="canEnroll && hasLessons">
+        <div class="cta-content">
+          <!-- ✅ Different messages based on access status -->
+          <div *ngIf="!hasPartialAccess" class="cta-full-enrollment">
+            <h3>هل أنت مستعد للبدء؟</h3>
+            <p>اشترك في المادة للوصول إلى جميع الدروس والمواد التعليمية</p>
           </div>
-        </div>
+          
+          <div *ngIf="hasPartialAccess" class="cta-upgrade-enrollment">
+            <h3>احصل على الوصول الكامل</h3>
+            <p>لديك وصول لبعض الدروس، اشترك في المادة كاملة للحصول على جميع المحتويات</p>
+            <div class="access-status">
+              <i class="pi pi-info-circle text-info me-2"></i>
+              <small class="text-muted">لديك وصول لدروس منفردة من هذه المادة</small>
+            </div>
+          </div>
 
-        <div class="selection-prompt">
-          <div class="prompt-content">
-            <i class="pi pi-arrow-up"></i>
-            <h3>اختر نوع الدروس للبدء</h3>
-            <p>يرجى اختيار نوع الدروس من الأعلى لعرض المحتوى المتاح</p>
+          <button class="btn btn-primary btn-lg" (click)="navigateToPlanSubject()">
+            <i class="pi pi-credit-card me-2"></i>
+            {{ hasPartialAccess ? 'اشترك في المادة كاملة' : 'سجل في المادة' }}
+          </button>
+          
+          <!-- ✅ Optional: Show current access info -->
+          <div class="current-access-info" *ngIf="hasPartialAccess">
+            <small class="text-info">
+              <i class="pi pi-check-circle me-1"></i>
+              لديك حالياً وصول لدروس منفردة - اشترك للحصول على جميع المحتويات
+            </small>
           </div>
         </div>
       </div>
-    </div>
 
     <!-- ✅ No Content Available -->
     <div class="no-content-container" *ngIf="!hasLessons && !isLoadingContent">
@@ -479,18 +438,6 @@
         >
           <i class="pi pi-plus me-2"></i>
           إضافة محتوى
-        </button>
-      </div>
-    </div>
-
-    <!-- ✅ Enrollment CTA (Students Only) -->
-    <div class="enrollment-cta" *ngIf="canEnroll && hasLessons">
-      <div class="cta-content">
-        <h3>هل أنت مستعد للبدء؟</h3>
-        <p>اشترك في الدورة للوصول إلى جميع الدروس والمواد التعليمية</p>
-        <button class="btn btn-primary btn-lg">
-          <i class="pi pi-credit-card me-2"></i>
-          سجل في الدورة
         </button>
       </div>
     </div>

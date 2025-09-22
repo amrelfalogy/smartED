@@ -1,3 +1,4 @@
+// ✅ UPDATE: income-overview-chart.component.ts - Better fallback handling
 import { Component, ViewChild, OnInit, Input, OnChanges } from '@angular/core';
 import { ChartComponent, ApexOptions } from 'ng-apexcharts';
 
@@ -21,22 +22,76 @@ export class IncomeOverviewChartComponent implements OnInit, OnChanges {
   ngOnChanges() { this.buildOptions(); }
 
   private buildOptions() {
+    const hasData = this.data.length > 0 && this.data.some(val => val > 0);
+    const chartLabels = hasData ? this.labels : ['لا توجد بيانات'];
+    const chartData = hasData ? this.data : [0];
+
     this.chartOptions = {
-      chart: { type: 'bar', height: 365, toolbar: { show: false }, background: 'transparent' },
-      plotOptions: { bar: { columnWidth: '45%', borderRadius: 4 } },
-      dataLabels: { enabled: false },
-      series: [{ name: 'الإيرادات (جنيه)', data: this.data.length ? this.data : [0] }],
+      chart: { 
+        type: 'bar', 
+        height: 365, 
+        toolbar: { show: false }, 
+        background: 'transparent' 
+      },
+      plotOptions: { 
+        bar: { 
+          columnWidth: '45%', 
+          borderRadius: 4,
+          dataLabels: {
+            position: 'top'
+          }
+        } 
+      },
+      dataLabels: { 
+        enabled: true,
+        offsetY: -20,
+        style: {
+          fontSize: '12px',
+          colors: ['#666']
+        },
+        formatter: function (val) {
+          return Number(val) > 0 ? val.toLocaleString() : '';
+        }
+      },
+      series: [{ 
+        name: 'الإيرادات (جنيه)', 
+        data: chartData
+      }],
       stroke: { curve: 'smooth', width: 2 },
       xaxis: {
-        categories: this.labels.length ? this.labels : ['—'],
+        categories: chartLabels,
         axisBorder: { show: false },
         axisTicks: { show: false },
-        labels: { style: { colors: (this.labels.length ? this.labels : ['—']).map(() => '#8c8c8c') } }
+        labels: { 
+          style: { 
+            colors: chartLabels.map(() => '#666'),
+            fontSize: '11px'
+          } 
+        }
       },
-      yaxis: { show: true, labels: { style: { colors: ['#8c8c8c'] } } },
+      yaxis: { 
+        show: true, 
+        labels: { 
+          style: { colors: ['#666'] },
+          formatter: function (val) {
+            return val > 0 ? val.toLocaleString() : '0';
+          }
+        } 
+      },
       colors: [this.color],
-      grid: { show: false },
-      tooltip: { theme: 'light' }
+      grid: { 
+        show: true,
+        borderColor: '#f0f0f0',
+        strokeDashArray: 3
+      },
+      tooltip: { 
+        theme: 'light',
+        y: {
+          formatter: function (val) {
+            return val.toLocaleString() + ' جنيه';
+          }
+        }
+      }
     };
   }
 }

@@ -1,20 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, takeUntil, forkJoin, of } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of, catchError } from 'rxjs';
 import { 
   Subject as CourseSubject, 
   Unit, 
-  Lesson, 
-  LessonTypeCard, 
-  PaymentPlan, 
-  PlanType,
-  LessonAccess 
+  Lesson
 } from 'src/app/core/models/course-complete.model';
 import { SubjectService } from 'src/app/core/services/subject.service';
 import { UnitService } from 'src/app/core/services/unit.service';
 import { LessonService } from 'src/app/core/services/lesson.service';
 import { PaymentService } from 'src/app/core/services/payment.service';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { ActivationCodeService } from 'src/app/core/services/activation-code.service';
 
 type EnrollmentStatus = 'enrolled' | 'not_enrolled' | 'pending';
 
@@ -34,50 +31,16 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
   isCheckingAccess = false;
 
   enrollmentStatus: EnrollmentStatus = 'not_enrolled';
+  isSubjectEnrolled = false; 
+  hasIndividualLessonAccess = false; 
+
   errorMessage = '';
   successMessage = '';
 
-  // Admin/support roles bypass access checks
   isAdminMode = false;
 
-  // Lesson Type Selection
-  lessonTypeCards: LessonTypeCard[] = [
-    {
-      id: 'center_recorded',
-      title: 'الدروس المسجلة - المركز',
-      description: 'دروس مسجلة في المركز التعليمي بجودة عالية',
-      icon: 'pi pi-video',
-      lessonType: 'center_recorded',
-      isAvailable: true,
-      isSelected: false,
-      color: 'primary'
-    },
-    {
-      id: 'studio_produced',
-      title: 'الدروس المنتجة - الاستوديو',
-      description: 'دروس منتجة في الاستوديو بجودة احترافية',
-      icon: 'pi pi-play-circle',
-      lessonType: 'studio_produced',
-      isAvailable: true,
-      isSelected: false,
-      color: 'success'
-    },
-    {
-      id: 'zoom',
-      title: 'الجلسات المباشرة - Zoom',
-      description: 'جلسات تفاعلية مباشرة عبر Zoom (قريباً)',
-      icon: 'pi pi-users',
-      lessonType: 'zoom',
-      isAvailable: false,
-      isSelected: false,
-      color: 'secondary'
-    }
-  ];
-
+  // For UI highlighting of subject-level sessionType
   selectedLessonType: 'center_recorded' | 'studio_produced' | 'zoom' | null = null;
-  paymentPlans: PaymentPlan[] = [];
-  showPaymentModal = false;
-  loadingPaymentPlans = false;
 
   private destroy$ = new Subject<void>();
 
@@ -88,11 +51,11 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
     private unitService: UnitService,
     private lessonService: LessonService,
     private paymentService: PaymentService,
-    private authService: AuthService
+    private authService: AuthService,
+    private activationCodeService: ActivationCodeService
   ) {}
 
   ngOnInit(): void {
-    // Detect admin/support
     const role = this.authService.getUserRole();
     this.isAdminMode = role === 'admin' || role === 'support';
 
@@ -102,6 +65,7 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
         this.loadCourseDetails();
       }
     });
+        this.listenForActivationSuccess();
   }
 
   ngOnDestroy(): void {
@@ -109,7 +73,161 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Load course details + units + lessons
+  
+  // ✅ ENHANCED: Better activation success handling in course-details.component.ts
+  private listenForActivationSuccess(): void {
+    this.activationCodeService.onActivationSuccess
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(response => {
+        if (response) {
+          console.log('🎯 Activation success detected, response:', JSON.stringify(response, null, 2));
+          
+          // Show success message
+          this.successMessage = 'تم تفعيل الرمز بنجاح! يمكنك الآن الوصول للدرس.';
+          
+          // ✅ CRITICAL: Get the lesson ID from the response
+          const activatedLessonId = response.accessGranted?.lessonId || response.access?.lessonId;
+          console.log('🎯 Activated lesson ID:', activatedLessonId);
+          
+          if (activatedLessonId) {
+            // ✅ STEP 1: Immediately mark lesson as accessible
+            this.markLessonAsAccessible(activatedLessonId);
+            
+            // ✅ STEP 2: Refresh lesson access after a short delay
+            setTimeout(() => {
+              this.refreshSingleLessonAccess(activatedLessonId);
+            }, 1000);
+            
+            // ✅ STEP 3: Full refresh as backup
+            setTimeout(() => {
+              this.checkLessonsAccess();
+            }, 2000);
+          }
+          
+          // Clear success message after 5 seconds
+          setTimeout(() => {
+            this.successMessage = '';
+            this.activationCodeService.clearActivationSuccess();
+          }, 5000);
+        }
+      });
+  }
+
+  // ✅ NEW: Immediately mark lesson as accessible
+  private markLessonAsAccessible(lessonId: string): void {
+    console.log('🔓 Marking lesson as accessible immediately:', lessonId);
+    
+    // Find and update in units
+    this.units.forEach(unit => {
+      if (unit.lessons) {
+        const lesson = unit.lessons.find(l => l.id === lessonId);
+        if (lesson) {
+          console.log('✅ Found lesson in unit, marking accessible:', lesson.title);
+          lesson.hasAccess = true;
+          lesson.requiresPayment = false;
+        }
+      }
+    });
+    
+    // Find and update in global lessons array
+    const globalLesson = this.lessons.find(l => l.id === lessonId);
+    if (globalLesson) {
+      console.log('✅ Found lesson globally, marking accessible:', globalLesson.title);
+      globalLesson.hasAccess = true;
+      globalLesson.requiresPayment = false;
+    }
+    
+    // Update access indicators
+    this.hasIndividualLessonAccess = this.lessons.some(l => !l.isFree && l.hasAccess);
+    
+    console.log('📊 Updated access state:', {
+      hasIndividualLessonAccess: this.hasIndividualLessonAccess,
+      isSubjectEnrolled: this.isSubjectEnrolled
+    });
+  }
+
+  // ✅ NEW: Refresh single lesson access
+  private refreshSingleLessonAccess(lessonId: string): void {
+    console.log('🔄 Refreshing access for specific lesson:', lessonId);
+    
+    this.paymentService.checkLessonAccess(lessonId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (accessResult) => {
+          console.log('✅ Single lesson access result:', accessResult);
+          
+          // Update the specific lesson
+          this.units.forEach(unit => {
+            if (unit.lessons) {
+              const lesson = unit.lessons.find(l => l.id === lessonId);
+              if (lesson) {
+                lesson.hasAccess = accessResult.hasAccess;
+                lesson.requiresPayment = accessResult.requiresPayment;
+                console.log('🔄 Updated lesson access:', {
+                  lessonTitle: lesson.title,
+                  hasAccess: lesson.hasAccess,
+                  requiresPayment: lesson.requiresPayment
+                });
+              }
+            }
+          });
+          
+          // Update global lessons array
+          const globalLesson = this.lessons.find(l => l.id === lessonId);
+          if (globalLesson) {
+            globalLesson.hasAccess = accessResult.hasAccess;
+            globalLesson.requiresPayment = accessResult.requiresPayment;
+          }
+          
+          // Update indicators
+          this.hasIndividualLessonAccess = this.lessons.some(l => !l.isFree && l.hasAccess);
+        },
+        error: (error) => {
+          console.error('❌ Failed to refresh single lesson access:', error);
+        }
+      });
+  }
+
+  // ✅ NEW: Update specific lesson access immediately
+  private updateLessonAccess(lessonId: string): void {
+    // Find the lesson in all units and mark it as accessible
+    this.units.forEach(unit => {
+      if (unit.lessons) {
+        const lesson = unit.lessons.find(l => l.id === lessonId);
+        if (lesson) {
+          console.log('🔓 Marking lesson as accessible:', lesson.title);
+          lesson.hasAccess = true;
+          lesson.requiresPayment = false;
+          
+          // Update the lessons array as well
+          const globalLesson = this.lessons.find(l => l.id === lessonId);
+          if (globalLesson) {
+            globalLesson.hasAccess = true;
+            globalLesson.requiresPayment = false;
+          }
+        }
+      }
+    });
+    
+    // Force change detection
+    this.checkIndividualLessonAccess();
+  }
+
+  // ✅ NEW: Check individual lesson access status
+  private checkIndividualLessonAccess(): void {
+    // Update hasIndividualLessonAccess based on current lesson states
+    this.hasIndividualLessonAccess = this.lessons.some(l => !l.isFree && l.hasAccess);
+    
+    // Log current access state
+    const accessibleLessons = this.lessons.filter(l => l.hasAccess || l.isFree);
+    console.log('📊 Current lesson access:', {
+      total: this.lessons.length,
+      accessible: accessibleLessons.length,
+      hasIndividualAccess: this.hasIndividualLessonAccess,
+      isSubjectEnrolled: this.isSubjectEnrolled
+    });
+  }
+
   loadCourseDetails(): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -117,24 +235,41 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
     this.subjectService.getSubject(this.courseId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
-          if (response.subject) {
+        next: (subject) => {
+          if (subject) {
+            const normalized = (subject as any).subject ? (subject as any).subject : subject;
             this.course = {
-              ...response.subject,
-              imageUrl: response.subject.imageUrl || response.subject.image || 'assets/imgs/course-placeholder.jpg',
-              instructorName: response.subject.instructorName || 'غير محدد',
-              difficulty: response.subject.difficulty || 'beginner',
-              duration: response.subject.duration || 'غير محدد'
+              ...normalized,
+              imageUrl: normalized.imageUrl || (normalized as any).image || 'assets/imgs/aboutt.jpg',
+              instructorName: (normalized as any).instructorName || 'غير محدد',
+              difficulty: normalized.difficulty || 'beginner',
+              duration: normalized.duration || 'غير محدد'
             };
 
-            this.units = response.units || [];
+            // Map subject.sessionType to UI selection
+            const st = (this.course as any).sessionType as string | undefined;
+            this.selectedLessonType =
+              st === 'studio' ? 'studio_produced'
+              : (st === 'recorded' || st === 'center_recorded') ? 'center_recorded'
+              : st === 'live' || st === 'zoom' ? 'zoom'
+              : null;
 
-            if (this.units.length > 0) {
-              this.loadUnitsLessons();
-            } else {
-              this.isLoading = false;
-              // No units/lessons, keep defaults
-            }
+            // Load units and lessons using updated lesson service
+            this.unitService.getUnitsBySubject(this.courseId).pipe(takeUntil(this.destroy$)).subscribe({
+              next: (units) => {
+                this.units = units || [];
+                if (this.units.length > 0) {
+                  this.loadUnitsLessons();
+                } else {
+                  this.isLoading = false;
+                }
+              },
+              error: (error) => {
+                console.error('Error loading units:', error);
+                this.units = [];
+                this.isLoading = false;
+              }
+            });
           } else {
             throw new Error('Invalid response structure');
           }
@@ -147,10 +282,7 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
-  
-
-  // Load lessons for each unit
-  // ✅ UPDATE: course-details.component.ts - Add debugging to lesson loading
+  // ✅ UPDATED: Use improved lesson service with fallback
   private loadUnitsLessons(): void {
     this.isLoadingUnits = true;
 
@@ -161,38 +293,46 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const requests = unitIds.map(id => this.lessonService.getLessonsByUnit(id));
+    console.log('🔄 Loading lessons for units:', unitIds);
+
+    // ✅ Use improved lesson service that handles both API filtering and fallback
+    const requests = unitIds.map(id => {
+      return this.lessonService.getLessonsByUnit(id).pipe(
+        catchError((error) => {
+          console.warn(`⚠️ Failed to load lessons for unit ${id}, trying fallback:`, error);
+          return this.lessonService.getLessonsByUnitClientSide(id).pipe(
+            catchError((fallbackError) => {
+              console.error(`❌ Both methods failed for unit ${id}:`, fallbackError);
+              return of([]); // Return empty array as final fallback
+            })
+          );
+        })
+      );
+    });
+
     forkJoin(requests)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: allLessons => {
+          console.log('✅ Loaded lessons for all units:', allLessons);
+          
           this.units.forEach((unit, idx) => {
-            unit.lessons = allLessons[idx] || [];
-            console.log(`Unit ${unit.name} lessons:`, unit.lessons.map(l => ({ title: l.title, type: l.lessonType })));
+            unit.lessons = Array.isArray(allLessons[idx]) ? allLessons[idx] : [];
+            console.log(`Unit ${unit.name}: ${unit.lessons.length} lessons`);
           });
 
-          // Flatten
           this.lessons = this.units.reduce((acc: Lesson[], u) => acc.concat(u.lessons || []), []);
-          
-          // ✅ Log all lessons with their types
-          console.log('All lessons loaded:', this.lessons.map(l => ({ 
-            title: l.title, 
-            lessonType: l.lessonType,
-            unitId: l.unitId 
-          })));
+          console.log(`📚 Total lessons loaded: ${this.lessons.length}`);
 
-          // ✅ Log available lesson types
-          const availableTypes = [...new Set(this.lessons.map(l => l.lessonType).filter(Boolean))];
-          console.log('Available lesson types:', availableTypes);
-
-          // Auto-select the first available lesson type that has lessons
-          this.autoSelectFirstAvailableType();
+          if (!this.isAdminMode && this.lessons.length > 0) {
+            this.checkLessonsAccess();
+          }
 
           this.isLoading = false;
           this.isLoadingUnits = false;
         },
         error: (error) => {
-          console.error('Error loading lessons:', error);
+          console.error('❌ Error loading lessons:', error);
           this.errorMessage = 'حدث خطأ أثناء تحميل دروس الكورس';
           this.isLoading = false;
           this.isLoadingUnits = false;
@@ -200,246 +340,142 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
       });
   }
 
-  private autoSelectFirstAvailableType(): void {
-    if (this.isAdminMode) {
-      // Admin can see all; default to first card having lessons if no selection
-    }
+ // Update the checkLessonsAccess method to use the fixed checkSubjectAccess
+private checkLessonsAccess(): void {
+  if (this.isAdminMode) return;
 
-    if (this.selectedLessonType) {
-      // Already selected via navigation or user click
-      this.syncTypeCards();
-      if (!this.isAdminMode) this.checkLessonsAccess(); // Preload access
-      return;
-    }
-
-    const typesInData = new Set(this.lessons.map(l => l.lessonType).filter(Boolean) as string[]);
-    const firstAvailable = (['center_recorded', 'studio_produced', 'zoom'] as const).find(t => typesInData.has(t));
-    if (firstAvailable) {
-      this.selectedLessonType = firstAvailable;
-      this.syncTypeCards();
-      if (!this.isAdminMode) this.checkLessonsAccess();
-    }
+  const filtered = this.lessons;
+  if (filtered.length === 0) {
+    this.enrollmentStatus = 'not_enrolled';
+    this.isSubjectEnrolled = false;
+    this.hasIndividualLessonAccess = false;
+    return;
   }
 
-  // Selection
-  selectLessonType(lessonType: 'center_recorded' | 'studio_produced' | 'zoom'): void {
-    if (!this.isLessonTypeAvailable(lessonType)) return;
-    this.selectedLessonType = lessonType;
-    this.syncTypeCards();
-    if (!this.isAdminMode) {
-      this.checkLessonsAccess();
-    }
-  }
+  this.isCheckingAccess = true;
 
-  private syncTypeCards(): void {
-    this.lessonTypeCards.forEach(c => (c.isSelected = c.lessonType === this.selectedLessonType));
-  }
-
-  isLessonTypeAvailable(lessonType: string): boolean {
-    // ✅ Zoom is always disabled (as per requirement)
-    if (lessonType === 'zoom') return false;
-    
-    const card = this.lessonTypeCards.find(c => c.lessonType === lessonType);
-    if (!card) return false;
-    
-    // ✅ Check if there are lessons of this type
-    const hasLessonsOfType = this.lessons.some(lesson => {
-      console.log(`Checking lesson: ${lesson.title}, type: ${lesson.lessonType}, target: ${lessonType}`);
-      return lesson.lessonType === lessonType;
-    });
-    
-    console.log(`Lesson type ${lessonType} available:`, hasLessonsOfType);
-    return hasLessonsOfType;
-  }
-
-  // ✅ UPDATE: course-details.component.ts - Better filtering
-  getFilteredLessons(): Lesson[] {
-    if (!this.selectedLessonType) return [];
-    
-    const filtered = this.lessons.filter(lesson => {
-      const matches = lesson.lessonType === this.selectedLessonType;
-      console.log(`Lesson ${lesson.title}: type=${lesson.lessonType}, selected=${this.selectedLessonType}, matches=${matches}`);
-      return matches;
-    });
-    
-    console.log(`Filtered lessons for ${this.selectedLessonType}:`, filtered.length);
-    return filtered;
-  }
-
-  getFilteredUnits(): Unit[] {
-    if (!this.selectedLessonType) return [];
-    
-    const filteredUnits = this.units
-      .map(unit => ({
-        ...unit,
-        lessons: (unit.lessons || []).filter(lesson => {
-          const matches = lesson.lessonType === this.selectedLessonType;
-          console.log(`Unit ${unit.name} - Lesson ${lesson.title}: type=${lesson.lessonType}, matches=${matches}`);
-          return matches;
+  // Check individual lesson access
+  const lessonCalls = filtered.map(lesson => {
+    if (lesson.isFree) {
+      lesson.hasAccess = true;
+      lesson.requiresPayment = false;
+      return of({ hasAccess: true, requiresPayment: false, accessType: 'free' });
+    } else if (lesson.id) {
+      return this.paymentService.checkLessonAccess(lesson.id).pipe(
+        catchError(error => {
+          console.warn(`Access check failed for lesson ${lesson.id}:`, error);
+          return of({ hasAccess: false, requiresPayment: true, accessType: 'none' });
         })
-      }))
-      .filter(unit => (unit.lessons?.length || 0) > 0);
-      
-    console.log(`Filtered units for ${this.selectedLessonType}:`, filteredUnits.length);
-    return filteredUnits;
-  }
+      );
+    }
+    return of({ hasAccess: false, requiresPayment: true, accessType: 'none' });
+  });
 
-  // Access checks for students (per-lesson)
-  private checkLessonsAccess(): void {
-    if (this.isAdminMode) return;
+  // ✅ Use the fixed subject access check
+  const subjectAccessCall = this.course?.id ? 
+    this.paymentService.checkSubjectAccess(this.course.id).pipe(
+      catchError(error => {
+        console.warn(`Subject access check failed for ${this.course?.id}:`, error);
+        return of({ hasAccess: false, isFullAccess: false, enrollmentStatus: 'not_enrolled' });
+      })
+    ) : of({ hasAccess: false, isFullAccess: false, enrollmentStatus: 'not_enrolled' });
 
-    const filtered = this.getFilteredLessons();
-    if (filtered.length === 0) {
-      this.enrollmentStatus = 'not_enrolled';
-      return;
+  forkJoin({
+    lessonAccess: forkJoin(lessonCalls),
+    subjectAccess: subjectAccessCall
+  })
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (results) => {
+        // Process lesson access results
+        filtered.forEach((lesson, idx) => {
+          const r: any = results.lessonAccess[idx];
+          lesson.hasAccess = !!r?.hasAccess;
+          lesson.requiresPayment = !!r?.requiresPayment && !lesson.hasAccess;
+        });
+
+        // Process subject access results
+        const subjectResult: any = results.subjectAccess;
+        this.isSubjectEnrolled = !!subjectResult?.hasAccess || !!subjectResult?.isFullAccess;
+
+        // Check for individual lesson access (non-free lessons with access)
+        this.hasIndividualLessonAccess = filtered.some(l => !l.isFree && l.hasAccess);
+
+        // Set enrollment status based on subject enrollment
+        this.enrollmentStatus = this.isSubjectEnrolled ? 'enrolled' : 'not_enrolled';
+
+        console.log('📊 Fixed Access Check Results:', {
+          isSubjectEnrolled: this.isSubjectEnrolled,
+          hasIndividualLessonAccess: this.hasIndividualLessonAccess,
+          enrollmentStatus: this.enrollmentStatus,
+          canEnroll: this.canEnroll,
+          subjectAccessType: subjectResult?.accessType
+        });
+
+        this.isCheckingAccess = false;
+      },
+      error: (error) => {
+        console.error('❌ Access check error:', error);
+        // Set fallback values that show CTA
+        this.isSubjectEnrolled = false;
+        this.hasIndividualLessonAccess = this.lessons.some(l => !l.isFree && l.hasAccess);
+        this.enrollmentStatus = 'not_enrolled';
+        this.isCheckingAccess = false;
+      }
+    });
+}
+
+  // Start/open lesson
+  private navigateToLesson(lesson: Lesson, isAdminPreview: boolean = false): void {
+    const queryParams: any = {
+      course: this.courseId,
+      unitId: lesson.unitId
+    };
+
+    if (isAdminPreview) {
+      queryParams.adminPreview = 'true';
     }
 
-    this.isCheckingAccess = true;
+    let navigationPath: string[];
+    if (this.isAdminMode && this.router.url.includes('/admin/')) {
+      navigationPath = ['/admin/lesson-details', lesson.id ?? ''];
+    } else {
+      navigationPath = ['/student-dashboard/lesson-details', lesson.id ?? ''];
+    }
 
-    const calls = filtered.map(lesson => {
-      if (lesson.isFree) {
-        // Free lesson: mark immediately
-        lesson.hasAccess = true;
-        lesson.requiresPayment = false;
-        return of({ hasAccess: true, requiresPayment: false } as LessonAccess);
-      } else if (lesson.id) {
-        return this.paymentService.checkLessonAccess(lesson.id);
-      }
-      return of({ hasAccess: false, requiresPayment: true } as LessonAccess);
-    });
-
-    forkJoin(calls)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (results) => {
-          // Map back to lessons
-          filtered.forEach((lesson, idx) => {
-            const r = results[idx];
-            lesson.hasAccess = !!r?.hasAccess;
-            lesson.requiresPayment = !!r?.requiresPayment && !lesson.hasAccess;
-          });
-
-          this.updateEnrollmentStatusFromLessons(filtered);
-          this.isCheckingAccess = false;
-        },
-        error: (err) => {
-          console.error('Error checking lessons access:', err);
-          // On error, consider locked; student can still see payment CTA
-          filtered.forEach(l => {
-            if (!l.isFree) {
-              l.hasAccess = false;
-              l.requiresPayment = true;
-            }
-          });
-          this.updateEnrollmentStatusFromLessons(filtered);
-          this.isCheckingAccess = false;
-        }
+    this.router.navigate(navigationPath, { queryParams })
+      .catch(error => {
+        console.error('Navigation error:', error);
+        this.errorMessage = 'حدث خطأ أثناء فتح الدرس.';
+        setTimeout(() => this.errorMessage = '', 3000);
       });
   }
 
-  private updateEnrollmentStatusFromLessons(lessons: Lesson[]): void {
-    // Heuristic:
-    // - If any non-free lesson has access → enrolled
-    // - Else if any requiresPayment → not_enrolled
-    // - Else pending remains default 'not_enrolled' unless your backend exposes a real 'pending' flag
-    const anyPaidAccessible = lessons.some(l => !l.isFree && l.hasAccess);
-    const anyRequiresPayment = lessons.some(l => !l.isFree && l.requiresPayment);
-
-    if (anyPaidAccessible) {
-      this.enrollmentStatus = 'enrolled';
-    } else if (anyRequiresPayment) {
-      this.enrollmentStatus = 'not_enrolled';
-    } else {
-      // All free or unknown; treat as enrolled if there are free lessons
-      const anyFree = lessons.some(l => l.isFree);
-      this.enrollmentStatus = anyFree ? 'enrolled' : 'not_enrolled';
+  startLesson(lesson: Lesson): void {
+    if (!lesson?.id) {
+      this.errorMessage = 'معرف الدرس غير صحيح';
+      setTimeout(() => (this.errorMessage = ''), 2500);
+      return;
     }
+
+    if (this.isAdminMode) {
+      this.navigateToLesson(lesson, true);
+      return;
+    }
+
+    if (lesson.isFree || lesson.hasAccess) {
+      this.navigateToLesson(lesson, false);
+      return;
+    }
+
+    if (lesson.requiresPayment) {
+      this.navigateToLessonPayment(lesson);
+      return;
+    }
+
+    this.checkLessonAccessAndNavigate(lesson);
   }
 
-  // Start/open lesson
-  // ✅ ADD: Enhanced navigation with debugging
-private navigateToLesson(lesson: Lesson, isAdminPreview: boolean = false): void {
-  const queryParams: any = {
-    course: this.courseId,
-    unitId: lesson.unitId
-  };
-
-  if (isAdminPreview) {
-    queryParams.adminPreview = 'true';
-  }
-
-  // Determine the correct route
-  let navigationPath: string[];
-  
-  if (this.isAdminMode && this.router.url.includes('/admin/')) {
-    navigationPath = ['/admin/lesson-details', lesson.id ?? ''];
-  } else {
-    navigationPath = ['/student-dashboard/lesson-details', lesson.id?? ''];
-  }
-
-  console.log('🚀 Navigation details:', {
-    path: navigationPath,
-    queryParams,
-    currentUrl: this.router.url,
-    isAdmin: this.isAdminMode
-  });
-
-  // Navigate with promise handling
-  this.router.navigate(navigationPath, { queryParams })
-    .then(success => {
-      if (success) {
-        console.log('✅ Navigation successful');
-      } else {
-        console.error('❌ Navigation failed - route not found');
-        this.errorMessage = 'فشل في فتح الدرس. يرجى التحقق من صحة الرابط.';
-        setTimeout(() => this.errorMessage = '', 3000);
-      }
-    })
-    .catch(error => {
-      console.error('❌ Navigation error:', error);
-      this.errorMessage = 'حدث خطأ أثناء فتح الدرس.';
-      setTimeout(() => this.errorMessage = '', 3000);
-    });
-}
-
-// ✅ UPDATE: Simplified startLesson method
-startLesson(lesson: Lesson): void {
-  if (!lesson?.id) {
-    this.errorMessage = 'معرف الدرس غير صحيح';
-    setTimeout(() => (this.errorMessage = ''), 2500);
-    return;
-  }
-
-  if (!this.selectedLessonType) {
-    this.errorMessage = 'يرجى اختيار نوع الدروس أولاً';
-    setTimeout(() => (this.errorMessage = ''), 2500);
-    return;
-  }
-
-  console.log('🎯 Starting lesson:', lesson.title);
-
-  // Admin can always access
-  if (this.isAdminMode) {
-    this.navigateToLesson(lesson, true);
-    return;
-  }
-
-  // Student access logic
-  if (lesson.isFree || lesson.hasAccess) {
-    this.navigateToLesson(lesson, false);
-    return;
-  }
-
-  if (lesson.requiresPayment) {
-    this.navigateToLessonPayment(lesson);
-    return;
-  }
-
-  // Check access dynamically
-  this.checkLessonAccessAndNavigate(lesson);
-}
-
-  // ✅ NEW: Dynamic access check for uncertain cases
   private checkLessonAccessAndNavigate(lesson: Lesson): void {
     if (!lesson.id) return;
 
@@ -450,7 +486,6 @@ startLesson(lesson: Lesson): void {
         this.isCheckingAccess = false;
         
         if (access?.hasAccess) {
-          // Has access - navigate to lesson
           lesson.hasAccess = true;
           lesson.requiresPayment = false;
           
@@ -461,7 +496,6 @@ startLesson(lesson: Lesson): void {
             }
           });
         } else {
-          // No access - navigate to payment
           lesson.hasAccess = false;
           lesson.requiresPayment = true;
           this.navigateToLessonPayment(lesson);
@@ -471,7 +505,6 @@ startLesson(lesson: Lesson): void {
         console.error('Access check failed:', error);
         this.isCheckingAccess = false;
         
-        // On error, assume payment required
         lesson.hasAccess = false;
         lesson.requiresPayment = true;
         this.navigateToLessonPayment(lesson);
@@ -479,13 +512,11 @@ startLesson(lesson: Lesson): void {
     });
   }
 
-  // Action button on lesson item
   onLessonAction(lesson: Lesson, event: Event): void {
     event.stopPropagation();
     this.startLesson(lesson);
   }
 
-  // Payment routing helpers
   private navigateToLessonPayment(lesson: Lesson): void {
     if (!lesson.lessonType) {
       this.errorMessage = 'نوع الدرس غير محدد';
@@ -504,20 +535,15 @@ startLesson(lesson: Lesson): void {
     );
   }
 
-  navigateToPlan(planType: PlanType): void {
+  // Navigate to subject-level payment
+  navigateToPlanSubject(): void {
     if (!this.course?.id) return;
-    if (!this.selectedLessonType) {
-      this.errorMessage = 'يرجى اختيار نوع الدروس أولاً';
-      setTimeout(() => (this.errorMessage = ''), 2500);
-      return;
-    }
     this.router.navigate(
       ['/student-dashboard/my-payments'],
       {
         queryParams: {
-          planType,
-          subjectId: this.course.id,
-          lessonType: this.selectedLessonType
+          planType: 'subject',
+          subjectId: this.course.id
         }
       }
     );
@@ -559,39 +585,29 @@ startLesson(lesson: Lesson): void {
 
   // Navigation
   goBack(): void {
-    // ✅ Determine current route context
     const currentUrl = this.router.url;
     
     if (this.isAdminMode) {
-      // Admin accessed course details
       if (currentUrl.includes('/admin/')) {
         this.router.navigate(['/admin/courses']);
       } else {
-        // Admin accessed via student route
         this.router.navigate(['/admin/courses']);
       }
     } else {
-      // Student navigation
       if (currentUrl.includes('/student-dashboard/')) {
-        // Check if came from course catalog or my courses
-        const referrer = document.referrer;
+        const referrer = document.referrer || '';
         if (referrer.includes('/courses') && !referrer.includes('/my-courses')) {
           this.router.navigate(['/student-dashboard/courses']);
         } else {
           this.router.navigate(['/student-dashboard/my-courses']);
         }
       } else {
-        // Public course browsing
         this.router.navigate(['/courses']);
       }
     }
   }
 
   // Labels and stats
-  getSelectedLessonTypeInfo(): LessonTypeCard | null {
-    return this.lessonTypeCards.find(card => card.isSelected) || null;
-  }
-
   formatDuration(seconds: number): string {
     const minutes = Math.floor((seconds || 0) / 60);
     if (minutes < 60) return `${minutes} دقيقة`;
@@ -618,18 +634,24 @@ startLesson(lesson: Lesson): void {
     }
   }
 
-  getTotalLessons(): number {
-    return this.getFilteredLessons().length;
-  }
-
   getTotalDuration(): string {
-    const totalSeconds = this.getFilteredLessons().reduce((total, lesson) => total + (lesson.duration || 0), 0);
+    const totalSeconds = this.lessons.reduce((total, lesson) => total + (lesson.duration || 0), 0);
     return this.formatDuration(totalSeconds);
   }
 
   // Template helpers
   get canEnroll(): boolean {
-    return !this.isAdminMode && this.enrollmentStatus === 'not_enrolled';
+    return !this.isAdminMode && !this.isSubjectEnrolled;
+  }
+
+  get canEnrollInSubject(): boolean {
+    // Alternative method for more explicit naming
+    return this.canEnroll;
+  }
+
+   get hasPartialAccess(): boolean {
+    // Check if user has access to some lessons but not the full subject
+    return !this.isSubjectEnrolled && this.hasIndividualLessonAccess;
   }
 
   get showEnrollmentActions(): boolean {

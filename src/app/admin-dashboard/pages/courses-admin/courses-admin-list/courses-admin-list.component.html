@@ -168,6 +168,15 @@
         </select>
       </div>
 
+      <div class="filter-group">
+        <label class="filter-label">نوع التقديم</label>
+        <select class="form-select" [formControl]="sessionTypeFilter">
+          <option value="all">الكل</option>
+          <option value="recorded">مسجل - المركز</option>
+          <option value="studio">منتج - الاستوديو</option>
+        </select>
+      </div>
+
       <div class="filter-actions">
         <button type="button" class="btn btn-outline-secondary" (click)="resetFilters()">
           <i class="pi pi-refresh"></i>
@@ -215,17 +224,17 @@
       <div class="empty-content">
         <i class="pi pi-book empty-icon"></i>
         <h3>لا توجد مواد</h3>
-        <p *ngIf="filters.search || filters.status !== 'all' || filters.academicYear !== 'all' || filters.studentYear !== 'all'">
+        <p *ngIf="filters.search || filters.status !== 'all' || filters.academicYear !== 'all' || filters.studentYear !== 'all' || filters.sessionType !== 'all'">
           لم يتم العثور على مواد تطابق معايير البحث
         </p>
-        <p *ngIf="!filters.search && filters.status === 'all' && filters.academicYear === 'all' && filters.studentYear === 'all'">
+        <p *ngIf="!filters.search && filters.status === 'all' && filters.academicYear === 'all' && filters.studentYear === 'all' && filters.sessionType === 'all'">
           لم يتم إنشاء أي مواد بعد
         </p>
         <button 
           type="button" 
           class="btn btn-primary"
           (click)="addCourse()"
-          *ngIf="!filters.search && filters.status === 'all' && filters.academicYear === 'all' && filters.studentYear === 'all'"
+          *ngIf="!filters.search && filters.status === 'all' && filters.academicYear === 'all' && filters.studentYear === 'all' && filters.sessionType === 'all'"
         >
           <i class="pi pi-plus"></i>
           إضافة أول مادة
@@ -234,7 +243,7 @@
           type="button" 
           class="btn btn-outline-secondary"
           (click)="resetFilters()"
-          *ngIf="filters.search || filters.status !== 'all' || filters.academicYear !== 'all' || filters.studentYear !== 'all'"
+          *ngIf="filters.search || filters.status !== 'all' || filters.academicYear !== 'all' || filters.studentYear !== 'all' || filters.sessionType !== 'all'"
         >
           <i class="pi pi-refresh"></i>
           إعادة تعيين البحث
@@ -290,6 +299,14 @@
             <div class="meta-item">
               <i class="pi pi-users"></i>
               <span class="student-year">{{ getStudentYearName(course.studentYearId) }}</span>
+            </div>
+            <div class="meta-item">
+              <i class="pi pi-tag"></i>
+              <span>{{ getSessionTypeLabel(getSubjectSessionType(course)) }}</span>
+            </div>
+            <div class="meta-item" *ngIf="getSubjectPrice(course) !== null">
+              <i class="pi pi-credit-card"></i>
+              <span>{{ getSubjectPrice(course) | number }} جنيه</span>
             </div>
             <div class="meta-item">
               <i class="pi pi-calendar"></i>
@@ -377,6 +394,10 @@
             <div class="course-details">
               <h4 class="course-name">{{ course.name }}</h4>
               <p class="course-desc">{{ course.description | slice:0:80 }}...</p>
+              <div class="small text-muted">
+                نوع التقديم: {{ getSessionTypeLabel(getSubjectSessionType(course)) }}
+                <span *ngIf="getSubjectPrice(course) !== null"> — السعر: {{ getSubjectPrice(course) | number }} جنيه</span>
+              </div>
             </div>
           </div>
         </div>

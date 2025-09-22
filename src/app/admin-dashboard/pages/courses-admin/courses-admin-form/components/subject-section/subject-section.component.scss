@@ -190,6 +190,12 @@
       }
     }
 
+    // Teacher Selection
+    .search-teacher.input-group{
+      flex-wrap: nowrap;
+      gap: 5px;
+    }
+
     // Image Upload Section
     .image-input-toggle {
       margin-bottom: 10px;

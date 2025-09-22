@@ -34,53 +34,13 @@
       ></app-income-overview-chart>
     </div>
 
-    <!-- Recent Payments -->
+     <!-- Plan type revenue/counts -->
     <div class="col-md-12 col-xl-8">
-      <h5 class="mb-3">أحدث المدفوعات</h5>
-      <div class="card tbl-card">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead>
-              <tr>
-                <th>رقم الدفع</th>
-                <th>الطالب</th>
-                <th>الخطة</th>
-                <th>الحالة</th>
-                <th class="text-end">المبلغ</th>
-                <th class="text-end">التاريخ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngIf="isLoadingPayments">
-                <td colspan="6" class="text-center">
-                  <i class="pi pi-spinner pi-spin"></i> جاري التحميل...
-                </td>
-              </tr>
-              <tr *ngFor="let p of recentPayments; trackBy: trackByPayment">
-                <td><a href="javascript:" class="text-muted">{{ p.id }}</a></td>
-                <td>{{ p.student }}</td>
-                <td>{{ p.planType }}</td>
-                <td>
-                  <span class="d-block">
-                    <i class="badge-circle"
-                       [ngClass]="{
-                         'bg-success': p.status === 'approved',
-                         'bg-warning': p.status === 'pending',
-                         'bg-danger': p.status === 'rejected'
-                       }"></i>
-                    {{ p.status === 'approved' ? 'موافق' : p.status === 'pending' ? 'معلق' : 'مرفوض' }}
-                  </span>
-                </td>
-                <td class="text-end">{{ p.amount }}</td>
-                <td class="text-end">{{ p.createdAt }}</td>
-              </tr>
-              <tr *ngIf="!isLoadingPayments && recentPayments.length === 0">
-                <td colspan="6" class="text-center text-muted">لا توجد بيانات</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <app-sales-report-chart
+        [categories]="planTypeLabels"
+        [revenueSeries]="planTypeRevenue"
+        [countSeries]="planTypeCounts"
+      ></app-sales-report-chart>
     </div>
 
     <!-- Right Column: Users Analytics + Plan Type Chart -->
@@ -130,4 +90,52 @@
       ></app-sales-report-chart>
     </div>
   </div>
+  <!-- Recent Payments -->
+    <div class="col-md-12 col-xl-12">
+      <h5 class="mb-3">أحدث المدفوعات</h5>
+      <div class="card tbl-card">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>رقم الدفع</th>
+                <th>الطالب</th>
+                <th>الخطة</th>
+                <th>الحالة</th>
+                <th class="text-end">المبلغ</th>
+                <th class="text-end">التاريخ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="isLoadingPayments">
+                <td colspan="6" class="text-center">
+                  <i class="pi pi-spinner pi-spin"></i> جاري التحميل...
+                </td>
+              </tr>
+              <tr *ngFor="let p of recentPayments; trackBy: trackByPayment">
+                <td><a href="javascript:" class="text-muted">{{ p.id }}</a></td>
+                <td>{{ p.student }}</td>
+                <td>{{ p.planType }}</td>
+                <td>
+                  <span class="d-block">
+                    <i class="badge-circle"
+                       [ngClass]="{
+                         'bg-success': p.status === 'approved',
+                         'bg-warning': p.status === 'pending',
+                         'bg-danger': p.status === 'rejected'
+                       }"></i>
+                    {{ p.status === 'approved' ? 'موافق' : p.status === 'pending' ? 'معلق' : 'مرفوض' }}
+                  </span>
+                </td>
+                <td class="text-end">{{ p.amount }}</td>
+                <td class="text-end">{{ p.createdAt }}</td>
+              </tr>
+              <tr *ngIf="!isLoadingPayments && recentPayments.length === 0">
+                <td colspan="6" class="text-center text-muted">لا توجد بيانات</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 </div>

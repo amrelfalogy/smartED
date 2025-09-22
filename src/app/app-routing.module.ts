@@ -15,7 +15,7 @@ const routes: Routes = [
     path: 'admin',
     loadChildren: () => import('./admin-dashboard/dashboard.module').then(m => m.AdminDashboardModule),
     canActivate: [AuthGuard],
-    data: { role: 'admin' }
+    data: { role: 'admin_or_support' }
   },
 
   // Student dashboard (protected routes)
@@ -80,9 +80,10 @@ const routes: Routes = [
   { path: 'courses-adminForm', redirectTo: '/admin/courses/new', pathMatch: 'full' },
   
   // Student redirects
-  { path: 'courses', redirectTo: '/student-dashboard/courses', pathMatch: 'full' },
   { path: 'my-courses', redirectTo: '/student-dashboard/my-courses', pathMatch: 'full' },
   { path: 'my-payments', redirectTo: '/student-dashboard/my-payments', pathMatch: 'full' },
+
+  { path: 'lesson/:id', redirectTo: '/student-dashboard/lesson-details/:id', pathMatch: 'full' },
 
   // Wildcard
   { path: '**', redirectTo: '/home' }

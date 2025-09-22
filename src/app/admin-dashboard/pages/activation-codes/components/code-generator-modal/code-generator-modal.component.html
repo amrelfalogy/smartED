@@ -1,0 +1,182 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    
+    <!-- Success State -->
+    <div *ngIf="generatedCode" class="success-container">
+      <div class="modal-header">
+        <h2>
+          <i class="pi pi-check-circle text-success me-2"></i>
+          تم إنشاء رمز التفعيل بنجاح
+        </h2>
+        <button class="btn btn-ghost" (click)="onClose()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="success-content">
+        <div class="generated-code-card">
+          <div class="code-header">
+            <h3>رمز التفعيل الجديد</h3>
+            <button 
+              class="btn btn-outline-primary btn-sm"
+              (click)="copyCodeToClipboard(generatedCode.activationCode.code)"
+              title="نسخ الرمز"
+            >
+              <i class="pi pi-copy me-1"></i>
+              نسخ
+            </button>
+          </div>
+          
+          <div class="code-display">
+            <code class="activation-code-large">{{ generatedCode.activationCode.code }}</code>
+          </div>
+
+          <div class="code-details">
+            <div class="detail-row">
+              <span class="label">المحتوى:</span>
+              <span class="value">{{ generatedCode.contentItem.title }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">صالح حتى:</span>
+              <span class="value">{{ generatedCode.activationCode.expiresAt | date:'medium' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="success-actions">
+          <button class="btn btn-primary" (click)="onStartNew()">
+            <i class="pi pi-plus me-2"></i>
+            إنشاء رمز آخر
+          </button>
+          <button class="btn btn-outline-secondary" (click)="onClose()">
+            إنهاء
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form State -->
+    <div *ngIf="!generatedCode" class="form-container">
+      <div class="modal-header">
+        <h2>
+          <i class="pi pi-key me-2"></i>
+          إنشاء رمز تفعيل جديد
+        </h2>
+        <button class="btn btn-ghost" (click)="onClose()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form [formGroup]="generatorForm" (ngSubmit)="onSubmit()">
+          
+          <!-- Content Selection -->
+          <div class="form-section">
+            <h3 class="section-title">
+              <i class="pi pi-bookmark me-2"></i>
+              اختيار المحتوى
+            </h3>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">نوع المحتوى <span class="required">*</span></label>
+                  <select 
+                    class="form-select" 
+                    formControlName="contentType"
+                    [class.is-invalid]="isFieldInvalid('contentType')"
+                  >
+                    <option value="lesson">درس</option>                                      
+                  </select>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('contentType')">
+                    {{ getFieldError('contentType') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">المحتوى <span class="required">*</span></label>
+                  <select 
+                    class="form-select" 
+                    formControlName="contentId"
+                    [class.is-invalid]="isFieldInvalid('contentId')"
+                    [disabled]="isLoadingContent || availableContent.length === 0"
+                  >
+                    <option value="">اختر المحتوى</option>
+                    <option *ngFor="let item of availableContent" [value]="item.id">
+                      {{ item.name }}
+                    </option>
+                  </select>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('contentId')">
+                    {{ getFieldError('contentId') }}
+                  </div>
+                  <div class="form-text" *ngIf="isLoadingContent">
+                    جاري تحميل قائمة المحتوى...
+                  </div>
+                  <div class="form-text text-warning" *ngIf="!isLoadingContent && availableContent.length === 0">
+                    لا يوجد محتوى متاح من هذا النوع
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Code Settings -->
+          <div class="form-section">
+            <h3 class="section-title">
+              <i class="pi pi-cog me-2"></i>
+              إعدادات الرمز
+            </h3>
+
+            <div class="form-group">
+              <label class="form-label">وصف الرمز (اختياري)</label>
+              <textarea 
+                class="form-control" 
+                formControlName="description"
+                rows="2"
+                placeholder="وصف مختصر للرمز وغرض استخدامه"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Validity Period -->
+          <div class="form-section">
+            <h3 class="section-title">
+              <i class="pi pi-calendar me-2"></i>
+              فترة الصلاحية
+            </h3>
+
+
+          </div>
+
+        </form>
+
+        <div class="alert alert-danger" *ngIf="error">
+          <i class="pi pi-exclamation-triangle me-2"></i>
+          {{ error }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary" 
+          (click)="onClose()"
+          [disabled]="isSubmitting"
+        >
+          إلغاء
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="onSubmit()"
+          [disabled]="isSubmitting || generatorForm.invalid"
+        >
+          <i class="pi" [ngClass]="isSubmitting ? 'pi-spinner pi-spin' : 'pi-key'"></i>
+          {{ isSubmitting ? 'جاري الإنشاء...' : 'إنشاء الرمز' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

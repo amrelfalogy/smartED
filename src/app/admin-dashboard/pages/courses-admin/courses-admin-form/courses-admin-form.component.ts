@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject as RxSubject, firstValueFrom, of } from 'rxjs';
-import { switchMap, takeUntil } from 'rxjs/operators';
+import { switchMap, takeUntil, catchError } from 'rxjs/operators';
 import {
   CourseComplete,
   Subject as CourseSubject,
@@ -14,6 +14,7 @@ import { UnitService } from 'src/app/core/services/unit.service';
 import { LessonService } from 'src/app/core/services/lesson.service';
 import { AcademicYearService } from 'src/app/core/services/academic-year.service';
 import { AcademicYear, StudentYear } from 'src/app/core/models/academic-year.model';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-courses-admin-form',
@@ -55,7 +56,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   errorMsg: string | null = null;
-  imageError: string | null = null; 
+  imageError: string | null = null;
   successMsg: string | null = null;
   isLoadingAcademicData = false;
   isLoadingStudentYears = false;
@@ -69,6 +70,9 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   selectedAcademicYearId: string = '';
   selectedStudentYearId: string = '';
 
+  currentUserId: string | null = null;
+  currentUserRole: 'admin' | 'teacher' | 'support' | 'student' | null = null;
+
   private destroy$ = new RxSubject<void>();
 
   constructor(
@@ -78,10 +82,12 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     private unitService: UnitService,
     private lessonService: LessonService,
     private academicYearService: AcademicYearService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.initializeUserContext();
     this.loadAcademicYears();
     this.checkEditMode();
   }
@@ -91,7 +97,19 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // --- Academic data loading (unchanged) ---
+  // --- User context initialization ---  
+  private initializeUserContext(): void {
+    const currentUser = this.authService.getCurrentUser();
+    this.currentUserId = currentUser?.id || null;
+    this.currentUserRole = currentUser?.role as any;
+    
+    console.log('👤 User context initialized:', {
+      currentUserId: this.currentUserId,
+      currentUserRole: this.currentUserRole
+    });
+  }
+
+  // --- Academic data loading ---
   private loadAcademicYears(): void {
     this.isLoadingAcademicData = true;
     this.academicDataLoaded = false;
@@ -168,7 +186,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       });
   }
 
-  // --- Edit mode & data loading (unchanged structure) ---
+  // --- Edit mode & data loading ---
   private checkEditMode(): void {
     this.subjectId = this.route.snapshot.paramMap.get('id');
     if (this.subjectId) {
@@ -244,33 +262,77 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       });
   }
 
+  // ✅ UPDATED: Enhanced lesson loading with improved error handling and fallback
   private async loadLessonsForUnits(): Promise<void> {
     try {
-      const unitIds = (this.courseData.units || []).map(u => u.id).filter(Boolean) as string[];
+      const unitIds = (this.courseData.units || [])
+        .map(u => u.id)
+        .filter(Boolean) as string[];
+        
       if (unitIds.length === 0) {
+        this.courseData.units.forEach(unit => {
+          if (!Array.isArray(unit.lessons)) {
+            unit.lessons = [];
+          }
+        });
+        
         this.isLoading = false;
         this.deferValidation();
         return;
       }
 
+      console.log('🔄 Loading lessons for units:', unitIds);
+
+      // ✅ Try to load lessons for each unit with fallback
       const lessonsPerUnit = await Promise.all(
-        unitIds.map(id => firstValueFrom(this.lessonService.getLessonsByUnit(id)))
+        unitIds.map(async (id, index) => {
+          try {
+            console.log(`🔍 Loading lessons for unit ${id} (${index + 1}/${unitIds.length})`);
+            // Try main method first
+            const lessons = await firstValueFrom(this.lessonService.getLessonsByUnit(id));
+            console.log(`✅ Main method success for unit ${id}: ${lessons.length} lessons`);
+            return lessons;
+          } catch (error) {
+            console.warn(`⚠️ Main method failed for unit ${id}, trying fallback:`, error);
+            try {
+              // Fallback to client-side filtering
+              const lessons = await firstValueFrom(this.lessonService.getLessonsByUnitClientSide(id));
+              console.log(`✅ Fallback method success for unit ${id}: ${lessons.length} lessons`);
+              return lessons;
+            } catch (fallbackError) {
+              console.error(`❌ Both methods failed for unit ${id}:`, fallbackError);
+              return []; // Return empty array as final fallback
+            }
+          }
+        })
       );
+      
       lessonsPerUnit.forEach((lessons, idx) => {
-        this.courseData.units[idx].lessons = lessons;
+        // ✅ Ensure lessons is array and normalize data
+        const normalizedLessons = Array.isArray(lessons) ? lessons : [];
+        this.courseData.units[idx].lessons = normalizedLessons;
+        
+        console.log(`📚 Loaded ${normalizedLessons.length} lessons for unit ${this.courseData.units[idx].name}`);
       });
 
       this.recalculateTotals();
       this.isLoading = false;
       this.deferValidation();
     } catch (err) {
-      console.error(err);
+      console.error('❌ Error loading lessons:', err);
+      
+      this.courseData.units.forEach(unit => {
+        if (!Array.isArray(unit.lessons)) {
+          unit.lessons = [];
+        }
+      });
+      
       this.errorMsg = 'حدث خطأ أثناء تحميل الدروس';
       this.isLoading = false;
     }
   }
 
-  // --- Child events (unchanged) ---
+  // --- Child events ---
   onSubjectUpdated(subjectData: CourseSubject): void {
     this.courseData.subject = {
       ...this.courseData.subject,
@@ -336,7 +398,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- Validation (unchanged) ---
+  // --- Validation (lesson.sessionType removed; subject.sessionType required) ---
   private deferValidation(): void {
     setTimeout(() => {
       this.updateStepValidation(1, this.isSubjectValid(this.courseData.subject));
@@ -354,30 +416,48 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       !!subject.imageUrl?.trim() &&
       subject.order > 0;
     const academicOk = !!(this.selectedAcademicYearId && this.selectedStudentYearId);
-    return basic && academicOk;
+    const stOk = !!(subject as any).sessionType; // required by backend
+    return basic && academicOk && stOk;
   }
 
+  // ✅ FIX: Update units validation
   private areUnitsValid(units: Unit[]): boolean {
-    return units.length > 0 &&
-      units.every(u =>
-        u.name?.trim() &&
-        u.description?.trim() &&
-        u.lessons &&
-        u.lessons.length > 0 &&
-        u.lessons.every(l => this.isLessonValid(l))
-      );
+    if (units.length === 0) return false;
+    
+    return units.every(u => {
+      const lessons = Array.isArray(u.lessons) ? u.lessons : [];
+      const unitBasicValid = !!(u.name?.trim() && u.description?.trim());
+      const hasLessons = lessons.length > 0;
+      const allLessonsValid = lessons.every(l => this.isLessonValid(l));
+      
+      return unitBasicValid && hasLessons && allLessonsValid;
+    });
   }
 
   private isLessonValid(lesson: Lesson): boolean {
-    return !!(
-      lesson.title?.trim() &&
-      lesson.description?.trim() &&
-      lesson.lessonType &&
-      lesson.sessionType &&
-      lesson.difficulty &&
-      (lesson.duration ?? 0) >= 0
-    );
+  const basicValid = !!(
+    lesson.title?.trim() &&
+    lesson.description?.trim() &&
+    lesson.lessonType &&
+    lesson.difficulty &&
+    (lesson.duration ?? 0) >= 0
+  );
+  
+  // ✅ Content validation based on lesson type
+  let contentValid = true;
+  if (lesson.lessonType === 'video') {
+    contentValid = !!lesson.videoUrl;
+  } else if (lesson.lessonType === 'pdf' || lesson.lessonType === 'document') {
+    contentValid = !!lesson.pdfUrl;
   }
+  
+  // ✅ Price validation
+  const priceValid = lesson.isFree || (!lesson.isFree && (lesson.price ?? 0) >= 0);
+  
+  return basicValid && contentValid && priceValid;
+}
+
+
 
   private updateStepValidation(stepId: number, isValid: boolean): void {
     const step = this.formState.steps.find(s => s.id === stepId);
@@ -389,16 +469,23 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     this.formState.isValid = this.formState.steps.slice(0, 2).every(s => s.isValid);
   }
 
-  // --- Totals / Navigation (unchanged) ---
+  // --- Totals / Navigation ---
   private recalculateTotals(): void {
     this.courseData.totalLessons = this.courseData.units.reduce(
-      (acc, u) => acc + (u.lessons?.length || 0), 0
+      (acc, u) => {
+        // ✅ FIX: Add null checks and ensure lessons is array
+        const lessons = Array.isArray(u.lessons) ? u.lessons : [];
+        return acc + lessons.length;
+      }, 0
     );
+    
     this.courseData.totalDuration = this.courseData.units.reduce(
-      (acc, u) =>
-        acc +
-        (u.lessons?.reduce((lt, l) => lt + (l.duration || 0), 0) || 0),
-      0
+      (acc, u) => {
+        // ✅ FIX: Add null checks and ensure lessons is array
+        const lessons = Array.isArray(u.lessons) ? u.lessons : [];
+        const unitDuration = lessons.reduce((lt, l) => lt + (l.duration || 0), 0);
+        return acc + unitDuration;
+      }, 0
     );
   }
 
@@ -561,7 +648,6 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
                   title: lesson.title,
                   description: lesson.description,
                   lessonType: lesson.lessonType,
-                  sessionType: lesson.sessionType,
                   difficulty: lesson.difficulty,
                   duration: lesson.duration,
                   isFree: lesson.isFree,
@@ -619,9 +705,11 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
         description: lesson.description,
         unitId, // REQUIRED
         order: lesson.order,
+        price: lesson.price || 0,
+        videoUrl: lesson.videoUrl || '',
+        pdfUrl: lesson.pdfUrl || '',
         duration: lesson.duration,
         lessonType: lesson.lessonType,
-        sessionType: lesson.sessionType,
         difficulty: lesson.difficulty,
         isFree: lesson.isFree,
         isActive: lesson.isActive

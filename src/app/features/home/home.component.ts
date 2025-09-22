@@ -1,4 +1,4 @@
-// ✅ UPDATED: home.component.ts - Role-aware navigation using AuthService
+// ✅ UPDATED: home.component.ts - Add Teachers Loading
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject as RxSubject, forkJoin } from 'rxjs';
@@ -6,9 +6,11 @@ import { takeUntil, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import { Subject as CourseSubject } from 'src/app/core/models/course-complete.model';
+import { User } from 'src/app/core/models/user.model'; // ✅ NEW
 import { AcademicYear, StudentYear } from 'src/app/core/models/academic-year.model';
 import { SubjectService } from 'src/app/core/services/subject.service';
 import { AcademicYearService } from 'src/app/core/services/academic-year.service';
+import { UserService } from 'src/app/core/services/user.service'; // ✅ NEW
 import { AuthService } from 'src/app/core/services/auth.service';
 
 // ✅ Enhanced Course interface for home display
@@ -22,17 +24,15 @@ interface HomeCourse extends CourseSubject {
   rating?: number;
 }
 
-interface Instructor {
-  id: number;
-  name: string;
-  photo: string;
-  specialization: string;
-  experience: number;
-  rating: number;
-  bio: string;
-  department: string;
+// ✅ Enhanced Teacher interface 
+interface HomeTeacher extends User {
+  specialization?: string;
+  yearsExperience?: number;
+  rating?: number;
   verified?: boolean;
 }
+
+
 
 @Component({
   selector: 'app-home',
@@ -45,6 +45,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   academicYears: AcademicYear[] = [];
   studentYearsCache = new Map<string, StudentYear[]>();
 
+  // ✅ NEW: Teachers data
+  teachers: HomeTeacher[] = [];
+  isLoadingTeachers = false;
+  teachersError = '';
+
   isLoadingCourses = false;
   coursesError = '';
 
@@ -55,52 +60,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     { icon: 'pi-play-circle', title: 'ابدأ التعلّم', desc: 'تابع الحصص المباشرة أو الدروس المسجلة وراقب تقدّمك.' }
   ];
 
-  instructors: Instructor[] = [
-    {
-      id: 1,
-      name: 'د. أحمد محمد الشريف',
-      photo: 'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg',
-      specialization: 'علوم الحاسوب والذكاء الاصطناعي',
-      experience: 8,
-      rating: 5,
-      bio: 'أستاذ مساعد ...',
-      department: 'كلية الحاسوب والمعلومات',
-      verified: true
-    },
-    {
-      id: 2,
-      name: 'د. فاطمة علي النجار',
-      photo: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
-      specialization: 'الرياضيات التطبيقية',
-      experience: 12,
-      rating: 5,
-      bio: 'أستاذ مشارك في قسم الرياضيات مع تخصص في التحليل العددي',
-      department: 'كلية العلوم',
-      verified: true
-    },
-    {
-      id: 3,
-      name: 'د. خالد حسن المطري',
-      photo: 'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg',
-      specialization: 'الفيزياء النظرية',
-      experience: 15,
-      rating: 4,
-      bio: 'أستاذ في قسم الفيزياء مع بحوث في فيزياء الجسيمات',
-      department: 'كلية العلوم',
-      verified: false
-    },
-    {
-      id: 4,
-      name: 'د. مريم الزهراني',
-      photo: 'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
-      specialization: 'التاريخ الإسلامي والحضارة',
-      experience: 10,
-      rating: 5,
-      bio: 'أستاذ مساعد في قسم التاريخ مع تخصص في الحضارة الإسلامية',
-      department: 'كلية الآداب',
-      verified: true
-    }
-  ];
+  
 
   private destroy$ = new RxSubject<void>();
 
@@ -108,7 +68,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     private router: Router,
     private subjectService: SubjectService,
     private academicYearService: AcademicYearService,
-    private authService: AuthService // ✅ Inject AuthService
+    private userService: UserService, // ✅ NEW
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -120,9 +81,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // ✅ UPDATED: Load both courses and teachers
   private loadHomeData(): void {
     this.isLoadingCourses = true;
+    this.isLoadingTeachers = true;
     this.coursesError = '';
+    this.teachersError = '';
 
     forkJoin({
       subjects: this.subjectService.getAllSubjects().pipe(
@@ -136,21 +100,52 @@ export class HomeComponent implements OnInit, OnDestroy {
           console.error('Error loading academic years for home:', err);
           return of([]);
         })
+      ),
+      teachers: this.userService.getTeachers({ limit: 12 }).pipe( // ✅ NEW
+        catchError(err => {
+          console.error('Error loading teachers for home:', err);
+          return of({ users: [], pagination: { current: 1, total: 1, totalItems: 0 } });
+        })
       )
     }).pipe(takeUntil(this.destroy$))
     .subscribe({
-      next: ({ subjects, academicYears }) => {
+      next: ({ subjects, academicYears, teachers }) => {
         this.allSubjects = subjects || [];
         this.academicYears = academicYears || [];
         this.prepareCourses();
+        this.prepareTeachers(teachers.users || []); // ✅ NEW
         this.isLoadingCourses = false;
+        this.isLoadingTeachers = false;
       },
       error: (error) => {
         console.error('Error loading home data:', error);
         this.coursesError = 'حدث خطأ أثناء تحميل الدورات';
+        this.teachersError = 'حدث خطأ أثناء تحميل بيانات المعلمين';
         this.isLoadingCourses = false;
+        this.isLoadingTeachers = false;
       }
     });
+  }
+
+  // ✅ NEW: Prepare teachers data
+  private prepareTeachers(teachersData: User[]): void {
+    if (!teachersData || teachersData.length === 0) {
+      this.teachersError = 'لا يوجد معلمين متاحين حالياً';
+      return;
+    }
+
+    this.teachers = teachersData
+      .filter(teacher => teacher.isActive)
+      .map(teacher => ({
+        ...teacher,
+        specialization: this.generateSpecialization(teacher),
+        yearsExperience: this.generateExperience(teacher),
+        rating: this.generateRating(teacher),
+        verified: this.generateVerificationStatus(teacher)
+      }))
+      .slice(0, 8); // Show max 8 teachers
+
+    console.log('✅ Teachers prepared for home:', this.teachers);
   }
 
   private prepareCourses(): void {
@@ -165,56 +160,89 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.courses = publishedSubjects.map(subject => ({
       ...subject,
-      instructor: this.getInstructorName(subject),
-      instructorImg: this.getInstructorImage(subject),
       academicYearName: this.getAcademicYearName(subject.academicYearId),
       studentYearName: this.getStudentYearName(subject.studentYearId),
       lessonType: this.determineLessonType(subject),
       price: this.generatePrice(subject),
       rating: this.generateRating(subject),
-      image: subject.imageUrl || subject.thumbnail || 'assets/imgs/course-placeholder.jpg'
+      image: subject.imageUrl || subject.thumbnail || 'assets/imgs/aboutt.jpg'
     }));
   }
 
-  // ---------- Role-aware navigation using AuthService ----------
+  // ✅ NEW: Teacher data generators
+  private generateSpecialization(teacher: User): string {
+    const specializations = [
+      'الرياضيات المتقدمة',
+      'الفيزياء التطبيقية',
+      'علوم الحاسوب',
+      'الكيمياء العضوية',
+      'اللغة العربية والأدب',
+      'التاريخ الإسلامي',
+      'علم النفس التربوي',
+      'الاقتصاد والإدارة'
+    ];
+    const hash = this.hashString(teacher.firstName + teacher.lastName);
+    return specializations[hash % specializations.length];
+  }
+
+  private generateExperience(teacher: User): number {
+    const hash = this.hashString(teacher.email || '');
+    return (hash % 15) + 5; // 5-20 years experience
+  }
+
+  private generateVerificationStatus(teacher: User): boolean {
+    const hash = this.hashString(teacher.id);
+    return hash % 3 !== 0; // ~66% verified
+  }
+
+  // ✅ UPDATED: Role-aware navigation
   viewCourse(course: HomeCourse): void {
     if (!course?.id) {
       console.error('Course ID is missing');
       return;
     }
 
-    // Use AuthService’s normalized role helpers
     if (this.authService.canAccessAdmin()) {
-      // Admin or support → admin course details route
       this.router.navigate(['/admin/course-details', course.id]);
       return;
     }
 
     if (this.authService.isStudent()) {
-      // Student → student course details route
       this.router.navigate(['/student-dashboard/course-details', course.id]);
       return;
     }
 
-    // Not logged in → go to login (optional: include a returnUrl)
     this.router.navigate(['/auth/login'], { queryParams: { returnUrl: `/courses` } });
   }
 
-  // ---------- Helpers (unchanged below) ----------
-  private getInstructorName(subject: CourseSubject): string {
-    const instructorNames = ['أ. محمد علي', 'د. أحمد محمد', 'أ. فاطمة النجار', 'د. خالد المطري', 'أ. سارة أحمد', 'د. مريم الزهراني'];
-    const hash = this.hashString(subject.name || '');
-    return instructorNames[hash % instructorNames.length];
+  // ✅ NEW: View teacher profile
+  viewTeacher(teacher: HomeTeacher): void {
+    // For now, just log - you can implement teacher profile page later
+    console.log('View teacher profile:', teacher);
+    // this.router.navigate(['/teachers', teacher.id]);
   }
 
-  private getInstructorImage(subject: CourseSubject): string {
-    const instructorImages = [
-      'https://lms.rocket-soft.org/store/1015/office_bundle.jpg',
-      'https://lms.rocket-soft.org/store/934/A-Z%20Web%20Programming.jpg'
-    ];
-    const hash = this.hashString(subject.name || '');
-    return instructorImages[hash % instructorImages.length];
+  // ✅ Keep existing instructor navigation for demo cards
+ 
+
+  // ✅ NEW: Retry teachers loading
+  retryLoadTeachers(): void {
+    this.loadHomeData();
   }
+
+  reloadCourses(): void {
+    this.loadHomeData();
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    target.src = 'assets/imgs/aboutt.jpg';
+  }
+
+  // ✅ Helper methods (unchanged)
+ 
+
+ 
 
   private getAcademicYearName(academicYearId?: string): string {
     if (!academicYearId) return 'غير محدد';
@@ -242,8 +270,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     return basePrices[hash % basePrices.length];
   }
 
-  private generateRating(subject: CourseSubject): number {
-    const hash = this.hashString(subject.name || '');
+  private generateRating(subject: any): number {
+    const hash = this.hashString((subject.name || subject.firstName || '') + (subject.lastName || ''));
     const ratings = [3, 4, 5];
     return ratings[hash % ratings.length];
   }
@@ -256,18 +284,5 @@ export class HomeComponent implements OnInit, OnDestroy {
       hash = hash & hash;
     }
     return Math.abs(hash);
-  }
-
-  viewInstructor(instructor: any): void {
-    this.router.navigate(['/instructors', instructor.id]);
-  }
-
-  reloadCourses(): void {
-    this.loadHomeData();
-  }
-
-  onImageError(event: Event): void {
-    const target = event.target as HTMLImageElement;
-    target.src = 'assets/imgs/course-placeholder.jpg';
   }
 }

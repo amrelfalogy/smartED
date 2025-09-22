@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject as RxSubject, takeUntil, firstValueFrom } from 'rxjs'; // ✅ Rename RxJS Subject
-import { Lesson, Subject as CourseSubject } from 'src/app/core/models/course-complete.model'; // ✅ Rename model Subject
+import { Subject as RxSubject, takeUntil, firstValueFrom } from 'rxjs';
+import { Lesson, Subject as CourseSubject } from 'src/app/core/models/course-complete.model';
 import { LessonService } from 'src/app/core/services/lesson.service';
 import { PaymentService } from 'src/app/core/services/payment.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { SubjectService } from 'src/app/core/services/subject.service';
-
+import { ActivationCodeService } from 'src/app/core/services/activation-code.service';
+import { CodeActivateResponse } from 'src/app/core/models/activation-code.model';
 
 @Component({
   selector: 'app-lesson-details',
@@ -14,15 +15,15 @@ import { SubjectService } from 'src/app/core/services/subject.service';
   styleUrls: ['./lesson-details.component.scss']
 })
 export class LessonDetailsComponent implements OnInit, OnDestroy {
-    private destroy$ = new RxSubject<void>();
+  private destroy$ = new RxSubject<void>();
 
   // Route params
   lessonId = '';
-  fromCourse = ''; // Course ID to navigate back
-  
+  fromCourse = '';
+
   // Data
   lesson: Lesson | null = null;
-  courseInfo: CourseSubject | null = null; 
+  courseInfo: CourseSubject | null = null;
 
   // States
   isLoading = false;
@@ -33,24 +34,22 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
   isAdminOrSupport = false;
   isAdminMode = false;
 
-  // Access flags (for students)
+  // Access flags
   hasAccess = false;
   requiresPayment = false;
 
   // Content data
   videoUrls: string[] = [];
   docUrls: string[] = [];
-  quizzes: any[] = [];
 
   // UI state
   activeTab: 'video' | 'document' | 'quiz' = 'video';
   isVideoLoading = false;
-  isDocLoading = false;
-
-  // Video player state
   currentVideoIndex = 0;
   isVideoPlaying = false;
-  videoProgress = 0;
+
+  // ✅ NEW: Activation modal
+  showActivationModal = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -58,7 +57,8 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     private lessonService: LessonService,
     private paymentService: PaymentService,
     private authService: AuthService,
-    private subjectService: SubjectService
+    private subjectService: SubjectService,
+    private activationService: ActivationCodeService
   ) {}
 
   ngOnInit(): void {
@@ -73,7 +73,6 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Get course ID from query params for navigation
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.fromCourse = params['course'] || '';
     });
@@ -84,79 +83,61 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // ✅ ENHANCED: Better error handling and course info loading
   private async loadLessonAndAccess(): Promise<void> {
     this.isLoading = true;
     this.errorMessage = '';
     this.successMessage = '';
 
     try {
-      // 1) Load lesson details from backend
-      const response: any = await firstValueFrom(this.lessonService.getLesson(this.lessonId));
-      
-      console.log('✅ Raw lesson response:', response);
-      
-      // Handle both nested and flat response structures
+      const response: any = await firstValueFrom(this.lessonService.getLessonById(this.lessonId));
       const lessonData = response.lesson || response;
-      const details = {
-        lesson: lessonData,
-        videos: response.videos || [],
-        quizzes: response.quizzes || [],
-        documents: response.documents || []
-      };
 
-      // Normalize lesson data
       this.lesson = {
         id: lessonData?.id,
         title: lessonData?.title || 'درس بدون عنوان',
         description: lessonData?.description || '',
         unitId: lessonData?.unitId,
         order: lessonData?.order ?? 0,
-        status: lessonData?.status || 'draft',
+        status: lessonData?.status || 'published',
         isActive: lessonData?.isActive ?? true,
         createdAt: lessonData?.createdAt,
         updatedAt: lessonData?.updatedAt,
-        // Enhanced fields with better defaults
         duration: lessonData?.duration ?? 0,
         difficulty: lessonData?.difficulty || 'beginner',
-        lessonType: lessonData?.lessonType || 'center_recorded',
-        sessionType: lessonData?.sessionType || 'recorded',
-        isFree: lessonData?.isFree ?? false
+        lessonType: lessonData?.lessonType || 'video',
+        isFree: lessonData?.isFree ?? false,
+        content: lessonData?.content ?? null,
+        thumbnail: lessonData?.thumbnail ?? null,
+        price: lessonData?.price ?? 0,
+        currency: lessonData?.currency ?? 'جنيه',
+        videoUrl: lessonData?.videoUrl ?? null,
+        pdfUrl: lessonData?.pdfUrl ?? null,
+        pdfFileName: lessonData?.pdfFileName ?? null,
+        pdfFileSize: lessonData?.pdfFileSize ?? null,
+        zoomUrl: lessonData?.zoomUrl ?? null,
+        zoomMeetingId: lessonData?.zoomMeetingId ?? null,
+        zoomPasscode: lessonData?.zoomPasscode ?? null,
+        scheduledAt: lessonData?.scheduledAt ?? null,
+        academicYearId: lessonData?.academicYearId ?? null,
+        studentYearId: lessonData?.studentYearId ?? null,
+        hasAccess: lessonData?.hasAccess ?? false,
+        requiresPayment: lessonData?.requiresPayment ?? false,
+        accessReason: lessonData?.accessReason ?? null
       };
 
-      // 2) Extract content arrays
-      this.videoUrls = this.extractUrls(details.videos);
-      this.docUrls = this.extractUrls(details.documents);
-      this.quizzes = Array.isArray(details.quizzes) ? details.quizzes : [];
+      // Set content URLs
+      this.videoUrls = this.lesson.videoUrl ? [this.lesson.videoUrl] : [];
+      this.docUrls = this.lesson.pdfUrl ? [this.lesson.pdfUrl] : [];
 
-      // Handle legacy content structure
-      if (!this.videoUrls.length && lessonData?.content?.videoUrl) {
-        this.videoUrls = [lessonData.content.videoUrl];
-      }
-      if (!this.docUrls.length && lessonData?.content?.documentUrl) {
-        this.docUrls = [lessonData.content.documentUrl];
-      }
-
-      console.log('✅ Processed lesson:', this.lesson);
-      console.log('✅ Content:', { videos: this.videoUrls.length, docs: this.docUrls.length, quizzes: this.quizzes.length });
-
-      // 3) Load course info for better navigation
       await this.loadCourseInfo();
-
-      // 4) Check access for students
       await this.checkLessonAccess();
-
-      // 5) Set default tab based on available content
-      this.setDefaultTab();
 
       this.isLoading = false;
 
-      // Show admin preview message
       if (this.isAdminMode) {
         this.successMessage = 'أنت تعرض هذا الدرس في وضع المعاينة كمدير';
-        setTimeout(() => this.successMessage = '', 3000);
+        setTimeout(() => (this.successMessage = ''), 5000);
       }
-
     } catch (err) {
       console.error('Lesson load error', err);
       this.errorMessage = 'حدث خطأ أثناء تحميل بيانات الدرس. يرجى المحاولة مرة أخرى.';
@@ -164,45 +145,17 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ NEW: Load course information
-  // ✅ FIX: Update the loadCourseInfo method
   private async loadCourseInfo(): Promise<void> {
-      try {
-        if (this.fromCourse) {
-          const courseResponse = await firstValueFrom(this.subjectService.getSubject(this.fromCourse));
-          
-          // ✅ FIX: Handle the response structure correctly
-          this.courseInfo = courseResponse; // This is the CourseSubject object
-          
-          console.log('✅ Course info loaded:', this.courseInfo);
-        } else if (this.lesson?.unitId) {
-          // ✅ Alternative: Get subject from unitId
-          const subjectId = await this.getSubjectIdFromUnit(this.lesson.unitId);
-          if (subjectId) {
-            const courseResponse = await firstValueFrom(this.subjectService.getSubject(subjectId));
-            this.courseInfo = courseResponse;
-          }
-        }
-      } catch (error) {
-        console.warn('Could not load course info:', error);
-        // Non-critical error, continue without course info
+    try {
+      if (this.fromCourse) {
+        const subject = await firstValueFrom(this.subjectService.getSubject(this.fromCourse));
+        this.courseInfo = (subject && (subject as any).subject) ? (subject as any).subject : subject;
       }
+    } catch (error) {
+      console.warn('Could not load course info:', error);
     }
-
-// ✅ NEW: Helper method to get subjectId from unitId
-private async getSubjectIdFromUnit(unitId: string): Promise<string | null> {
-  try {
-    // Option 2: Search through subjects to find the unit
-    // This is less efficient but works with current API structure
-    console.warn('Cannot determine subjectId from unitId without additional API endpoint');
-    return null;
-  } catch (error) {
-    console.error('Error getting subjectId from unitId:', error);
-    return null;
   }
-}
 
-  // ✅ UPDATE: Better access checking with proper endpoint
   private async checkLessonAccess(): Promise<void> {
     if (this.isAdminOrSupport) {
       this.hasAccess = true;
@@ -217,56 +170,23 @@ private async getSubjectIdFromUnit(unitId: string): Promise<string | null> {
     }
 
     try {
-      // ✅ UPDATE: Use the correct endpoint format
-      const access = await firstValueFrom(
-        this.paymentService.checkLessonAccess(this.lessonId)
-      );
-      
-      console.log('✅ Access check response:', access);
-      
+      const access = await firstValueFrom(this.paymentService.checkLessonAccess(this.lessonId));
       this.hasAccess = !!access?.hasAccess;
       this.requiresPayment = !!access?.requiresPayment && !this.hasAccess;
-      
-      // ✅ Alternative: If the endpoint returns different format
-      // this.hasAccess = access === true || access?.hasAccess === true;
-      // this.requiresPayment = !this.hasAccess;
-      
-    } catch (accessError) {
-      console.warn('Access check failed, assuming no access:', accessError);
-      
-      // ✅ For paid lessons, assume payment required if access check fails
+    } catch {
       this.hasAccess = false;
       this.requiresPayment = !this.lesson?.isFree;
     }
   }
 
-  // ✅ ENHANCED: Smarter default tab selection
-  private setDefaultTab(): void {
-    if (this.videoUrls.length > 0) {
-      this.activeTab = 'video';
-    } else if (this.docUrls.length > 0) {
-      this.activeTab = 'document';
-    } else if (this.quizzes.length > 0) {
-      this.activeTab = 'quiz';
-    } else {
-      this.activeTab = 'video'; // Default even if empty
-    }
+  // ✅ NEW: Video event handlers
+  onVideoLoaded(): void {
+    this.isVideoLoading = false;
   }
 
-  // ✅ ENHANCED: Better URL extraction
-  private extractUrls(items: Array<{ url?: string; title?: string } | string> | undefined): string[] {
-    if (!Array.isArray(items)) return [];
-    return items
-      .map(item => {
-        if (typeof item === 'string') return item;
-        return item?.url;
-      })
-      .filter(Boolean) as string[];
-  }
-
-  // ✅ NEW: Video player controls
   onVideoPlay(): void {
     this.isVideoPlaying = true;
+    this.isVideoLoading = false;
   }
 
   onVideoPause(): void {
@@ -275,7 +195,6 @@ private async getSubjectIdFromUnit(unitId: string): Promise<string | null> {
 
   onVideoEnded(): void {
     this.isVideoPlaying = false;
-    // Auto-advance to next video if available
     if (this.currentVideoIndex < this.videoUrls.length - 1) {
       this.nextVideo();
     }
@@ -283,82 +202,81 @@ private async getSubjectIdFromUnit(unitId: string): Promise<string | null> {
 
   nextVideo(): void {
     if (this.currentVideoIndex < this.videoUrls.length - 1) {
+      this.isVideoLoading = true;
       this.currentVideoIndex++;
     }
   }
 
   previousVideo(): void {
     if (this.currentVideoIndex > 0) {
+      this.isVideoLoading = true;
       this.currentVideoIndex--;
     }
   }
 
-  selectVideo(index: number): void {
-    this.currentVideoIndex = index;
+  // ✅ NEW: Utility methods
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // ✅ ENHANCED: Tab management
-  changeTab(tab: 'video' | 'document' | 'quiz'): void {
-    // Check if tab has content
-    if (tab === 'video' && this.videoUrls.length === 0) return;
-    if (tab === 'document' && this.docUrls.length === 0) return;
-    if (tab === 'quiz' && this.quizzes.length === 0) return;
-
-    this.activeTab = tab;
+  copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.successMessage = 'تم نسخ النص إلى الحافظة';
+      setTimeout(() => this.successMessage = '', 2000);
+    });
   }
 
-  // ✅ ENHANCED: Payment navigation with better context
-  navigateToPayment(planType: 'lesson' | 'monthly' | 'semester'): void {
+  // ✅ NEW: Activation modal methods
+  openActivationModal(): void {
+    this.showActivationModal = true;
+  }
+
+  closeActivationModal(): void {
+    this.showActivationModal = false;
+  }
+
+  onActivationSuccess(response: CodeActivateResponse): void {
+    this.successMessage = 'تم تفعيل الدرس بنجاح!';
+    this.closeActivationModal();
+    // Reload lesson access
+    this.checkLessonAccess();
+  }
+
+  onActivationError(error: string): void {
+    this.errorMessage = error;
+    setTimeout(() => this.errorMessage = '', 5000);
+  }
+
+  // Navigation methods
+  navigateToPayment(planType: 'lesson' | 'subject'): void {
     const queryParams: any = { planType };
-    
     if (planType === 'lesson') {
       queryParams.lessonId = this.lessonId;
       if (this.lesson?.lessonType) {
         queryParams.lessonType = this.lesson.lessonType;
       }
+    } else if (planType === 'subject') {
+      if (this.fromCourse) queryParams.subjectId = this.fromCourse;
     }
-    
-    if (this.fromCourse) {
-      queryParams.subjectId = this.fromCourse;
-    }
-
     this.router.navigate(['/student-dashboard/my-payments'], { queryParams });
   }
 
-  // ✅ ENHANCED: Better navigation
   backToCourse(): void {
-    // Priority 1: Use fromCourse query parameter
     if (this.fromCourse) {
       this.router.navigate(['/student-dashboard/course-details', this.fromCourse]);
       return;
     }
-
-    // Priority 2: Use courseInfo if loaded
     if (this.courseInfo?.id) {
       this.router.navigate(['/student-dashboard/course-details', this.courseInfo.id]);
       return;
     }
-
-    // Priority 3: Try to determine course from lesson data
-    if (this.lesson?.unitId) {
-      // We could try to find the course through the unit
-      this.navigateViaCourseSearch();
-      return;
-    }
-
-    // Priority 4: Fallback to courses list
     this.router.navigate(['/student-dashboard/courses']);
   }
 
-  // ✅ NEW: Navigate via course search (fallback)
-  private navigateViaCourseSearch(): void {
-    // This would require searching for the course that contains this unit
-    // For now, just go to courses list
-    console.log('Cannot determine course, navigating to courses list');
-    this.router.navigate(['/student-dashboard/courses']);
-  }
-
-  // ✅ NEW: Admin actions
   editLesson(): void {
     if (this.lesson?.unitId && this.fromCourse) {
       this.router.navigate(['/admin-dashboard/courses/edit', this.fromCourse], {
@@ -367,27 +285,22 @@ private async getSubjectIdFromUnit(unitId: string): Promise<string | null> {
     }
   }
 
-  // ✅ ENHANCED: Better helpers
-  isVideoUrl(url: string): boolean {
-    return /\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i.test(url) || 
-           url.includes('youtube.com') || 
-           url.includes('vimeo.com') ||
-           url.includes('cloudinary.com');
+  // ✅ NEW: Generate activation code (admin only)
+  generateActivationCode(): void {
+    this.router.navigate(['/admin/activation-codes'], {
+      queryParams: { 
+        lessonId: this.lessonId,
+        lessonTitle: this.lesson?.title 
+      }
+    });
   }
 
-  isDocumentUrl(url: string): boolean {
-    return /\.(pdf|doc|docx|ppt|pptx)(\?.*)?$/i.test(url);
-  }
-
+  // Utility methods
   formatDuration(seconds?: number): string {
     if (!seconds || seconds === 0) return 'غير محدد';
-    
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    
-    if (hours > 0) {
-      return `${hours} ساعة ${minutes} دقيقة`;
-    }
+    if (hours > 0) return `${hours} ساعة ${minutes} دقيقة`;
     return `${minutes} دقيقة`;
   }
 
@@ -402,34 +315,25 @@ private async getSubjectIdFromUnit(unitId: string): Promise<string | null> {
 
   getLessonTypeLabel(lessonType?: string): string {
     switch (lessonType) {
-      case 'center_recorded': return 'مسجل - المركز';
-      case 'studio_produced': return 'منتج - الاستوديو';
-      case 'zoom': return 'مباشر - Zoom';
+      case 'video': return 'فيديو';
+      case 'text': return 'نصي';
+      case 'quiz': return 'اختبار';
+      case 'assignment': return 'تكليف';
+      case 'live': return 'مباشر';
+      case 'document': return 'مستند';
+      case 'pdf': return 'PDF';
       default: return 'غير محدد';
     }
   }
 
-  // ✅ NEW: Content availability checks
   get hasAnyContent(): boolean {
-    return this.videoUrls.length > 0 || this.docUrls.length > 0 || this.quizzes.length > 0;
+    return this.videoUrls.length > 0 || 
+           this.docUrls.length > 0 || 
+           !!this.lesson?.content ||
+           !!this.lesson?.zoomUrl;
   }
 
-  get availableTabsCount(): number {
-    let count = 0;
-    if (this.videoUrls.length > 0) count++;
-    if (this.docUrls.length > 0) count++;
-    if (this.quizzes.length > 0) count++;
-    return count;
-  }
-
-  // ✅ NEW: Error recovery
   retryLoading(): void {
     this.loadLessonAndAccess();
-  }
-
-  // ✅ NEW: Report issue (for students)
-  reportIssue(): void {
-    // Could open a modal or navigate to support
-    console.log('Report issue for lesson:', this.lessonId);
   }
 }

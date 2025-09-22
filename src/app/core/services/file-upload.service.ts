@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpEventType, HttpRequest, HttpEvent } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, filter, catchError } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 
 export interface FileUploadResponse {
   url: string;
@@ -27,7 +28,7 @@ export interface UploadValidation {
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadService {
-  private baseUrl = '/api/uploads';
+  private baseUrl = `${environment.apiUrl}/uploads`;
 
   // ✅ File type configurations
   private readonly FILE_CONFIGS = {
@@ -172,124 +173,125 @@ export class FileUploadService {
   }
 
   // ✅ Core upload method
-  private uploadFile(
-    file: File,
-    type: keyof typeof this.FILE_CONFIGS
-  ): Observable<FileUploadResponse | FileUploadProgress> {
-    
-    // Validate file before upload
-    const validation = this.validateFile(file, type);
-    if (!validation.isValid) {
-      return throwError(() => new Error(validation.error));
-    }
-
-    const config = this.FILE_CONFIGS[type];
-    const formData = new FormData();
-    
-    // Use the correct field name for each type
-    formData.append(config.fieldName, file);
-    
-    // Add additional metadata
-    formData.append('originalName', file.name);
-    formData.append('fileSize', file.size.toString());
-    formData.append('fileType', file.type);
-    
-    const url = `${this.baseUrl}/${type}`;
-    console.log(`🚀 Uploading ${type}:`, {
-      url,
-      fieldName: config.fieldName,
-      fileName: file.name,
-      fileSize: this.formatFileSize(file.size),
-      fileType: file.type
-    });
-    
-    const req = new HttpRequest('POST', url, formData, { 
-      reportProgress: true 
-    });
-    
-    return this.http.request(req).pipe(
-      map((event: HttpEvent<any>) => {
-        switch (event.type) {
-          case HttpEventType.UploadProgress:
-            if (event.total) {
-              const progress = Math.round((100 * event.loaded) / event.total);
-              console.log(`📈 Upload progress: ${progress}%`);
-              return { 
-                progress, 
-                loaded: event.loaded, 
-                total: event.total 
-              } as FileUploadProgress;
-            }
-            return { 
-              progress: 0, 
-              loaded: event.loaded, 
-              total: event.total ?? 0 
-            } as FileUploadProgress;
-
-          case HttpEventType.Response:
-            console.log('✅ Upload response:', event.body);
-            
-            // Handle different response formats
-            if (event.body?.url) {
-              return { 
-                url: event.body.url,
-                fileName: event.body.fileName || file.name,
-                fileSize: event.body.fileSize || file.size,
-                fileType: event.body.fileType || file.type,
-                duration: event.body.duration // For videos
-              } as FileUploadResponse;
-            } else if (event.body?.fileUrl) {
-              return { 
-                url: event.body.fileUrl,
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type
-              } as FileUploadResponse;
-            } else if (event.body?.path) {
-              return { 
-                url: event.body.path,
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type
-              } as FileUploadResponse;
-            } else if (typeof event.body === 'string') {
-              return { 
-                url: event.body,
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type
-              } as FileUploadResponse;
-            } else {
-              throw new Error('صيغة استجابة رفع الملف غير صحيحة');
-            }
-
-          default:
-            return undefined;
-        }
-      }),
-      filter((result): result is FileUploadResponse | FileUploadProgress => result !== undefined),
-      catchError(error => {
-        console.error(`❌ ${type} upload error:`, error);
-        
-        // Provide user-friendly error messages
-        let errorMessage = 'حدث خطأ أثناء رفع الملف';
-        
-        if (error.status === 413) {
-          errorMessage = 'حجم الملف كبير جداً';
-        } else if (error.status === 415) {
-          errorMessage = 'نوع الملف غير مدعوم';
-        } else if (error.status === 400) {
-          errorMessage = error.error?.message || 'بيانات الملف غير صحيحة';
-        } else if (error.status === 500) {
-          errorMessage = 'خطأ في الخادم. يرجى المحاولة لاحقاً';
-        } else if (error.status === 0) {
-          errorMessage = 'فشل في الاتصال بالخادم';
-        }
-        
-        return throwError(() => new Error(errorMessage));
-      })
-    );
+ private uploadFile(
+  file: File,
+  type: keyof typeof this.FILE_CONFIGS
+): Observable<FileUploadResponse | FileUploadProgress> {
+  
+  const validation = this.validateFile(file, type);
+  if (!validation.isValid) {
+    return throwError(() => new Error(validation.error));
   }
+
+  const config = this.FILE_CONFIGS[type];
+  const formData = new FormData();
+  
+  // ✅ Use correct field name for your backend
+  formData.append(config.fieldName, file);
+  
+  // ✅ Your backend might expect these fields
+  formData.append('originalName', file.name);
+  formData.append('fileSize', file.size.toString());
+  formData.append('fileType', file.type);
+  
+  // ✅ Use your exact backend endpoints
+  const url = `${this.baseUrl}/${type}`; // This maps to /uploads/video, /uploads/document etc
+  
+  console.log(`🚀 Uploading ${type}:`, {
+    url,
+    fieldName: config.fieldName,
+    fileName: file.name,
+    fileSize: this.formatFileSize(file.size),
+    fileType: file.type
+  });
+  
+  const req = new HttpRequest('POST', url, formData, { 
+    reportProgress: true 
+  });
+  
+  return this.http.request(req).pipe(
+    map((event: HttpEvent<any>) => {
+      switch (event.type) {
+        case HttpEventType.UploadProgress:
+          if (event.total) {
+            const progress = Math.round((100 * event.loaded) / event.total);
+            return { 
+              progress, 
+              loaded: event.loaded, 
+              total: event.total 
+            } as FileUploadProgress;
+          }
+          return { 
+            progress: 0, 
+            loaded: event.loaded, 
+            total: event.total ?? 0 
+          } as FileUploadProgress;
+
+        case HttpEventType.Response:
+          console.log(`✅ ${type} upload response:`, event.body);
+          
+          // ✅ Handle your backend response format
+          const body = event.body;
+          
+          if (body?.url) {
+            return { 
+              url: body.url,
+              fileName: body.fileName || body.originalName || file.name,
+              fileSize: body.fileSize || file.size,
+              fileType: body.fileType || file.type,
+              duration: body.duration // For videos
+            } as FileUploadResponse;
+          } else if (body?.fileUrl) {
+            return { 
+              url: body.fileUrl,
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type
+            } as FileUploadResponse;
+          } else if (body?.path) {
+            return { 
+              url: body.path,
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type
+            } as FileUploadResponse;
+          } else if (typeof body === 'string') {
+            return { 
+              url: body,
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type
+            } as FileUploadResponse;
+          } else {
+            throw new Error('صيغة استجابة رفع الملف غير صحيحة');
+          }
+
+        default:
+          return undefined;
+      }
+    }),
+    filter((result): result is FileUploadResponse | FileUploadProgress => result !== undefined),
+    catchError(error => {
+      console.error(`❌ ${type} upload error:`, error);
+      
+      let errorMessage = 'حدث خطأ أثناء رفع الملف';
+      
+      if (error.status === 413) {
+        errorMessage = 'حجم الملف كبير جداً';
+      } else if (error.status === 415) {
+        errorMessage = 'نوع الملف غير مدعوم';
+      } else if (error.status === 400) {
+        errorMessage = error.error?.message || 'بيانات الملف غير صحيحة';
+      } else if (error.status === 500) {
+        errorMessage = 'خطأ في الخادم. يرجى المحاولة لاحقاً';
+      } else if (error.status === 0) {
+        errorMessage = 'فشل في الاتصال بالخادم';
+      }
+      
+      return throwError(() => new Error(errorMessage));
+    })
+  );
+}
 
   // ✅ Utility method to check if file is image
   isImageFile(file: File): boolean {

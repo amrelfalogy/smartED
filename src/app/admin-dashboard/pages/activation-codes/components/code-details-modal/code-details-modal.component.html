@@ -1,0 +1,181 @@
+<div class="modal-overlay" *ngIf="isVisible" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <i class="pi pi-info-circle me-2"></i>
+        تفاصيل رمز التفعيل
+      </h2>
+      <button class="btn btn-ghost" (click)="onClose()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="codeDetails">
+      <!-- Code Information -->
+      <div class="details-section">
+        <h3 class="section-title">
+          <i class="pi pi-key me-2"></i>
+          معلومات الرمز
+        </h3>
+        
+        <div class="code-info-card">
+          <div class="code-display">
+            <div class="code-value">
+              <code class="activation-code">{{ codeDetails.code.code }}</code>
+              <button 
+                class="btn btn-sm btn-outline-primary"
+                (click)="copyCodeToClipboard(codeDetails.code.code)"
+                title="نسخ الرمز"
+              >
+                <i class="pi pi-copy"></i>
+              </button>
+            </div>
+            <div class="code-status">
+              <span class="status-badge" [class]="'status-' + getCodeStatus().color">
+                {{ getCodeStatus().label }}
+              </span>
+            </div>
+          </div>
+
+          <div class="code-details-grid">
+            <div class="detail-item">
+              <label>النوع:</label>
+              <span class="content-type-badge" [class]="'type-' + codeDetails.code.contentType">
+                <i class="pi" [ngClass]="{
+                  'pi-play-circle': codeDetails.code.contentType === 'lesson',
+                  'pi-book': codeDetails.code.contentType === 'subject',
+                  'pi-bookmark': codeDetails.code.contentType === 'unit'
+                }"></i>
+                {{ getContentTypeLabel(codeDetails.code.contentType) }}
+              </span>
+            </div>
+
+            <!-- ✅ SIMPLIFIED: Only lesson name -->
+            <div class="detail-item" *ngIf="codeDetails.code.lessonId">
+              <label>اسم الدرس:</label>
+              <span *ngIf="!isLoadingLessonName">{{ lessonName }}</span>
+              <div *ngIf="isLoadingLessonName" class="loading-inline">
+                <i class="pi pi-spinner pi-spin"></i>
+                جاري التحميل...
+              </div>
+            </div>
+
+            <div class="detail-item" *ngIf="codeDetails.code.name">
+              <label>الاسم:</label>
+              <span>{{ codeDetails.code.name }}</span>
+            </div>
+
+            <div class="detail-item" *ngIf="codeDetails.code.description">
+              <label>الوصف:</label>
+              <span>{{ codeDetails.code.description }}</span>
+            </div>
+
+            <div class="detail-item">
+              <label>تاريخ الإنشاء:</label>
+              <span>{{ formatDate(codeDetails.code.createdAt) }}</span>
+            </div>
+
+            <div class="detail-item">
+              <label>صالح من:</label>
+              <span>{{ formatDate(codeDetails.code.validFrom) }}</span>
+            </div>
+
+            <div class="detail-item">
+              <label>صالح حتى:</label>
+              <span>{{ formatDate(codeDetails.code.expiresAt) }}</span>
+            </div>
+
+            <div class="detail-item">
+              <label>عدد الاستخدامات:</label>
+              <div class="usage-info">
+                <span class="usage-text">{{ codeDetails.code.currentUses }} / {{ codeDetails.code.maxUses }}</span>
+                <div class="usage-progress">
+                  <div class="progress-bar" [style.width.%]="getUsagePercentage()"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <label>استخدام متعدد:</label>
+              <span class="boolean-badge" [class.true]="codeDetails.code.allowMultipleUses">
+                <i class="pi" [class.pi-check]="codeDetails.code.allowMultipleUses" [class.pi-times]="!codeDetails.code.allowMultipleUses"></i>
+                {{ codeDetails.code.allowMultipleUses ? 'نعم' : 'لا' }}
+              </span>
+            </div>
+
+            <div class="detail-item">
+              <label>نشط:</label>
+              <span class="boolean-badge" [class.true]="codeDetails.code.isActive">
+                <i class="pi" [class.pi-check]="codeDetails.code.isActive" [class.pi-times]="!codeDetails.code.isActive"></i>
+                {{ codeDetails.code.isActive ? 'نعم' : 'لا' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Usage History -->
+      <div class="details-section">
+        <h3 class="section-title">
+          <i class="pi pi-history me-2"></i>
+          تاريخ الاستخدام
+          <span class="usage-count">({{ codeDetails.usageHistory.length }})</span>
+        </h3>
+
+        <div class="usage-history" *ngIf="codeDetails.usageHistory.length > 0">
+          <div 
+            class="usage-item" 
+            *ngFor="let usage of codeDetails.usageHistory; trackBy: trackByUsageId"
+          >
+            <div class="usage-avatar">
+              <div class="avatar-placeholder">
+                {{ usage.studentName.charAt(0).toUpperCase() }}
+              </div>
+            </div>
+            
+            <div class="usage-info">
+              <div class="student-info">
+                <h4 class="student-name">{{ usage.studentName }}</h4>
+                <p class="student-email">{{ usage.studentEmail }}</p>
+              </div>
+              
+              <div class="usage-meta">
+                <div class="meta-item">
+                  <i class="pi pi-calendar"></i>
+                  <span>{{ formatDate(usage.usedAt) }}</span>
+                </div>
+                
+                <div class="meta-item">
+                  <i class="pi pi-globe"></i>
+                  <span>{{ usage.ipAddress }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="usage-status">
+              <span class="status-badge status-success">
+                <i class="pi pi-check"></i>
+                مستخدم
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-usage" *ngIf="codeDetails.usageHistory.length === 0">
+          <div class="empty-icon">
+            <i class="pi pi-clock"></i>
+          </div>
+          <h4>لم يتم استخدام الرمز بعد</h4>
+          <p>سيظهر تاريخ الاستخدام هنا عند استخدام الرمز من قبل الطلاب</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary" (click)="onClose()">
+        <i class="pi pi-check me-2"></i>
+        تم
+      </button>
+    </div>
+  </div>
+</div>

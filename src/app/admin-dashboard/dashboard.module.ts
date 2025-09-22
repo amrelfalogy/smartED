@@ -31,6 +31,9 @@ import { DashboardRoutingModule } from './dashboard-routing.module';
 
 import { SharedModule } from '../shared/shared.module';
 import { PaymentsComponent } from './pages/payments/payments.component';
+import { ActivationCodesComponent } from './pages/activation-codes/activation-codes.component';
+import { CodeGeneratorModalComponent } from './pages/activation-codes/components/code-generator-modal/code-generator-modal.component';
+import { CodeDetailsModalComponent } from './pages/activation-codes/components/code-details-modal/code-details-modal.component';
 
 
 @NgModule({
@@ -45,14 +48,15 @@ import { PaymentsComponent } from './pages/payments/payments.component';
     AnalyticsChartComponent,
     SalesReportChartComponent,
     // Shared components
-    CardComponent,
     CoursesAdminListComponent,
     CoursesAdminFormComponent,
     SubjectSectionComponent,
     UnitsSectionComponent,
     LessonsSectionComponent,
     PaymentsComponent,
-
+    ActivationCodesComponent,
+    CodeGeneratorModalComponent,
+    CodeDetailsModalComponent
     
   ],
   imports: [

@@ -73,7 +73,7 @@ export const NavigationItems: NavigationItem[] = [
             url: '/admin/courses/new',
             icon: 'pi pi-plus-circle',
             breadcrumbs: false,
-            role: ['admin']
+            role: ['admin', 'support']
           }
         ]
       },
@@ -85,7 +85,17 @@ export const NavigationItems: NavigationItem[] = [
         url: '/admin/payments',
         icon: 'pi pi-credit-card',
         breadcrumbs: false,
-        role: ['admin', 'support']
+        role: ['admin']
+      },
+      {
+        id: 'activation-codes',
+        title: 'رموز التفعيل',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/admin/activation-codes',      
+        icon: 'pi pi-key',
+        breadcrumbs: false,
+        role: ['admin'],
       },
     ]
   },
@@ -101,18 +111,28 @@ export const NavigationItems: NavigationItem[] = [
         title: 'Students',
         type: 'item',
         classes: 'nav-item',
-        url: '/admin/students',
-        icon: 'pi pi-user',
+        url: '/admin/users/students',
+        icon: 'pi pi-users',
         breadcrumbs: false,
         role: ['admin']
       },
       {
-        id: 'instructors',
-        title: 'Instructors',
+        id: 'teachers',
+        title: 'Teachers',
         type: 'item',
         classes: 'nav-item',
-        url: '/admin/instructors',
+        url: '/admin/users/teachers',
         icon: 'pi pi-user-plus',
+        breadcrumbs: false,
+        role: ['admin']
+      },
+      {
+        id: 'support',
+        title: 'Support',
+        type: 'item',
+        classes: 'nav-item',
+        url: '/admin/users/support',
+        icon: 'pi pi-user-edit',
         breadcrumbs: false,
         role: ['admin']
       }

@@ -92,23 +92,34 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
   }
 
   private buildLessonGroup(lesson?: Lesson): FormGroup {
-    return this.fb.group({
-      id: [lesson?.id],
-      unitId: [lesson?.unitId || lesson?.lectureId || ''],
-      lectureId: [lesson?.lectureId || ''],
-      title: [lesson?.title || '', [Validators.required, Validators.minLength(3)]],
-      description: [lesson?.description || '', [Validators.required, Validators.minLength(10)]],
-      order: [lesson?.order ?? 0],
-      lessonType: [lesson?.lessonType || 'center_recorded', Validators.required],
-      sessionType: [lesson?.sessionType || 'recorded', Validators.required],
-      difficulty: [lesson?.difficulty || 'beginner', Validators.required],
-      isFree: [lesson?.isFree ?? false],
-      isActive: [lesson?.isActive ?? true],
-      duration: [lesson?.duration ?? 0],
-      videos: [lesson?.videos || []],
-      documents: [lesson?.documents || []]
-    });
-  }
+  return this.fb.group({
+    id: [lesson?.id],
+    unitId: [lesson?.unitId || lesson?.lectureId || ''],
+    lectureId: [lesson?.lectureId || ''],
+    title: [lesson?.title || '', [Validators.required, Validators.minLength(3)]],
+    description: [lesson?.description || '', [Validators.required, Validators.minLength(10)]],
+    content: [lesson?.content || ''],
+    order: [lesson?.order ?? 0],
+    lessonType: [lesson?.lessonType || 'video', Validators.required], // ✅ Consistent default
+    price: [lesson?.price ?? 0, [Validators.min(0)]],
+    videoUrl: [lesson?.videoUrl || null], // ✅ Single value
+    pdfUrl: [lesson?.pdfUrl || null], // ✅ Single value
+    pdfFileName: [lesson?.pdfFileName ?? null],
+    pdfFileSize: [lesson?.pdfFileSize ?? null],
+    difficulty: [lesson?.difficulty || 'beginner', Validators.required],
+    isFree: [lesson?.isFree ?? false],
+    isActive: [lesson?.isActive ?? true],
+    duration: [lesson?.duration ?? 0],
+    thumbnail: [lesson?.thumbnail ?? null],
+    academicYearId: [lesson?.academicYearId ?? null],
+    studentYearId: [lesson?.studentYearId ?? null],
+    zoomUrl: [lesson?.zoomUrl ?? null],
+    zoomMeetingId: [lesson?.zoomMeetingId ?? null],
+    zoomPasscode: [lesson?.zoomPasscode ?? null],
+    scheduledAt: [lesson?.scheduledAt ?? null]
+    // ✅ Remove videos/documents arrays to avoid confusion
+  });
+}
 
   addUnit(): void {
     const group = this.buildUnitGroup();
@@ -180,16 +191,21 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
     this.emitUnitsDeferred();
   }
 
-  onLessonUpdated(unitIndex: number, lessonIndex: number, updated: Lesson): void {
+ onLessonUpdated(unitIndex: number, lessonIndex: number, updated: Lesson): void {
     const fa = this.getLessonsFormArray(unitIndex);
     const ctrl = fa.at(lessonIndex) as FormGroup;
     const parentUnitId = (this.unitsFormArray.at(unitIndex) as FormGroup).get('id')?.value || '';
+    
+    // ✅ CRITICAL: Update the form control with the media URLs
     ctrl.patchValue({
       ...updated,
       unitId: updated.unitId || parentUnitId || updated.lectureId,
-      videos: updated.videos || [],
-      documents: updated.documents || []
+      videoUrl: updated.videoUrl || null,
+      pdfUrl: updated.pdfUrl || null,
+      pdfFileName: updated.pdfFileName || null,
+      pdfFileSize: updated.pdfFileSize || null
     }, { emitEvent: false });
+    
     this.emitUnitsDeferred();
   }
 
@@ -239,61 +255,135 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
     );
   }
 
-  getUnitProgress(unitIndex: number): number | null {
-    const fa = this.getLessonsFormArray(unitIndex);
-    if (fa.length === 0) return null;
-    let valid = 0;
-    fa.controls.forEach(ctrl => {
-      const title = ctrl.get('title')?.value?.trim();
-      const desc = ctrl.get('description')?.value?.trim();
-      const lt = ctrl.get('lessonType')?.value;
-      const st = ctrl.get('sessionType')?.value;
-      const diff = ctrl.get('difficulty')?.value;
-      if (title && desc && lt && st && diff) valid++;
-    });
-    return Math.round((valid / fa.length) * 100);
-  }
-
-  getFormStatusMessage(): string {
-    if (this.isFormValid) return 'جميع الوحدات والدروس مكتملة';
-    if (this.unitsFormArray.length === 0) return 'أضف وحدة واحدة على الأقل';
-    const emptyUnits = this.unitsFormArray.controls.filter(u => {
-      const lessons = u.get('lessons') as FormArray;
-      return lessons.length === 0;
-    }).length;
-    if (emptyUnits > 0) return `هناك ${emptyUnits} وحدة بلا دروس`;
-    return 'يرجى استكمال بيانات بعض الدروس';
-  }
-
+  // ✅ FIX: Update the isFormValid getter to match actual form structure
   get isFormValid(): boolean {
-    if (this.unitsFormArray.length === 0) return false;
-    return this.unitsFormArray.controls.every(u => {
-      const lessons = u.get('lessons') as FormArray;
-      return u.valid &&
-        lessons.length > 0 &&
-        lessons.controls.every(l => {
-          const title = l.get('title')?.value?.trim();
-          const desc = l.get('description')?.value?.trim();
-          const lt = l.get('lessonType')?.value;
-          const st = l.get('sessionType')?.value;
-          const diff = l.get('difficulty')?.value;
-          return title && desc && lt && st && diff;
-        });
+  if (this.unitsFormArray.length === 0) return false;
+  
+  return this.unitsFormArray.controls.every(u => {
+    const lessons = u.get('lessons') as FormArray;
+    const unitValid = u.valid;
+    const hasLessons = lessons.length > 0;
+    
+    const allLessonsValid = lessons.controls.every(l => {
+      const lessonGroup = l as FormGroup;
+      const title = lessonGroup.get('title')?.value?.trim();
+      const desc = lessonGroup.get('description')?.value?.trim();
+      const lessonType = lessonGroup.get('lessonType')?.value;
+      const difficulty = lessonGroup.get('difficulty')?.value;
+      
+      // ✅ Basic validation
+      const basicValid = !!(title && desc && lessonType && difficulty);
+      
+      // ✅ Content validation based on lesson type
+      let contentValid = true;
+      if (lessonType === 'video') {
+        const videoUrl = lessonGroup.get('videoUrl')?.value;
+        contentValid = !!videoUrl;
+      } else if (lessonType === 'pdf' || lessonType === 'document') {
+        const pdfUrl = lessonGroup.get('pdfUrl')?.value;
+        contentValid = !!pdfUrl;
+      }
+      
+      // ✅ Price validation
+      const isFree = lessonGroup.get('isFree')?.value;
+      const price = lessonGroup.get('price')?.value;
+      const priceValid = isFree || (!isFree && price >= 0);
+      
+      return basicValid && contentValid && priceValid;
     });
+    
+    return unitValid && hasLessons && allLessonsValid;
+  });
+}
+
+  // ✅ FIX: Update status message to be more specific
+  getFormStatusMessage(): string {
+  if (this.isFormValid) return 'جميع الوحدات والدروس مكتملة';
+  if (this.unitsFormArray.length === 0) return 'أضف وحدة واحدة على الأقل';
+  
+  // ✅ Check for specific issues WITHOUT console.log
+  const emptyUnits = this.unitsFormArray.controls.filter(u => {
+    const lessons = u.get('lessons') as FormArray;
+    return lessons.length === 0;
+  });
+  
+  if (emptyUnits.length > 0) return `هناك ${emptyUnits.length} وحدة بلا دروس`;
+  
+  // ✅ Check for invalid lessons WITHOUT console.log
+  const invalidLessons: string[] = [];
+  this.unitsFormArray.controls.forEach((u, unitIndex) => {
+    const unitName = u.get('name')?.value || `الوحدة ${unitIndex + 1}`;
+    const lessons = u.get('lessons') as FormArray;
+    
+    lessons.controls.forEach((l, lessonIndex) => {
+      const lessonGroup = l as FormGroup;
+      const lessonTitle = lessonGroup.get('title')?.value || `الدرس ${lessonIndex + 1}`;
+      const lessonType = lessonGroup.get('lessonType')?.value;
+      
+      // Check what's missing
+      const issues: string[] = [];
+      if (!lessonGroup.get('title')?.value?.trim()) issues.push('العنوان');
+      if (!lessonGroup.get('description')?.value?.trim()) issues.push('الوصف');
+      if (!lessonType) issues.push('نوع المحتوى');
+      if (!lessonGroup.get('difficulty')?.value) issues.push('المستوى');
+      
+      if (lessonType === 'video' && !lessonGroup.get('videoUrl')?.value) {
+        issues.push('رابط الفيديو');
+      }
+      if ((lessonType === 'pdf' || lessonType === 'document') && !lessonGroup.get('pdfUrl')?.value) {
+        issues.push('رابط المستند');
+      }
+      
+      const isFree = lessonGroup.get('isFree')?.value;
+      const price = lessonGroup.get('price')?.value;
+      if (!isFree && (!price || price < 0)) {
+        issues.push('السعر');
+      }
+      
+      if (issues.length > 0) {
+        invalidLessons.push(`${unitName} - ${lessonTitle}: ${issues.join(', ')}`);
+      }
+    });
+  });
+  
+  if (invalidLessons.length > 0) {
+    return `يرجى إكمال البيانات التالية:\n${invalidLessons.slice(0, 3).join('\n')}${invalidLessons.length > 3 ? '\n...' : ''}`;
   }
+  
+  return 'يرجى استكمال بيانات بعض الدروس';
+}
 
   private emitUnitsDeferred(): void {
     const value: Unit[] = this.unitsFormArray.controls.map((unitCtrl) => {
       const uVal = unitCtrl.value as Unit;
+      // Lessons: only send backend fields
       const ensuredLessons = (uVal.lessons || []).map((l: any) => ({
-        ...l,
+        id: l.id,
         unitId: l.unitId || uVal.id || l.lectureId,
-        videos: Array.isArray(l.videos) ? l.videos : [],
-        documents: Array.isArray(l.documents) ? l.documents : []
+        title: l.title,
+        description: l.description,
+        content: l.content,
+        order: l.order,
+        lessonType: l.lessonType,
+        price: l.isFree ? 0 : l.price,
+        videoUrl: l.videoUrl || null,
+        pdfUrl: l.pdfUrl || null,
+        pdfFileName: l.pdfFileName || null,
+        pdfFileSize: l.pdfFileSize || null,
+        difficulty: l.difficulty,
+        isFree: l.isFree,
+        isActive: l.isActive,
+        duration: l.duration,
+        thumbnail: l.thumbnail,
+        academicYearId: l.academicYearId,
+        studentYearId: l.studentYearId,
+        zoomUrl: l.zoomUrl,
+        zoomMeetingId: l.zoomMeetingId,
+        zoomPasscode: l.zoomPasscode,
+        scheduledAt: l.scheduledAt,
       }));
       return { ...uVal, lessons: ensuredLessons };
     });
-
     Promise.resolve().then(() => this.unitsUpdated.emit(value));
   }
   formatDuration(seconds: number): string {
@@ -302,9 +392,4 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
     if (h > 0) return `${h}س ${m}د`;
     return `${m}د`;
   }
-
-  trackByUnit = (_: number, unitGroup: FormGroup) =>
-    unitGroup.get('id')?.value || unitGroup.get('name')?.value || _;
-  trackByLesson = (_: number, lessonGroup: FormGroup) =>
-    lessonGroup.get('id')?.value || lessonGroup.get('title')?.value || _;
 }

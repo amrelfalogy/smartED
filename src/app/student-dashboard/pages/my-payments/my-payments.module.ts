@@ -4,6 +4,8 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { MyPaymentsComponent } from './my-payments.component';
+import { SharedModule } from 'src/app/shared/shared.module';
+
 
 @NgModule({
   declarations: [
@@ -11,8 +13,9 @@ import { MyPaymentsComponent } from './my-payments.component';
   ],
   imports: [
     CommonModule,
-    ReactiveFormsModule,  // ✅ This fixes the formGroup error
+    ReactiveFormsModule, 
     FormsModule,
+    SharedModule,
     RouterModule.forChild([
       { path: '', component: MyPaymentsComponent }
     ])

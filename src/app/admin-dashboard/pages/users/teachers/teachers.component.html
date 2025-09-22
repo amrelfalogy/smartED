@@ -1,0 +1,237 @@
+<div class="teachers-management">
+  <!-- Header Section -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="page-title">إدارة المعلمين</h1>
+      <p class="text-muted">إدارة حسابات المعلمين وبياناتهم</p>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+      <app-card [showHeader]="false" blockClass="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon bg-primary">
+            <i class="pi pi-user-plus"></i>
+          </div>
+          <div class="stat-details">
+             <h4 class="stat-value">
+              <span *ngIf="!isLoadingStats">{{ formatStatNumber(stats.total) }}</span>
+              <div *ngIf="isLoadingStats" class="stat-loading">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+              </div>
+            </h4>
+            <p class="stat-label">إجمالي المعلمين</p>
+          </div>
+        </div>
+      </app-card>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+      <app-card [showHeader]="false" blockClass="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon bg-success">
+            <i class="pi pi-check-circle"></i>
+          </div>
+          <div class="stat-details">
+            <h4 class="stat-value">
+              <span *ngIf="!isLoadingStats">{{ formatStatNumber(stats.active) }}</span>
+              <div *ngIf="isLoadingStats" class="stat-loading">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+              </div>
+            </h4>
+            <p class="stat-label">معلمين نشطون</p>
+          </div>
+        </div>
+      </app-card>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+      <app-card [showHeader]="false" blockClass="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon bg-warning">
+            <i class="pi pi-pause-circle"></i>
+          </div>
+          <div class="stat-details">
+             <h4 class="stat-value">
+              <span *ngIf="!isLoadingStats">{{ formatStatNumber(stats.inactive) }}</span>
+              <div *ngIf="isLoadingStats" class="stat-loading">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+              </div>
+            </h4>
+            <p class="stat-label">معلمين غير نشطون</p>
+          </div>
+        </div>
+      </app-card>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+      <app-card [showHeader]="false" blockClass="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon bg-info">
+            <i class="pi pi-user-plus"></i>
+          </div>
+          <div class="stat-details">
+           <h4 class="stat-value">
+              <span *ngIf="!isLoadingStats">{{ formatStatNumber(stats.recent) }}</span>
+              <div *ngIf="isLoadingStats" class="stat-loading">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+              </div>
+            </h4>
+            <p class="stat-label">انضموا مؤخراً</p>
+          </div>
+        </div>
+      </app-card>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <app-card>
+    <div class="search-section">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="pi pi-search"></i>
+            </span>
+            <input 
+              type="text" 
+              class="form-control" 
+              [formControl]="searchControl"
+              placeholder="البحث بالاسم أو البريد الإلكتروني...">
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="results-info">
+            <span class="text-muted">
+              {{ totalItems }} معلم
+              <span *ngIf="searchControl.value">(من البحث)</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-card>
+
+  <!-- Teachers Grid -->
+  <div class="teachers-grid mt-4">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-2 text-muted">جاري تحميل بيانات المعلمين...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && teachers.length === 0" class="text-center py-5">
+      <i class="pi pi-user-plus text-muted" style="font-size: 4rem;"></i>
+      <h4 class="mt-3">لا يوجد معلمين</h4>
+      <p class="text-muted">
+        <span *ngIf="searchControl.value">لم يتم العثور على معلمين يطابقون البحث</span>
+        <span *ngIf="!searchControl.value">لم يتم تسجيل أي معلمين بعد</span>
+      </p>
+    </div>
+
+    <!-- Teachers Cards -->
+    <div *ngIf="!isLoading && teachers.length > 0" class="row">
+      <div class="col-lg-4 col-md-6 mb-4" *ngFor="let teacher of teachers; trackBy: trackByUserId">
+        <app-card [showHeader]="false" blockClass="user-card teacher-card h-100">
+          <div class="user-card-content">
+            <!-- User Avatar & Basic Info -->
+            <div class="user-header">
+              <div class="user-avatar">
+                <img *ngIf="teacher.avatar" [src]="teacher.avatar" [alt]="getDisplayName(teacher)">
+                <div *ngIf="!teacher.avatar" class="avatar-placeholder teacher-avatar">
+                  {{ getDisplayName(teacher).charAt(0).toUpperCase() }}
+                </div>
+                <span class="user-status" [class.active]="teacher.isActive" [class.inactive]="!teacher.isActive">
+                  <i class="pi" [class.pi-circle-fill]="teacher.isActive" [class.pi-circle]="!teacher.isActive"></i>
+                </span>
+              </div>
+              <div class="user-info">
+                <h5 class="user-name">{{ getDisplayName(teacher) }}</h5>
+                <p class="user-email">{{ teacher.email }}</p>
+                <div class="user-meta">
+                  <span class="badge teacher-role">معلم</span>
+                  <span class="badge ms-1" [class.bg-success]="teacher.emailVerified" [class.bg-warning]="!teacher.emailVerified">
+                    {{ teacher.emailVerified ? 'مُفعل' : 'غير مُفعل' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- User Details -->
+            <div class="user-details">
+              <div class="detail-item" *ngIf="teacher.phone">
+                <i class="pi pi-phone"></i>
+                <span>{{ teacher.phone }}</span>
+              </div>
+              <div class="detail-item" *ngIf="teacher.bio">
+                <i class="pi pi-info-circle"></i>
+                <span class="bio-text">{{ teacher.bio }}</span>
+              </div>
+              <div class="detail-item" *ngIf="teacher.lastLogin">
+                <i class="pi pi-clock"></i>
+                <span>آخر دخول: {{ formatDate(teacher.lastLogin) }}</span>
+              </div>
+              <div class="detail-item">
+                <i class="pi pi-calendar"></i>
+                <span>انضم في: {{ formatDate(teacher.createdAt) }}</span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="user-actions">
+              <button 
+                type="button" 
+                class="btn btn-primary btn-sm flex-fill"
+                (click)="viewProfile(teacher)">
+                <i class="pi pi-eye me-2"></i>
+                عرض الملف الشخصي
+              </button>
+            </div>
+          </div>
+        </app-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="d-flex justify-content-center mt-4" *ngIf="!isLoading && totalPages > 1">
+    <nav aria-label="Teacher pagination">
+      <ul class="pagination">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
+            <i class="pi pi-chevron-right"></i>
+          </button>
+        </li>
+        
+        <li class="page-item" 
+            *ngFor="let page of [].constructor(totalPages); let i = index"
+            [class.active]="currentPage === i + 1">
+          <button class="page-link" (click)="onPageChange(i + 1)">
+            {{ i + 1 }}
+          </button>
+        </li>
+        
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button class="page-link" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages">
+            <i class="pi pi-chevron-left"></i>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- User Profile Modal -->
+<app-user-profile-modal
+  *ngIf="showProfileModal && selectedUser"
+  [user]="selectedUser"
+  [isVisible]="showProfileModal"
+  (close)="closeProfileModal()"
+  (userUpdated)="onUserUpdated($event)"
+  (userDeleted)="onUserDeleted($event)">
+</app-user-profile-modal>

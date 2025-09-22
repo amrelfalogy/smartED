@@ -35,10 +35,9 @@
     <form [formGroup]="lessonForm" class="lesson-form">
       <input type="hidden" formControlName="id" />
       <input type="hidden" formControlName="unitId" />
-      <input type="hidden" formControlName="lectureId" />
       <input type="hidden" formControlName="order" />
 
-      <!-- Basic info (unchanged) -->
+      <!-- Basic info -->
       <div class="form-section">
         <h6 class="section-title">
           <i class="pi pi-info-circle"></i>
@@ -61,18 +60,18 @@
         </div>
       </div>
 
-      <!-- Settings (unchanged) -->
+      <!-- Settings -->
       <div class="form-section">
         <h6 class="section-title"><i class="pi pi-cog"></i> إعدادات الدرس</h6>
         <div class="row">
-          <div class="col-md-3">
+          <div class="col-md-4">
             <div class="form-group">
               <label class="form-label">المدة (ثواني)</label>
               <input type="number" class="form-control" formControlName="duration" min="0" placeholder="0" />
               <div class="form-text">يمكن تركها صفر واحتسابها لاحقاً</div>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <div class="form-group">
               <label class="form-label">المستوى <span class="required">*</span></label>
               <select class="form-select" formControlName="difficulty" [class.is-invalid]="isFieldInvalid('difficulty')">
@@ -82,40 +81,39 @@
               <div class="invalid-feedback" *ngIf="isFieldInvalid('difficulty')">{{ getFieldError('difficulty') }}</div>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <div class="form-group">
-              <label class="form-label">نوع الجلسة <span class="required">*</span></label>
-              <select class="form-select" formControlName="sessionType" [class.is-invalid]="isFieldInvalid('sessionType')">
-                <option value="">اختر نوع الجلسة</option>
-                <option *ngFor="let st of sessionTypes" [value]="st.value">{{ st.label }}</option>
-              </select>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('sessionType')">{{ getFieldError('sessionType') }}</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="form-group">
-              <label class="form-label">نوع الدرس <span class="required">*</span></label>
+              <label class="form-label">نوع المحتوى <span class="required">*</span></label>
               <select class="form-select" formControlName="lessonType" [class.is-invalid]="isFieldInvalid('lessonType')">
-                <option value="">اختر نوع الدرس</option>
+                <option value="">اختر نوع المحتوى</option>
                 <option *ngFor="let lt of lessonTypes" [value]="lt.value">{{ lt.label }}</option>
               </select>
               <div class="invalid-feedback" *ngIf="isFieldInvalid('lessonType')">{{ getFieldError('lessonType') }}</div>
             </div>
           </div>
         </div>
+
+        <!-- Validation message for required media -->
+        <div class="alert alert-warning py-2 px-3 mt-2" *ngIf="contentMissingType === 'video'">
+          <i class="pi pi-exclamation-triangle me-2"></i>
+          يجب إضافة فيديو واحد على الأقل عند اختيار نوع المحتوى "فيديو"
+        </div>
+        <div class="alert alert-warning py-2 px-3 mt-2" *ngIf="contentMissingType === 'document'">
+          <i class="pi pi-exclamation-triangle me-2"></i>
+          يجب إضافة مستند واحد على الأقل عند اختيار نوع المحتوى "PDF" أو "مستند"
+        </div>
       </div>
 
-      <!-- NEW: Media management -->
+      <!-- Media management -->
       <div class="form-section">
         <h6 class="section-title">
           <i class="pi pi-video"></i>
           الوسائط
         </h6>
 
-        <!-- Videos (required for non-document lessons) -->
+        <!-- Videos (first URL will be sent as videoUrl) -->
         <div class="content-upload-section">
           <label class="form-label"><i class="pi pi-video"></i> روابط الفيديو</label>
-
           <div class="upload-area" [class.has-content]="videosFA.length > 0">
             <div class="upload-input-group">
               <input type="url" class="form-control" placeholder="https://example.com/video.mp4" #videoUrlInput />
@@ -129,21 +127,17 @@
                 <input type="file" accept="video/*" class="d-none" (change)="onVideoFileSelected($event)" />
               </label>
             </div>
-
             <div class="upload-progress" *ngIf="isLoadingMedia">
               <div class="progress">
-                <div class="progress-bar" [style.width.%]="50"></div>
+                <div class="progress-bar" [style.width.%]="uploadProgress"></div>
               </div>
-              <small>جاري تحميل الوسائط...</small>
+              <small>جاري تحميل الوسائط... {{ uploadProgress }}%</small>
             </div>
-
             <div class="content-status success" *ngIf="videosFA.length > 0">
               <i class="pi pi-check-circle"></i>
               <span>تمت إضافة {{ videosFA.length }} فيديو</span>
             </div>
           </div>
-
-          <!-- List -->
           <div class="video-list mt-2" *ngIf="videosFA.length > 0">
             <div class="d-flex align-items-center gap-2 mb-2" *ngFor="let ctrl of videosFA.controls; let i = index">
               <span class="badge bg-light text-dark">#{{ i + 1 }}</span>
@@ -159,28 +153,38 @@
               </button>
             </div>
           </div>
-
           <small class="text-muted d-block mt-1">
-            الفيديو مطلوب (أدخل رابط واحد على الأقل) ما لم يكن نوع الدرس "مستند".
+            سيتم إرسال أول رابط فقط إلى الخادم كـ videoUrl.
           </small>
         </div>
 
-        <!-- Documents (optional) -->
+        <!-- Documents (first URL sent as pdfUrl) -->
         <div class="content-upload-section mt-3">
           <label class="form-label"><i class="pi pi-file"></i> مستندات الدرس (اختياري)</label>
           <div class="upload-area" [class.has-content]="documentsFA.length > 0">
-            <label class="btn btn-outline-secondary mb-0">
-              <i class="pi pi-upload"></i>
-              رفع ملف مستند
-              <input type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" class="d-none" (change)="onDocumentFileSelected($event)" />
-            </label>
-
+            <div class="upload-input-group">
+              <input type="url" class="form-control" placeholder="https://example.com/file.pdf" #docUrlInput />
+              <button type="button" class="btn btn-outline-primary" (click)="addDocumentUrl(docUrlInput)">
+                <i class="pi pi-plus"></i>
+                إضافة رابط
+              </button>
+              <label class="btn btn-outline-secondary mb-0">
+                <i class="pi pi-upload"></i>
+                رفع ملف مستند
+                <input type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" class="d-none" (change)="onDocumentFileSelected($event)" />
+              </label>
+            </div>
+            <div class="upload-progress" *ngIf="isLoadingMediaDoc">
+              <div class="progress">
+                <div class="progress-bar bg-info" [style.width.%]="uploadProgressDoc"></div>
+              </div>
+              <small>جاري تحميل المستند... {{ uploadProgressDoc }}%</small>
+            </div>
             <div class="content-status success" *ngIf="documentsFA.length > 0">
               <i class="pi pi-check-circle"></i>
               <span>تمت إضافة {{ documentsFA.length }} مستند</span>
             </div>
           </div>
-
           <div class="doc-list mt-2" *ngIf="documentsFA.length > 0">
             <div class="d-flex align-items-center gap-2 mb-2" *ngFor="let ctrl of documentsFA.controls; let i = index">
               <span class="badge bg-light text-dark">#{{ i + 1 }}</span>
@@ -193,21 +197,49 @@
               </button>
             </div>
           </div>
+          <small class="text-muted d-block mt-1">
+            سيتم إرسال أول رابط فقط إلى الخادم كـ pdfUrl.
+          </small>
         </div>
       </div>
 
-      <!-- Options (unchanged) -->
+      <!-- Pricing -->
+      <div class="form-section">
+        <h6 class="section-title"><i class="pi pi-credit-card"></i> التسعير</h6>
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">السعر</label>
+            <input type="number" class="form-control" formControlName="price" min="0" 
+              [class.is-invalid]="isFieldInvalid('price')"
+              [readonly]="lessonForm.get('isFree')?.value"
+              [class.bg-light]="lessonForm.get('isFree')?.value"
+            />
+            <div class="form-text">اتركه 0 إذا كان الدرس مجانياً أو حدده بحسب السياسة</div>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('price')">
+              {{ getFieldError('price') }}
+            </div>  
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">العملة</label>
+            <select class="form-select" formControlName="currency">
+              <option value="EGP">EGP</option>
+            </select>
+          </div>
+          <div class="col-md-5 d-flex align-items-end">
+            <div class="form-check mt-4">
+              <input class="form-check-input" type="checkbox" formControlName="isFree" id="isFreeChk{{lessonIndex}}" />
+              <label class="form-check-label" [for]="'isFreeChk' + lessonIndex">
+                مجاني
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Options -->
       <div class="form-section">
         <h6 class="section-title"><i class="pi pi-sliders-h"></i> خيارات الدرس</h6>
         <div class="options-grid">
-          <div class="option-card">
-            <label class="form-check">
-              <input class="form-check-input" type="checkbox" formControlName="isFree" />
-              <span class="form-check-label">
-                <i class="pi pi-gift"></i> مجاني
-              </span>
-            </label>
-          </div>
           <div class="option-card">
             <label class="form-check">
               <input class="form-check-input" type="checkbox" formControlName="isActive" />
@@ -216,6 +248,36 @@
               </span>
             </label>
           </div>
+        </div>
+      </div>
+
+      <!-- Live session fields (when lessonType = live) -->
+      <div class="form-section" *ngIf="lessonForm.get('lessonType')?.value === 'live'">
+        <h6 class="section-title"><i class="pi pi-users"></i> جلسة مباشرة (Zoom)</h6>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">رابط Zoom</label>
+              <input type="url" class="form-control" formControlName="zoomUrl" placeholder="https://zoom.us/j/..." />
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label class="form-label">معرف الاجتماع</label>
+              <input type="text" class="form-control" formControlName="zoomMeetingId" />
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group">
+              <label class="form-label">الرمز</label>
+              <input type="text" class="form-control" formControlName="zoomPasscode" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">التاريخ/الوقت</label>
+          <input type="datetime-local" class="form-control" formControlName="scheduledAt" />
+          <div class="form-text">اترك القيمة فارغة إذا لم يتم التحديد بعد (سيتم إرسال null بأمان)</div>
         </div>
       </div>
     </form>

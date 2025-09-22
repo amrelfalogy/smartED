@@ -1,104 +1,293 @@
+// ✅ COMPLETE UPDATE: lesson.service.ts - Fixed endpoints and improved error handling
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Lesson } from '../models/course-complete.model';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Lesson } from 'src/app/core/models/course-complete.model';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { environment } from 'src/environments/environment';
 
-interface LessonsResponse {
-  lessons: any[];
-  pagination: { total: number; pages: number; currentPage: number; limit: number };
+export interface CreateLessonDto {
+  title: string;
+  description: string;
+  content?: string | null;
+  unitId: string;
+  order: number;
+  duration?: number | null;
+  lessonType: Lesson['lessonType'];
+  difficulty: Lesson['difficulty'];
+  isFree?: boolean;
+  isActive?: boolean;
+  status?: string;
+  price?: number | null;
+  currency?: string | null;
+  academicYearId?: string | null;
+  studentYearId?: string | null;
+  thumbnail?: string | null;
+  
+  // Media
+  videoUrl?: string | null;
+  pdfUrl?: string | null;
+  pdfFileName?: string | null;
+  pdfFileSize?: number | null;
+
+  // Live fields (only when lessonType = 'live')
+  zoomUrl?: string | null;
+  zoomMeetingId?: string | null;
+  zoomPasscode?: string | null;
+  scheduledAt?: string | null;
 }
 
-export interface LessonResponse {
-  lesson: any;
-  videos?: Array<{ url?: string } | string>;
-  quizzes?: any[];
-  documents?: Array<{ url?: string } | string>;
+export interface UpdateLessonDto extends Partial<CreateLessonDto> {}
+
+// ✅ Backend response interfaces
+interface CreateLessonResponse {
+  message: string;
+  lesson: any; // Raw lesson data
+  optimizations?: any;
+}
+
+interface GetLessonResponse {
+  lesson: any; // Raw lesson data
+  videos: any[];
+  quizzes: any[];
+  assignments: any[];
+}
+
+// ✅ NEW: Lessons list response interface
+interface GetLessonsResponse {
+  lessons: any[];
+  pagination?: {
+    total: number;
+    pages: number;
+    currentPage: number;
+    limit: number;
+  };
 }
 
 @Injectable({ providedIn: 'root' })
 export class LessonService {
-  private baseUrl = '/api/content/lessons';
+  private baseUrl = `${environment.apiUrl}/content/lessons`;
 
   constructor(private http: HttpClient) {}
 
+  // ✅ FIXED: Use correct endpoint with unitId query parameter
   getLessonsByUnit(unitId: string): Observable<Lesson[]> {
-    return this.http.get<LessonsResponse>(`${this.baseUrl}?unitId=${unitId}`).pipe(
-      map(response => (response.lessons || []).map(l => this.normalize(l))),
-      catchError(this.handleError)
+    console.log('🔍 Getting lessons for unit:', unitId);
+    
+    // ✅ Method 1: Try with unitId query parameter
+    const params = new HttpParams().set('unitId', unitId);
+    
+    return this.http.get<GetLessonsResponse | Lesson[]>(this.baseUrl, { params }).pipe(
+      map((response: GetLessonsResponse | Lesson[]) => {
+        console.log(`🔍 Raw lessons response for unit ${unitId}:`, response);
+        
+        // Handle different response formats
+        let rawLessons: any[] = [];
+        
+        if (Array.isArray(response)) {
+          // Direct array response
+          rawLessons = response;
+        } else if (response && Array.isArray(response.lessons)) {
+          // Wrapped response with lessons array
+          rawLessons = response.lessons;
+        } else {
+          // Fallback - empty array
+          rawLessons = [];
+        }
+        
+        console.log(`✅ Found ${rawLessons.length} lessons for unit ${unitId}`);
+        return rawLessons.map(lesson => this.normalizeLessonData(lesson));
+      }),
+      catchError((error) => {
+        console.warn(`⚠️ Query parameter method failed for unit ${unitId}:`, error);
+        // ✅ Fallback to client-side filtering
+        return this.getLessonsByUnitClientSide(unitId);
+      })
     );
   }
 
-  getLesson(id: string): Observable<LessonResponse> {
-    return this.http.get<LessonResponse>(`${this.baseUrl}/${id}`).pipe(
-      map(res => res),
-      catchError(this.handleError)
+  // ✅ NEW: Get all lessons (for fallback filtering)
+  getAllLessons(): Observable<Lesson[]> {
+    return this.http.get<GetLessonsResponse | Lesson[]>(this.baseUrl).pipe(
+      map((response: GetLessonsResponse | Lesson[]) => {
+        console.log('🔍 All lessons response:', response);
+        const rawLessons = Array.isArray(response) ? response : (response.lessons || []);
+        return rawLessons.map(lesson => this.normalizeLessonData(lesson));
+      }),
+      catchError((error) => {
+        console.error('❌ Failed to get all lessons:', error);
+        return of([]); // Return empty array on error
+      })
     );
   }
 
-  createLesson(data: Partial<Lesson> & { title: string; description: string; unitId: string }): Observable<Lesson> {
-    const payload = this.transformLessonForAPI(data);
-    return this.http.post<LessonResponse>(this.baseUrl, payload).pipe(
-      map(response => this.normalize(response.lesson || response)),
-      catchError(this.handleError)
+  // ✅ NEW: Client-side filter method as fallback
+  getLessonsByUnitClientSide(unitId: string): Observable<Lesson[]> {
+    console.log('🔄 Using client-side filtering for unit:', unitId);
+    
+    return this.getAllLessons().pipe(
+      map((lessons: Lesson[]) => {
+        const filtered = lessons.filter(lesson => lesson.unitId === unitId);
+        console.log(`✅ Client-side filtered ${filtered.length} lessons for unit ${unitId}`);
+        return filtered;
+      })
     );
   }
 
-  updateLesson(id: string, partial: Partial<Lesson>): Observable<Lesson> {
-    const payload = this.transformLessonForAPI(partial);
-    return this.http.put<LessonResponse | Lesson>(`${this.baseUrl}/${id}`, payload).pipe(
-      map(response => this.normalize(('lesson' in (response as any)) ? (response as any).lesson : response)),
-      catchError(this.handleError)
+  // ✅ Handle wrapped response from backend
+  getLessonById(lessonId: string): Observable<Lesson> {
+    return this.http.get<GetLessonResponse>(`${this.baseUrl}/${encodeURIComponent(lessonId)}`).pipe(
+      map((response: GetLessonResponse) => {
+        console.log(`✅ Lesson ${lessonId} response:`, response);
+        return this.normalizeLessonData(response.lesson);
+      })
     );
   }
 
-  deleteLesson(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(catchError(this.handleError));
-  }
-
-  private transformLessonForAPI(data: any): any {
-    // Backend does NOT accept videos/documents here; and name/content are disallowed
-    const allowed = [
-      'title', 'description', 'unitId', 'order',
-      'duration', 'lessonType', 'sessionType', 'difficulty',
-      'isFree', 'isActive'
-    ];
-    const out: any = {};
-    for (const key of allowed) {
-      if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
-        out[key] = data[key];
-      }
+  // ✅ Handle wrapped response from backend
+  createLesson(payload: CreateLessonDto): Observable<Lesson> {
+    // ✅ Clean payload - remove null/undefined zoomUrl if not live lesson
+    const cleanPayload = { ...payload };
+    if (payload.lessonType !== 'live') {
+      delete cleanPayload.zoomUrl;
+      delete cleanPayload.zoomMeetingId;
+      delete cleanPayload.zoomPasscode;
+      delete cleanPayload.scheduledAt;
     }
-    return out;
+    
+    console.log('🚀 Creating lesson:', cleanPayload);
+    
+    return this.http.post<CreateLessonResponse>(this.baseUrl, cleanPayload).pipe(
+      map((response: CreateLessonResponse) => {
+        console.log('✅ Lesson created:', response);
+        return this.normalizeLessonData(response.lesson);
+      })
+    );
   }
 
-  private normalize(lesson: any): Lesson {
-    if (!lesson) return {} as Lesson;
+  updateLesson(lessonId: string, payload: UpdateLessonDto): Observable<Lesson> {
+    const cleanPayload = { ...payload };
+    if (payload.lessonType !== 'live') {
+      delete cleanPayload.zoomUrl;
+      delete cleanPayload.zoomMeetingId;
+      delete cleanPayload.zoomPasscode;
+      delete cleanPayload.scheduledAt;
+    }
+    
+    console.log('🔄 Updating lesson:', lessonId, cleanPayload);
+    
+    return this.http.put<CreateLessonResponse>(`${this.baseUrl}/${encodeURIComponent(lessonId)}`, cleanPayload).pipe(
+      map((response: CreateLessonResponse) => {
+        console.log('✅ Lesson updated:', response);
+        return this.normalizeLessonData(response.lesson || response);
+      })
+    );
+  }
+
+  deleteLesson(lessonId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${encodeURIComponent(lessonId)}`);
+  }
+
+  // ✅ NEW: Get lessons with advanced filtering options
+  getLessonsWithFilters(filters: {
+    unitId?: string;
+    subjectId?: string;
+    lessonType?: string;
+    difficulty?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Observable<{lessons: Lesson[], pagination?: any}> {
+    let params = new HttpParams();
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params = params.set(key, String(value));
+      }
+    });
+    
+    return this.http.get<GetLessonsResponse>(this.baseUrl, { params }).pipe(
+      map((response: GetLessonsResponse) => {
+        const lessons = (response.lessons || []).map(lesson => this.normalizeLessonData(lesson));
+        return {
+          lessons,
+          pagination: response.pagination
+        };
+      })
+    );
+  }
+
+  // ✅ IMPROVED: Normalize lesson data from backend with better null handling
+  private normalizeLessonData(rawLesson: any): Lesson {
+    if (!rawLesson) {
+      throw new Error('Invalid lesson data received from backend');
+    }
+
+    console.log('🔄 Normalizing lesson:', rawLesson.id, rawLesson.title);
+
     return {
-      id: lesson.id,
-      title: lesson.title,
-      description: lesson.description,
-      unitId: lesson.unitId || lesson.lectureId,
-      order: lesson.order ?? 0,
-      isActive: lesson.isActive ?? true,
-      isFree: lesson.isFree ?? false,
-      duration: lesson.duration ?? 0,
-      lessonType: lesson.lessonType || 'center_recorded',
-      sessionType: lesson.sessionType || 'recorded',
-      difficulty: lesson.difficulty || 'beginner',
-      status: lesson.status,
-      academicYearId: lesson.academicYearId,
-      studentYearId: lesson.studentYearId,
-      createdAt: lesson.createdAt,
-      updatedAt: lesson.updatedAt,
-      // Media comes from GET /lessons/:id as separate arrays
-      videos: Array.isArray(lesson.videos) ? lesson.videos : undefined,
-      documents: Array.isArray(lesson.documents) ? lesson.documents : undefined
+      id: rawLesson.id,
+      title: rawLesson.title || '',
+      description: rawLesson.description || '',
+      content: rawLesson.content || null,
+      unitId: rawLesson.unitId,
+      order: rawLesson.order || 1,
+      duration: rawLesson.duration || 0,
+      difficulty: rawLesson.difficulty || 'beginner',
+      lessonType: rawLesson.lessonType || 'video',
+      
+      // Academic info
+      academicYearId: rawLesson.academicYearId || null,
+      studentYearId: rawLesson.studentYearId || null,
+      
+      // Media
+      thumbnail: rawLesson.thumbnail || null,
+      videoUrl: rawLesson.videoUrl || null,
+      pdfUrl: rawLesson.pdfUrl || null,
+      pdfFileName: rawLesson.pdfFileName || null,
+      pdfFileSize: rawLesson.pdfFileSize || null,
+      
+      // ✅ For UI compatibility - create arrays from single URLs
+      videos: rawLesson.videoUrl ? [rawLesson.videoUrl] : [],
+      documents: rawLesson.pdfUrl ? [rawLesson.pdfUrl] : [],
+      
+      // Pricing
+      price: rawLesson.price || 0,
+      currency: rawLesson.currency || 'EGP',
+      isFree: rawLesson.isFree || false,
+      
+      // ✅ IMPROVED: Live session - Better null handling
+      zoomUrl: this.cleanZoomField(rawLesson.zoomUrl),
+      zoomMeetingId: this.cleanZoomField(rawLesson.zoomMeetingId),
+      zoomPasscode: this.cleanZoomField(rawLesson.zoomPasscode),
+      scheduledAt: this.cleanScheduledAt(rawLesson.scheduledAt),
+      
+      // Status
+      status: rawLesson.status || 'published',
+      isActive: rawLesson.isActive ?? true,
+      
+      // Timestamps
+      createdAt: rawLesson.createdAt,
+      updatedAt: rawLesson.updatedAt,
+      
+      // Access info (from getLessonById)
+      hasAccess: rawLesson.hasAccess,
+      accessReason: rawLesson.accessReason
     };
   }
 
-  private handleError = (error: any) => {
-    console.error('Lesson Service Error', error);
-    return throwError(() => error);
-  };
+  // ✅ NEW: Helper methods for cleaning zoom fields
+  private cleanZoomField(value: any): string | null {
+    if (!value || value === 'null' || value === 'http://null.com') {
+      return null;
+    }
+    return String(value);
+  }
+
+  private cleanScheduledAt(value: any): string | null {
+    if (!value || value === '2000-01-01T00:00:00.000Z' || value === '00') {
+      return null;
+    }
+    return String(value);
+  }
 }

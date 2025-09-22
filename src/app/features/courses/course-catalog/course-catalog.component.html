@@ -60,6 +60,22 @@
         </div>
       </div>
 
+      <!-- Session Type -->
+      <div class="filter-group">
+        <label class="filter-label">نوع التقديم</label>
+        <div class="grade-buttons">
+          <button class="grade-btn" [class.active]="selectedSessionType === 'all'" (click)="selectSessionType('all')">
+            الكل
+          </button>
+          <button class="grade-btn" [class.active]="selectedSessionType === 'recorded'" (click)="selectSessionType('recorded')">
+            مسجل - المركز
+          </button>
+          <button class="grade-btn" [class.active]="selectedSessionType === 'studio'" (click)="selectSessionType('studio')">
+            منتج - الاستوديو
+          </button>
+        </div>
+      </div>
+
       <!-- Search -->
       <div class="filter-group">
         <label class="filter-label">بحث</label>
@@ -138,7 +154,14 @@
             <i class="pi pi-users"></i>
             {{ getStudentYearName(s.studentYearId) }}
           </span>
-          
+          <span class="meta-item">
+            <i class="pi pi-tag"></i>
+            {{ getSessionTypeLabel(getSubjectSessionType(s)) }}
+          </span>
+          <span class="meta-item" *ngIf="getSubjectPrice(s) != null">
+            <i class="pi pi-credit-card"></i>
+            {{ getSubjectPrice(s) | number }} جنيه
+          </span>
         </div>
 
         <div class="actions">

@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CardCarouselComponent } from './card-carousel/card-carousel.component'; 
 import { CarouselModule } from 'primeng/carousel';
 import { RouterModule } from '@angular/router';
@@ -9,20 +10,26 @@ import { DynamicFormArrayComponent } from './dynamic-form-array/dynamic-form-arr
 import { HeaderComponent } from '../admin-dashboard/layouts/admin-layouts/header/header.component';
 import { HeaderLeftComponent } from '../admin-dashboard/layouts/admin-layouts/header/header-left/header-left.component';
 import { HeaderRightComponent } from '../admin-dashboard/layouts/admin-layouts/header/header-right/header-right.component';
+import { CardComponent } from '../admin-dashboard/shared/components/card/card.component';
+import { ActivationCodeInputComponent } from './activation-code-input/activation-code-input.component';
 
 @NgModule({
   declarations: [
+    CardComponent,
     CardCarouselComponent,
     FileUploadComponent,
     VideoPlayerComponent,
     DynamicFormArrayComponent,
     HeaderComponent,
     HeaderLeftComponent,
-    HeaderRightComponent
+    HeaderRightComponent,
+    ActivationCodeInputComponent
   ],
   imports: [
     CommonModule,
     CarouselModule,
+    ReactiveFormsModule,
+    FormsModule,
     RouterModule  
   ],
   exports: [
@@ -33,6 +40,8 @@ import { HeaderRightComponent } from '../admin-dashboard/layouts/admin-layouts/h
     HeaderComponent,
     HeaderLeftComponent,
     HeaderRightComponent,
+    CardComponent,
+    ActivationCodeInputComponent
   ]
 })
 export class SharedModule { }

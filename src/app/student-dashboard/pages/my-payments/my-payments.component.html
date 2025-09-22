@@ -1,159 +1,322 @@
-<div class="payments-page">
-  <div class="page-header">
-    <h1 class="page-title">إدارة المدفوعات</h1>
-    <p class="page-description">عرض وإدارة مدفوعاتك وحالات الاشتراك</p>
-  </div>
+<div class="my-payments-page">
+  <!-- Payment Form Mode -->
+  <div *ngIf="viewMode === 'form'" class="payment-form-container">
+    <div class="header">
+      <div class="header-content">
+        <h2>
+          <i class="pi pi-credit-card me-3"></i>
+          الحصول على الوصول
+        </h2>
+        <p class="text-muted">
+          {{ planType === 'subject' ? 'شراء المادة بالكامل' : 'شراء ' + contentTypeLabel }}
+        </p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline-secondary" (click)="goBack()">
+          <i class="pi pi-arrow-right me-2"></i>
+          العودة
+        </button>
+        <button class="btn btn-outline-secondary" (click)="goToHistory()">
+          <i class="pi pi-history me-2"></i>
+          تاريخ المدفوعات
+        </button>
+      </div>
+    </div>
 
-  <!-- Stats -->
-  <div class="stats-section">
-    <div class="row">
-      <div class="col-md-6 mb-4">
-        <div class="stat-card">
-          <div class="stat-icon success"><i class="pi pi-check-circle"></i></div>
-          <div class="stat-content">
-            <h3 class="stat-number">{{ stats.lastPayments }}</h3>
-            <p class="stat-label">آخر المدفوعات الناجحة</p>
+    <div class="alert alert-danger" *ngIf="error">
+      <i class="pi pi-exclamation-triangle me-2"></i>
+      {{ error }}
+    </div>
+
+    <div class="alert alert-success" *ngIf="success">
+      <i class="pi pi-check-circle me-2"></i>
+      {{ success }}
+    </div>
+
+    <!-- ✅ NEW: Access Method Selection -->
+    <div class="access-methods-section" *ngIf="showAccessOptions && !activationSuccess">
+      <div class="section-header">
+        <h3>اختر طريقة الحصول على الوصول</h3>
+        <p>يمكنك الدفع أو استخدام رمز تفعيل إذا كان لديك واحد</p>
+      </div>
+
+      <div class="access-methods">
+        <div class="access-method-card" 
+             [class.selected]="selectedAccessMethod === 'payment'"
+             (click)="selectAccessMethod('payment')">
+          <div class="method-icon payment-icon">
+            <i class="pi pi-credit-card"></i>
+          </div>
+          <div class="method-content">
+            <h4>الدفع الإلكتروني</h4>
+            <p>ادفع وستحصل على الوصول بعد موافقة الإدارة</p>
+            <div class="method-price" *ngIf="amount !== null">
+              <span class="price">{{ amount | number }} {{ currency }}</span>
+            </div>
+          </div>
+          <div class="method-check" *ngIf="selectedAccessMethod === 'payment'">
+            <i class="pi pi-check-circle"></i>
           </div>
         </div>
-      </div>
-      <div class="col-md-6 mb-4">
-        <div class="stat-card">
-          <div class="stat-icon warning"><i class="pi pi-clock"></i></div>
-          <div class="stat-content">
-            <h3 class="stat-number">{{ stats.pendingPayments }}</h3>
-            <p class="stat-label">مدفوعات في انتظار التأكيد</p>
+
+        <div class="access-method-card" 
+             [class.selected]="selectedAccessMethod === 'activation'"
+             (click)="selectAccessMethod('activation')">
+          <div class="method-icon activation-icon">
+            <i class="pi pi-key"></i>
+          </div>
+          <div class="method-content">
+            <h4>رمز التفعيل</h4>
+            <p>أدخل رمز التفعيل للحصول على وصول فوري</p>
+            <div class="method-benefit">
+              <i class="pi pi-bolt"></i>
+              <span>وصول فوري</span>
+            </div>
+          </div>
+          <div class="method-check" *ngIf="selectedAccessMethod === 'activation'">
+            <i class="pi pi-check-circle"></i>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Payment Form (only show when payment method selected and not success) -->
+    <div class="payment-card" *ngIf="selectedAccessMethod === 'payment' && !error && !activationSuccess">
+      <div class="card-header">
+        <h3>تفاصيل الدفع</h3>
+      </div>
+      
+      <div class="summary">
+        <div class="summary-line">
+          <span class="label">النوع</span>
+          <span class="value">
+            <i class="pi" [ngClass]="planType === 'subject' ? 'pi-book' : 'pi-play-circle'"></i>
+            {{ contentTypeLabel }}
+          </span>
+        </div>
+        <div class="summary-line">
+          <span class="label">العنوان</span>
+          <span class="value">
+            {{ planType === 'subject' ? (subject?.name || 'غير متاح') : (lesson?.title || 'غير متاح') }}
+          </span>
+        </div>
+        <div class="summary-line total">
+          <span class="label">المبلغ الإجمالي</span>
+          <span class="value">
+            <ng-container *ngIf="amount !== null; else noAmount">
+              {{ amount | number }} {{ currency }}
+            </ng-container>
+            <ng-template #noAmount>غير محدد</ng-template>
+          </span>
+        </div>
+      </div>
+
+      <div class="form">
+        <div class="form-group">
+          <label class="form-label">
+            <i class="pi pi-wallet me-2"></i>
+            طريقة الدفع
+          </label>
+          <select class="form-select" [(ngModel)]="paymentMethod">
+            <option value="cash">كاش</option>
+            <option value="instapay">InstaPay</option>
+            <option value="vodafone_cash">فودافون كاش</option>
+            <option value="bank_transfer">تحويل بنكي</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="pi pi-link me-2"></i>
+            رابط إيصال الدفع (اختياري)
+          </label>
+          <input class="form-control" type="url" [(ngModel)]="receiptUrl" placeholder="https://..." />
+          <small class="form-text">يمكنك رفع الإيصال على أي خدمة ملفات ثم لصق الرابط</small>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">
+                <i class="pi pi-hashtag me-2"></i>
+                رقم المعاملة (اختياري)
+              </label>
+              <input class="form-control" type="text" [(ngModel)]="transactionId" placeholder="رقم المعاملة من التطبيق" />
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">
+                <i class="pi pi-tag me-2"></i>
+                الرقم المرجعي (اختياري)
+              </label>
+              <input class="form-control" type="text" [(ngModel)]="referenceNumber" placeholder="الرقم المرجعي للعملية" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="pi pi-comment me-2"></i>
+            ملاحظات (اختياري)
+          </label>
+          <textarea class="form-control" rows="3" [(ngModel)]="notes" placeholder="أي ملاحظات إضافية..."></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary btn-lg" [disabled]="isSubmitting" (click)="submit()">
+            <i class="pi" [ngClass]="isSubmitting ? 'pi-spinner pi-spin' : 'pi-send'"></i>
+            {{ isSubmitting ? 'جاري الإرسال...' : 'إرسال طلب الدفع' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ NEW: Success State -->
+    <div class="success-card" *ngIf="activationSuccess">
+      <div class="success-animation">
+        <div class="success-checkmark">
+          <i class="pi pi-check"></i>
+        </div>
+      </div>
+      <h3>تم بنجاح!</h3>
+      <p>{{ activationMessage }}</p>
+      <div class="success-actions">
+        <button class="btn btn-primary" (click)="goBack()">
+          <i class="pi pi-arrow-right me-2"></i>
+          العودة للمحتوى
+        </button>
+      </div>
+    </div>
   </div>
 
-  <div class="row">
-    <!-- History -->
-    <div class="col-lg-6 mb-4">
-      <div class="content-card">
-        <div class="card-header">
-          <h5 class="card-title"><i class="pi pi-history me-2"></i>تاريخ المدفوعات</h5>
-        </div>
-        <div class="card-body">
-          <div class="payment-history">
-            <div class="payment-item" *ngFor="let payment of paymentHistory">
-              <div class="payment-info">
-                <h6 class="payment-course">{{ payment.course }}</h6>
-                <p class="payment-details">{{ payment.amount }} {{ payment.currency }} - {{ payment.method }}</p>
-                <small class="payment-date">{{ formatDate(payment.date) }}</small>
-              </div>
-              <div class="payment-status">
-                <span class="status-badge" [class]="'badge-' + getStatusColor(payment.status)">
-                  {{ getStatusLabel(payment.status) }}
-                </span>
-                <small class="payment-ref" *ngIf="payment.reference">{{ payment.reference }}</small>
-              </div>
-            </div>
+  <!-- Payment History Mode (unchanged) -->
+  <div *ngIf="viewMode === 'history'" class="payment-history-container">
+    <!-- ... existing payment history code ... -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          <i class="pi pi-history me-3"></i>
+          تاريخ المدفوعات
+        </h1>
+        <p class="page-description">عرض جميع عمليات الدفع والاشتراكات السابقة</p>
+      </div>
+      <button class="btn btn-primary" (click)="makeNewPayment()">
+        <i class="pi pi-plus me-2"></i>
+        دفعة جديدة
+      </button>
+    </div>
 
-            <div class="empty-state" *ngIf="paymentHistory.length === 0">
-              <i class="pi pi-receipt"></i>
-              <p>لا توجد مدفوعات بعد</p>
+    <!-- Stats Section -->
+    <div class="stats-section">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-icon success">
+              <i class="pi pi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-number">{{ completedPayments }}</h3>
+              <p class="stat-label">عملية مكتملة</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-icon warning">
+              <i class="pi pi-clock"></i>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-number">{{ pendingPayments }}</h3>
+              <p class="stat-label">في الانتظار</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="stat-card">
+            <div class="stat-icon info">
+              <i class="pi pi-wallet"></i>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-number">{{ totalPayments }}</h3>
+              <p class="stat-label">إجمالي العمليات</p>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Conditional Payment Form -->
-    <div class="col-lg-6 mb-4" *ngIf="showForm">
-      <div class="content-card">
-        <div class="card-header">
-          <h5 class="card-title"><i class="pi pi-plus me-2"></i>دفعة جديدة</h5>
-          <small class="text-muted" *ngIf="selectedPlan">
-            الخطة: {{ selectedPlan.name }} — {{ selectedPlan.price }} جنيه
-          </small>
-        </div>
-        <div class="card-body">
-          <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
-            <!-- Amount (read-only) -->
-            <div class="form-group mb-3">
-              <label class="form-label">المبلغ</label>
-              <div class="input-group">
-                <input type="number" class="form-control" formControlName="amount" readonly>
-                <span class="input-group-text">جنيه</span>
-              </div>
-            </div>
-
-            <!-- Payment Method -->
-            <div class="form-group mb-3">
-              <label class="form-label">طريقة الدفع</label>
-              <div class="payment-methods">
-                <div class="payment-method" [ngStyle]="{ 'background-color': method.color }" *ngFor="let method of paymentMethods">
-                  <input type="radio"
-                         [id]="'method-' + method.value"
-                         [value]="method.value"
-                         formControlName="paymentMethod"
-                         class="payment-method-radio">
-                  <label [for]="'method-' + method.value" class="payment-method-label">
-                    <i [class]="method.icon"></i>
-                    {{ method.label }}
-                  </label>
-                </div>
-              </div>
-              <div class="invalid-feedback" *ngIf="paymentForm.get('paymentMethod')?.touched && paymentForm.get('paymentMethod')?.errors">
-                يرجى اختيار طريقة الدفع
-              </div>
-            </div>
-
-            <!-- Transaction Reference (optional) -->
-            <div class="form-group mb-3">
-              <label class="form-label">رقم المرجع (اختياري)</label>
-              <input type="text" class="form-control" formControlName="transactionReference" placeholder="أدخل رقم المرجع إن وجد">
-            </div>
-
-            <!-- Notes (optional) -->
-            <div class="form-group mb-3">
-              <label class="form-label">ملاحظات</label>
-              <textarea class="form-control" formControlName="notes" rows="2" placeholder="ملاحظات إضافية"></textarea>
-            </div>
-
-            <!-- File Upload -->
-            <div class="form-group mb-3">
-              <label class="form-label">إيصال الدفع *</label>
-              <div class="file-upload-area">
-                <input type="file"
-                       id="receipt-upload"
-                       accept="image/*,.pdf"
-                       (change)="onFileSelected($event)"
-                       class="file-input">
-                <label for="receipt-upload" class="file-upload-label">
-                  <i class="pi pi-cloud-upload-alt"></i>
-                  <span *ngIf="!selectedFile">اختر الملف أو اسحبه هنا</span>
-                  <span *ngIf="selectedFile" class="selected-file">{{ selectedFile.name }}</span>
-                </label>
-              </div>
-              <small class="form-text">يُقبل: JPG, PNG, PDF (الحد الأقصى: 5MB)</small>
-            </div>
-
-            <!-- Submit -->
-            <button type="submit"
-                    class="btn btn-primary w-100"
-                    [disabled]="isSubmitting || !paymentForm.valid || !selectedFile">
-              <i class="pi pi-spinner fa-spin me-2" *ngIf="isSubmitting"></i>
-              <i class="pi pi-paper-plane me-2" *ngIf="!isSubmitting"></i>
-              {{ isSubmitting ? 'جاري الإرسال...' : 'إرسال طلب الدفع' }}
-            </button>
-          </form>
-        </div>
-      </div>
+    <!-- Error Message -->
+    <div class="alert alert-danger" *ngIf="error">
+      <i class="pi pi-exclamation-triangle me-2"></i>
+      {{ error }}
     </div>
-  </div>
 
-  <!-- Instructions -->
-  <div class="instructions-section">
+    <!-- Payment History -->
     <div class="content-card">
       <div class="card-header">
-        <h5 class="card-title"><i class="pi pi-info-circle me-2"></i>تعليمات الدفع</h5>
+        <h3 class="card-title">
+          <i class="pi pi-list me-2"></i>
+          سجل المدفوعات
+        </h3>
       </div>
       <div class="card-body">
-        <pre class="instructions-text">{{ paymentInstructions }}</pre>
+        <div *ngIf="paymentsLoading" class="loading-state">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">جاري التحميل...</span>
+          </div>
+          <p>جاري تحميل المدفوعات...</p>
+        </div>
+
+        <div *ngIf="!paymentsLoading && payments.length === 0" class="empty-state">
+          <i class="pi pi-inbox"></i>
+          <h4>لا توجد مدفوعات</h4>
+          <p>لم تقم بأي عمليات دفع حتى الآن</p>
+          <button class="btn btn-primary" (click)="makeNewPayment()">
+            <i class="pi pi-plus me-2"></i>
+            ابدأ الآن
+          </button>
+        </div>
+
+        <div class="payment-history" *ngIf="!paymentsLoading && payments.length > 0">
+          <div class="payment-item" *ngFor="let payment of payments; trackBy: trackPayment">
+            <div class="payment-icon">
+              <i class="pi" [ngClass]="getPaymentType(payment) === 'subject' ? 'pi-book' : 'pi-play-circle'"></i>
+            </div>
+            <div class="payment-info">
+              <div class="payment-course">{{ getPaymentTitle(payment) }}</div>
+              <div class="payment-details">
+                طريقة الدفع: {{ getPaymentMethodLabel(payment.paymentMethod) }} • 
+                المبلغ: {{ payment.amount | number }} {{ payment.currency || 'EGP' }}
+              </div>
+              <div class="payment-date">{{ formatDate(payment.createdAt) }}</div>
+            </div>
+            <div class="payment-status">
+              <span class="status-badge" [ngClass]="getStatusBadgeClass(payment.status)">
+                {{ getStatusLabel(payment.status) }}
+              </span>
+              <div class="payment-ref" *ngIf="payment.referenceNumber">
+                مرجع: {{ payment.referenceNumber }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ✅ NEW: Activation Code Modal -->
+<div class="activation-modal-overlay" *ngIf="showActivationModal" (click)="onActivationClose()">
+  <div class="activation-modal" (click)="$event.stopPropagation()">
+    <app-activation-code-input
+      [lessonId]="lessonId ?? undefined"
+      [subjectId]="subjectId ?? undefined"
+      [autoFocus]="true"
+      [autoNavigate]="true"
+      (activationSuccess)="handleActivationSuccess($event)"
+      (activationError)="onActivationError($event)"
+      (close)="onActivationClose()">
+    </app-activation-code-input>
   </div>
 </div>

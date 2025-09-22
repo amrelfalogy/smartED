@@ -7,7 +7,6 @@ export interface Subject {
   imageUrl: string;
   order: number;
 
-  
   academicYearId?: string;
   studentYearId?: string;
   status?: 'draft' | 'published';
@@ -24,7 +23,21 @@ export interface Subject {
   totalDuration?: number;
   studentsCount?: number;
   rating?: number;
-  price?: number;
+
+  // Commerce
+  price?: number | null;
+  // Delivery/session is now at the subject level
+  sessionType?:
+    | 'recorded'
+    | 'center_recorded'
+    | 'studio'
+    | 'live'
+    | 'zoom'
+    | 'teams'
+    | 'webinar';
+
+  // Backend teacher relation
+  teacherId?: string;
 }
 
 export interface Unit {
@@ -35,17 +48,10 @@ export interface Unit {
   order: number;
   lessons?: Lesson[];
   isActive?: boolean;
-  status?: 'draft' | 'published';
+  status?: 'draft' | 'published' | 'deleted';
   thumbnail?: string | null;
   createdAt?: string;
   updatedAt?: string;
-}
-
-export interface LessonContent {
-  videoUrl?: string;
-  documentUrl?: string;
-  htmlContent?: string;
-  attachments?: string[];
 }
 
 export interface Lesson {
@@ -53,13 +59,24 @@ export interface Lesson {
   title: string;
   description: string;
 
-  // Backend uses unitId now (lectureId kept for backward compatibility when loading legacy data)
   unitId?: string;
-  lectureId?: string;
+  lectureId?: string; // legacy
 
   duration?: number; // seconds
-  lessonType?: 'center_recorded' | 'studio_produced' | 'zoom' | 'document';
-  sessionType?: 'recorded' | 'live';
+
+  // Content format (delivery removed from lesson)
+  lessonType?:
+    | 'video'
+    | 'text'
+    | 'quiz'
+    | 'assignment'
+    | 'live'
+    | 'document'
+    | 'pdf';
+
+  // Delivery/session REMOVED from lesson (moved to Subject)
+  // sessionType?: never;
+
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   order: number;
 
@@ -68,18 +85,37 @@ export interface Lesson {
 
   isFree?: boolean;
   isActive?: boolean;
-  status?: 'draft' | 'published';
+  status?: 'draft' | 'published' | 'deleted';
   thumbnail?: string | null;
 
-  videos?: string[];     // required: at least one for non-document lessons
-  documents?: string[];
-  
+  // Backend fields
+  content?: string | null;
+  price?: number | null;
+  currency?: 'EGP' | string | null;
+  videoUrl?: string | null;
+  pdfUrl?: string | null;
+  pdfFileName?: string | null;
+  pdfFileSize?: number | null;
+
+  // Live session
+  zoomUrl?: string | null;
+  zoomMeetingId?: string | null;
+  zoomPasscode?: string | null;
+  scheduledAt?: string | null;
+
+  // Access
   hasAccess?: boolean;
   requiresPayment?: boolean;
-  
+  accessReason?: string | null;
+
   createdAt?: string;
   updatedAt?: string;
+
+  // Optional legacy arrays
+  videos?: string[];
+  documents?: string[];
 }
+
 export interface CourseComplete {
   subject: Subject;
   units: Unit[];
@@ -103,108 +139,7 @@ export interface FormStep {
   hasErrors: boolean;
 }
 
-// Payment & Plans (unchanged)
-export interface LessonTypeCard {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  lessonType: 'center_recorded' | 'studio_produced' | 'zoom';
-  isAvailable: boolean;
-  isSelected: boolean;
-  color: string;
-}
-
-export type PlanType = 'lesson' | 'monthly' | 'semester';
-export type LessonType = 'center_recorded' | 'studio_produced' | 'zoom' | 'document';
-export type PaymentMethod = 'vodafone_cash' | 'instapay';
-export type PaymentStatus = 'pending' | 'approved' | 'rejected';
-
-export interface PaymentPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: 'EGP';
-  duration: number; // days
-  features: string[];
-  isPopular: boolean;
-  isActive: boolean;
-  order: number;
-  discountPercentage: string;
-  type: PlanType;
-  lessonType?: Extract<LessonType, 'center_recorded' | 'studio_produced'>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PaymentPlansResponse {
-  plans: PaymentPlan[];
-}
-
-export interface LessonAccess {
-  hasAccess: boolean;
-  requiresPayment: boolean;
-  message?: string;
-  planRequired?: string;
-}
-
-export interface CreatePaymentPlanRequest {
-  name: string;
-  description: string;
-  type: PlanType;
-  lessonType?: Extract<LessonType, 'center_recorded' | 'studio_produced'>;
-  price: number;
-  currency: 'EGP';
-  duration: number;
-  features: string[];
-}
-
-export interface CreatePaymentRequest {
-  planId: string;
-  amount: number;
-  currency: 'EGP';
-  paymentMethod: PaymentMethod;
-  receiptUrl: string;
-  notes?: string;
-  lessonId?: string;
-  subjectId?: string;
-}
-
-export interface StudentPayment {
-  id: string;
-  status: PaymentStatus;
-  amount: number;
-  currency: 'EGP';
-  paymentMethod: PaymentMethod;
-  planType: PlanType;
-  subjectId?: string;
-  subjectName?: string;
-  lessonId?: string;
-  lessonTitle?: string;
-  receiptUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AdminPayment extends StudentPayment {
-  studentId?: string;
-  studentName?: string;
-  studentEmail?: string;
-  academicYearId?: string;
-  academicYearName?: string;
-  studentYearId?: string;
-  studentYearName?: string;
-  transactionReference?: string;
-}
-
-export interface PaymentStatsOverview {
-  stats: Array<{ planType: PlanType; count: number; revenue: number }>;
-  totalRevenue: number;
-  byMethod: Array<{ method: PaymentMethod; count: number; revenue: number }>;
-}
-
-
+// Keep these for other pages (fixes ProgressStats import error)
 export interface CourseProgress {
   courseId: string;
   courseName: string;
@@ -223,37 +158,9 @@ export interface CourseProgress {
   };
 }
 
-export interface PaymentHistory {
-  id: string;
-  course: string;
-  amount: number;
-  currency: string;
-  method: string;
-  status: 'completed' | 'pending' | 'failed';
-  date: Date;
-  reference?: string;
-}
-
-export interface PaymentStats {
-  lastPayments: number;
-  pendingPayments: number;
-}
-
 export interface ProgressStats {
   totalCourses: number;
   completionRate: number;
   averageProgress: number;
   totalHoursStudied: number;
 }
-
-export interface Instructor {
-  id: number;
-  name: string;
-  photo: string;
-  specialization: string;
-  experience: number;
-  rating: number;
-  bio?: string;
-  department?: string;
-}
-

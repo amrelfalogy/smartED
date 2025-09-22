@@ -1,8 +1,9 @@
 {
   "/api/*": {
-    "target": "https://elearn-drizzle.vercel.app",
-    "secure": true,
+    "target": "http://130.162.171.106:8048",
+    "secure": false,
     "changeOrigin": true,
-    "logLevel": "debug"
+    "logLevel": "debug",
+    "timeout": 30000
   }
 }
