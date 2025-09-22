@@ -15,11 +15,5 @@
       "dest": "/index.html"
     }
   ],
-  "functions": {
-    "*": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
   "framework": "angular"
 }
