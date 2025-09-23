@@ -1,0 +1,9 @@
+.chart-income.active {
+  background-color: var(--primary-color);
+  color: #fff;
+  border-radius: 9px;
+  padding: 1px 10px;
+}
+.month, .week{
+    cursor: pointer;
+}

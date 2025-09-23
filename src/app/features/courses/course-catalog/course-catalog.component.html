@@ -12,6 +12,17 @@
         <i class="pi pi-filter"></i>
         تصفية الدورات
       </h3>
+      <!-- Search -->              
+      <div class="search-box">
+        <input
+          class="form-control"
+          type="text"
+          placeholder="ابحث بالاسم أو الوصف..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="applyFilters()"
+        />
+        <i class="pi pi-search"></i>
+      </div>
       <button
         *ngIf="hasActiveFilters"
         class="reset-btn"
@@ -64,9 +75,7 @@
       <div class="filter-group">
         <label class="filter-label">نوع التقديم</label>
         <div class="grade-buttons">
-          <button class="grade-btn" [class.active]="selectedSessionType === 'all'" (click)="selectSessionType('all')">
-            الكل
-          </button>
+          
           <button class="grade-btn" [class.active]="selectedSessionType === 'recorded'" (click)="selectSessionType('recorded')">
             مسجل - المركز
           </button>
@@ -74,22 +83,7 @@
             منتج - الاستوديو
           </button>
         </div>
-      </div>
-
-      <!-- Search -->
-      <div class="filter-group">
-        <label class="filter-label">بحث</label>
-        <div class="search-box">
-          <input
-            class="form-control"
-            type="text"
-            placeholder="ابحث بالاسم أو الوصف..."
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="applyFilters()"
-          />
-          <i class="pi pi-search"></i>
-        </div>
-      </div>
+      </div>     
     </div>
   </div>
 

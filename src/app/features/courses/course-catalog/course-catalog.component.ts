@@ -34,7 +34,7 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
   // Filters
   selectedAcademicYearId: string | null = null;
   selectedStudentYearId: string | null = null;
-  selectedSessionType: SessionFilter = 'all';
+  selectedSessionType: SessionFilter = 'recorded';
   searchTerm = '';
   selectedDifficulty: string | null = null;
 
@@ -170,7 +170,7 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
     this.selectedAcademicYearId = null;
     this.selectedStudentYearId = null;
        this.selectedDifficulty = null;
-    this.selectedSessionType = 'all';
+    this.selectedSessionType = 'recorded';
     this.searchTerm = '';
     this.applyFilters();
   }
@@ -191,10 +191,11 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
     }
 
     // sessionType is on subject
-    if (this.selectedSessionType !== 'all') {
+    if (this.selectedSessionType ) {
       filtered = filtered.filter(s => {
         const st = this.getSubjectSessionType(s);
-        return st === this.selectedSessionType || (this.selectedSessionType === 'recorded' && st === 'center_recorded');
+        return st === this.selectedSessionType ||
+           (this.selectedSessionType === 'recorded' && st === 'center_recorded');
       });
     }
 

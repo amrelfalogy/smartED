@@ -16,7 +16,7 @@
     </div>
 
     <!-- Charts Row -->
-    <div class="col-md-12 col-xl-8">
+    <div class="col-md-12 col-xl-12">
       <app-monthly-bar-chart
         [title]="'الإيراد اليومي'"
         [weekCategories]="weekCategories"
@@ -25,15 +25,7 @@
         [monthData]="monthRevenue"
       ></app-monthly-bar-chart>
     </div>
-    <div class="col-md-12 col-xl-4">
-      <app-income-overview-chart
-        [title]="'نظرة عامة على الدخل'"
-        [subtitle]="'حسب طريقة الدفع'"
-        [labels]="byMethodLabels"
-        [data]="byMethodRevenue"
-      ></app-income-overview-chart>
-    </div>
-
+  
      <!-- Plan type revenue/counts -->
     <div class="col-md-12 col-xl-8">
       <app-sales-report-chart
@@ -43,52 +35,61 @@
       ></app-sales-report-chart>
     </div>
 
-    <!-- Right Column: Users Analytics + Plan Type Chart -->
     <div class="col-md-12 col-xl-4">
-      <app-analytics-chart
-        [title]="'تسجيلات المستخدمين'"
-        [categories]="registrationCategories"
-        [seriesName]="'تسجيلات جديدة'"
-        [data]="registrationData"
-        [color]="'#FFB814'"
-      ></app-analytics-chart>
+      <app-income-overview-chart
+        [title]="'نظرة عامة على الدخل'"
+        [subtitle]="'حسب طريقة الدفع'"
+        [labels]="byMethodLabels"
+        [data]="byMethodRevenue"
+      ></app-income-overview-chart>
+    </div>
 
-      <h5 class="mb-3 mt-4">أحدث المستخدمين</h5>
-      <div class="card">
-        <div class="list-group list-group-flush">
-          <div class="list-group-item px-3" *ngIf="isLoadingUsers">
-            <i class="pi pi-spinner pi-spin"></i> جاري التحميل...
-          </div>
-          <a href="javascript:" class="list-group-item list-group-item-action px-3"
-             *ngFor="let u of recentUsers; trackBy: trackByUser">
-            <div class="d-flex">
-              <div class="flex-grow-1">
-                <h6 class="mb-1">{{ u.name }} <small class="text-muted">({{ u.role }})</small></h6>
-                <p class="mb-0 text-muted">{{ u.email }}</p>
+   <!-- Right Column: Users Analytics + Plan Type Chart -->
+    
+      <div class="row">
+        <!-- Chart (7 columns) -->
+        <div class="col-md-8">
+          <app-analytics-chart
+            [title]="'تسجيلات المستخدمين'"
+            [categories]="registrationCategories"
+            [seriesName]="'تسجيلات جديدة'"
+            [data]="registrationData"
+            [color]="'#FFB814'">
+          </app-analytics-chart>
+        </div>
+
+        <!-- Users List (5 columns) -->
+        <div class="col-md-4">
+          <h5 class="mb-3">أحدث المستخدمين</h5>
+          <div class="card">
+            <div class="list-group list-group-flush">
+              <div class="list-group-item px-3" *ngIf="isLoadingUsers">
+                <i class="pi pi-spinner pi-spin"></i> جاري التحميل...
               </div>
-              <div class="text-end">
-                <span class="badge" [ngClass]="u.isActive ? 'bg-success' : 'bg-secondary'">
-                  {{ u.isActive ? 'نشط' : 'غير نشط' }}
-                </span>
-                <div class="text-muted small">{{ u.createdAt }}</div>
+              <a href="javascript:" class="list-group-item list-group-item-action px-3"
+                *ngFor="let u of recentUsers; trackBy: trackByUser">
+                <div class="d-flex">
+                  <div class="flex-grow-1">
+                    <h6 class="mb-1">{{ u.name }} <small class="text-muted">({{ u.role }})</small></h6>
+                    <p class="mb-0 text-muted">{{ u.email }}</p>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge" [ngClass]="u.isActive ? 'bg-success' : 'bg-secondary'">
+                      {{ u.isActive ? 'نشط' : 'غير نشط' }}
+                    </span>
+                    <div class="text-muted small">{{ u.createdAt }}</div>
+                  </div>
+                </div>
+              </a>
+              <div class="list-group-item text-center text-muted" *ngIf="!isLoadingUsers && recentUsers.length === 0">
+                لا توجد بيانات
               </div>
             </div>
-          </a>
-          <div class="list-group-item text-center text-muted" *ngIf="!isLoadingUsers && recentUsers.length === 0">
-            لا توجد بيانات
           </div>
         </div>
       </div>
-    </div>
+    
 
-    <!-- Plan type revenue/counts -->
-    <div class="col-md-12 col-xl-8">
-      <app-sales-report-chart
-        [categories]="planTypeLabels"
-        [revenueSeries]="planTypeRevenue"
-        [countSeries]="planTypeCounts"
-      ></app-sales-report-chart>
-    </div>
   </div>
   <!-- Recent Payments -->
     <div class="col-md-12 col-xl-12">

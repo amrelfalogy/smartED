@@ -402,7 +402,7 @@
    ========================= */
 @media (min-width: 768px) {
   .filter-container {
-    grid-template-columns: 1fr 1fr 1fr; /* AY, SY, Search */
+    grid-template-columns: 1fr 2fr 1fr; /* AY, SY, Search */
     align-items: end;
   }
 }
@@ -415,7 +415,7 @@
     padding: 14px;
   }
   .filters-header {
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
   }
   .courses-grid {

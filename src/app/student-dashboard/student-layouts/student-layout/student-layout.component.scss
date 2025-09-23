@@ -1,6 +1,6 @@
 .pc-sidebar{
-    direction: ltr;
-    left: 0;
+    direction: rtl;
+    right: 0;
 }
 // Layout transitions
 .pc-container, .pc-header, .pc-footer {
@@ -9,7 +9,7 @@
 
 // Desktop collapsed state
 .pc-container.sidebar-collapsed {
-  margin-left: 0; // Collapsed sidebar width
+  margin-right: 0; // Collapsed sidebar width
 }
 
 .pc-header.sidebar-collapsed {
@@ -17,7 +17,7 @@
 }
 
 .pc-footer.sidebar-collapsed {
-  margin-left: 0; // Collapsed sidebar width
+  margin-right: 0; // Collapsed sidebar width
 }
 
 // Mobile sidebar open state

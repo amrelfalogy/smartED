@@ -13,3 +13,83 @@
     &.bg-warning { background: linear-gradient(135deg, #f39c12, #e67e22); }
     &.bg-info { background: linear-gradient(135deg, #17a2b8, #138496); }
 }
+
+/* Table wrapper */
+.tbl-card {  
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Table header */
+.table thead {
+  background: var(--gradient-color);
+  color: #fff;
+}
+
+.table thead th {
+  font-weight: 600;
+  text-align: center;
+  vertical-align: middle;
+  border: none;
+  padding: 12px;
+}
+
+/* Table body rows */
+.table tbody tr {
+  transition: background-color 0.2s ease-in-out;
+}
+
+
+/* Alternating row colors */
+.table tbody tr:nth-child(even):not(.table-active) {
+  background-color: #fdfdfd;
+}
+
+/* Cells */
+.table td {
+  padding: 12px;
+  vertical-align: middle;
+  color: var(--dark-color);
+}
+
+/* Links inside table */
+.table a.text-muted {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.table a.text-muted:hover {
+  color: var(--primary-color);
+}
+
+/* Badge circle for status */
+.badge-circle {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-inline-end: 6px;
+}
+
+.bg-success {
+  background-color: var(--success-color) !important;
+}
+.bg-warning {
+  background-color: var(--warning-color) !important;
+}
+.bg-danger {
+  background-color: var(--danger-color) !important;
+}
+
+/* Loading row */
+.table tbody tr td.text-center {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Empty row */
+.table tbody tr td.text-muted {
+  font-size: 14px;
+}

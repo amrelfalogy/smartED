@@ -276,7 +276,7 @@ export class DashboardComponent implements OnInit {
   // ✅ UPDATE: Fix recent users loading
   private loadRecentUsers(): void {
     this.isLoadingUsers = true;
-    this.userService.getUsers({ page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'desc' }).subscribe({
+    this.userService.getUsers({ page: 1, limit: 5, sortBy: 'createdAt', sortOrder: 'desc' }).subscribe({
       next: (res) => {
         if (!res || !Array.isArray(res.users)) {
           this.recentUsers = [];

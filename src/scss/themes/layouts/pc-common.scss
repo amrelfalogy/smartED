@@ -6,7 +6,7 @@ body {
   $temp: $header-height + 53;
   position: relative;
   top: $header-height;
-  margin-left: $sidebar-width;
+  margin-right: $sidebar-width;
   min-height: calc(100vh - #{$temp});
   background: rgb(250, 250, 251);
 

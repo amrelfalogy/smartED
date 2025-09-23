@@ -21,6 +21,11 @@ body{
   background-color: var(--primary-color);
   border-color: var(--primary-color);
 }
+.btn-primary:hover {
+  background-color: #3f608f;
+  border-color: #3f608f;
+  border: none;
+}
 
 .btn-secondary {
   background-color: var(--secondary-color);

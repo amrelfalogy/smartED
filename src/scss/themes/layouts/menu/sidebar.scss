@@ -83,7 +83,7 @@
     }
 
     ~ .pc-footer {
-      margin-left: 20px;
+      margin-left: 0px;
     }
 
     ~ .pc-container {
@@ -122,7 +122,7 @@
               border: none;
               position: absolute;
               top: 11px;
-              right: 20px;
+              left: 20px;
               transition: 0.3s ease-in-out;
             }
           }
@@ -216,7 +216,7 @@
 
           > .coded-micon {
             font-size: 16px;
-            margin-right: 8px;
+            margin-left: 8px;
             height: 16px;
             display: inline-block;
             text-align: center;

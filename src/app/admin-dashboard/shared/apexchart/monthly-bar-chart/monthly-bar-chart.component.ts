@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, Input } from '@angular/core';
+import { Component, ViewChild, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ChartComponent, ApexOptions } from 'ng-apexcharts';
 
 @Component({
@@ -6,7 +6,7 @@ import { ChartComponent, ApexOptions } from 'ng-apexcharts';
   templateUrl: './monthly-bar-chart.component.html',
   styleUrls: ['./monthly-bar-chart.component.css']
 })
-export class MonthlyBarChartComponent implements OnInit {
+export class MonthlyBarChartComponent implements OnInit, OnChanges {
   @ViewChild('chart') chart!: ChartComponent;
 
   @Input() weekCategories: string[] = [];
@@ -15,23 +15,31 @@ export class MonthlyBarChartComponent implements OnInit {
   @Input() monthData: number[] = [];
   @Input() title: string = 'الإيراد اليومي';
 
-  chartOptions!: Partial<ApexOptions>;
-  private currentView: 'week' | 'month' = 'week';
+  chartOptions: Partial<ApexOptions> = {};
+  currentView: 'week' | 'month' = 'week';
 
   ngOnInit() {
-    setTimeout(() => document.querySelector('.chart-income.week')?.classList.add('active'));
-    this.buildOptions('week');
+    // Build initial empty chart
+    this.buildOptions(this.currentView);
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // When parent inputs update, rebuild chart with latest data
+    if (changes['weekData'] || changes['monthData']) {
+      this.buildOptions(this.currentView);
+
+      if (this.chart) {
+        this.chart.updateOptions(this.chartOptions);
+      }
+    }
   }
 
   toggleActive(value: 'week' | 'month') {
     this.currentView = value;
     this.buildOptions(value);
-    if (value === 'month') {
-      document.querySelector('.chart-income.month')?.classList.add('active');
-      document.querySelector('.chart-income.week')?.classList.remove('active');
-    } else {
-      document.querySelector('.chart-income.week')?.classList.add('active');
-      document.querySelector('.chart-income.month')?.classList.remove('active');
+
+    if (this.chart) {
+      this.chart.updateOptions(this.chartOptions);
     }
   }
 

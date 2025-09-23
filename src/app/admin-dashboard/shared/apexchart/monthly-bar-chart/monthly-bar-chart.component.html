@@ -1,8 +1,18 @@
 <div class="d-flex align-items-center justify-content-between mb-3">
   <h5 class="mb-0">{{ title }}</h5>
   <div class="d-flex gap-2 chart-income">
-    <div class="chart-income month" (click)="toggleActive('month')">Month</div>
-    <div class="chart-income week" (click)="toggleActive('week')">Week</div>
+    <div class="chart-income month"
+      (click)="toggleActive('month')"
+      [class.active]="currentView === 'month'"
+    >
+      Month
+    </div>
+    <div class="chart-income week"
+      (click)="toggleActive('week')"
+      [class.active]="currentView === 'week'"
+    > 
+      Week
+    </div>
   </div>
 </div>
 <div class="card">
