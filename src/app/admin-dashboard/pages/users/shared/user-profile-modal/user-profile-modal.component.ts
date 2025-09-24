@@ -2,8 +2,8 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angu
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { User, ProfileResponse } from 'src/app/core/models/user.model';
-import { UserService } from 'src/app/core/services/user.service';
+import { User } from 'src/app/core/models/user.model';
+import { UserService, ProfileUpdateData } from 'src/app/core/services/user.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
@@ -30,6 +30,7 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
   
   // Profile picture
   profilePictureError = '';
+  selectedProfilePicture: File | null = null; // ✅ NEW: Store selected file
   
   // Confirmation
   showDeleteConfirmation = false;
@@ -59,6 +60,7 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
+      role: ['student'], // ✅ NEW: Add role field for admin
       phone: ['', [Validators.pattern(/^(\+)?[0-9\s\-\(\)]+$/)]],
       bio: ['', [Validators.maxLength(500)]],
       bioLong: ['', [Validators.maxLength(2000)]],
@@ -75,6 +77,7 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
       firstName: this.user.firstName || '',
       lastName: this.user.lastName || '',
       email: this.user.email || '',
+      role: this.user.role || 'student', // ✅ NEW: Load role
       phone: this.user.phone || '',
       bio: this.user.bio || '',
       bioLong: this.user.bioLong || '',
@@ -83,17 +86,25 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
       isActive: this.user.isActive
     });
 
+    // Email should be readonly, role editable only by admin
     this.userForm.get('email')?.disable();
+    
+    // ✅ NEW: Role field access control
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.role !== 'admin') {
+      this.userForm.get('role')?.disable();
+    }
   }
 
   toggleEditMode(): void {
     this.isEditMode = !this.isEditMode;
+    this.selectedProfilePicture = null; // ✅ NEW: Reset selected picture
     if (!this.isEditMode) {
       this.loadUserData();
     }
   }
 
-  // ✅ FIXED: Proper typing for the update call
+  // ✅ UPDATED: Use new unified profile update endpoint
   saveUser(): void {
     if (!this.user || this.userForm.invalid || this.isSaving) return;
 
@@ -101,32 +112,39 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
     
     const formData = this.userForm.getRawValue();
     
-    if (formData.dateOfBirth) {
-      formData.dateOfBirth = new Date(formData.dateOfBirth).toISOString().split('T')[0];
-    }
-
-    // ✅ FIX: Create properly typed observable
-    let updateCall: Observable<any>;
+    // ✅ NEW: Prepare data for unified endpoint
+    const profileData: ProfileUpdateData = {};
     
-    if (this.isCurrentUser()) {
-      updateCall = this.userService.updateCurrentUserProfile(formData);
-    } else {
-      updateCall = this.userService.updateUserById(this.user.id, formData);
+    // Only include changed fields
+    if (formData.firstName !== this.user.firstName) profileData.firstName = formData.firstName;
+    if (formData.lastName !== this.user.lastName) profileData.lastName = formData.lastName;
+    if (formData.email !== this.user.email) profileData.email = formData.email;
+    if (formData.role !== this.user.role) profileData.role = formData.role;
+    if (formData.phone !== this.user.phone) profileData.phone = formData.phone;
+    if (formData.bio !== this.user.bio) profileData.bio = formData.bio;
+    if (formData.isActive !== this.user.isActive) profileData.isActive = formData.isActive;
+    
+   
+    
+    // ✅ NEW: Include profile picture if selected
+    if (this.selectedProfilePicture) {
+      profileData.profilePicture = this.selectedProfilePicture;
     }
 
-    updateCall
+    // ✅ NEW: Use unified profile update method
+    this.userService.updateUserProfile(this.user.id, profileData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: ProfileResponse | User) => {
+        next: (response: any) => {
           console.log('User updated successfully:', response);
           
-          // ✅ Handle both response formats properly
+          // ✅ Handle response format from new endpoint
           let updatedUser: User;
-          if ('data' in response && response.data) {
-            // ProfileResponse format
+          if (response.user) {
+            updatedUser = response.user;
+          } else if (response.data?.user) {
             updatedUser = response.data.user;
           } else {
-            // Direct User format
             updatedUser = response as User;
           }
           
@@ -135,6 +153,7 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
           
           this.isSaving = false;
           this.isEditMode = false;
+          this.selectedProfilePicture = null; // ✅ NEW: Reset selected picture
           this.userUpdated.emit(updatedUser);
         },
         error: (error: any) => {
@@ -149,6 +168,7 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     
+    // ✅ You can use the existing toggle method or the new unified endpoint
     this.userService.toggleUserStatus(this.user.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -166,7 +186,7 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ✅ Profile picture event handlers
+  // ✅ UPDATED: Profile picture event handlers
   onProfilePictureUpdated(imageUrl: string): void {
     if (this.user) {
       this.user.profilePicture = imageUrl;
@@ -185,6 +205,15 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
 
   onProfilePictureError(error: string): void {
     this.profilePictureError = error;
+  }
+
+  // ✅ NEW: Handle profile picture selection for unified update
+  onProfilePictureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedProfilePicture = input.files[0];
+      console.log('Profile picture selected:', this.selectedProfilePicture.name);
+    }
   }
 
   showDeleteDialog(): void {
@@ -227,6 +256,12 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
   isCurrentUser(): boolean {
     const currentUser = this.authService.getCurrentUser();
     return !!(currentUser && this.user && currentUser.id === this.user.id);
+  }
+
+  // ✅ NEW: Check if current user is admin
+  isCurrentUserAdmin(): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    return currentUser?.role === 'admin';
   }
 
   getUserDisplayName(): string {
@@ -300,6 +335,7 @@ export class UserProfileModalComponent implements OnInit, OnDestroy {
       firstName: 'الاسم الأول',
       lastName: 'اسم العائلة',
       email: 'البريد الإلكتروني',
+      role: 'الدور',
       phone: 'رقم الهاتف',
       bio: 'نبذة شخصية',
       bioLong: 'السيرة الذاتية',

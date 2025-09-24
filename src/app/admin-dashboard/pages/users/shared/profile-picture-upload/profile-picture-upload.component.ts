@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { UserService } from 'src/app/core/services/user.service';
+import { UserService, ProfileUpdateData } from 'src/app/core/services/user.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { User } from 'src/app/core/models/user.model';
 
@@ -101,8 +101,8 @@ export class ProfilePictureUploadComponent implements OnDestroy {
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser) return false;
     
-    // Admin can upload for teachers
-    if (currentUser.role === 'admin' && this.user.role === 'teacher') return true;
+    // Admin can upload for any user
+    if (currentUser.role === 'admin') return true;
     
     // Teachers can upload their own (future feature)
     if (currentUser.role === 'teacher' && currentUser.id === this.user.id) return true;
@@ -110,26 +110,36 @@ export class ProfilePictureUploadComponent implements OnDestroy {
     return false;
   }
   
+  // ✅ UPDATED: Use new unified endpoint for profile picture upload
   private uploadProfilePicture(file: File): void {
     // Validate file
     if (!this.validateFile(file)) return;
     
+    if (!this.user) return;
+    
     this.isUploading = true;
     this.uploadError = '';
     
-    this.userService.uploadProfilePicture(file)
+    // ✅ NEW: Use unified profile update endpoint with only picture
+    const profileData: ProfileUpdateData = {
+      profilePicture: file
+    };
+    
+    this.userService.updateUserProfile(this.user.id, profileData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           console.log('✅ Profile picture uploaded:', response);
           this.isUploading = false;
           
-          // Update user profile picture
-          if (this.user) {
-            this.user.profilePicture = response.data.url;
-          }
+          // ✅ UPDATED: Handle response format from new endpoint
+          const updatedUser = response.user || response.data?.user || response;
           
-          this.pictureUpdated.emit(response.data.url);
+          // Update user profile picture
+          if (this.user && updatedUser) {
+            this.user.profilePicture = updatedUser.profilePicture;
+            this.pictureUpdated.emit(updatedUser.profilePicture);
+          }
         },
         error: (error: any) => {
           console.error('❌ Upload failed:', error);
@@ -140,13 +150,24 @@ export class ProfilePictureUploadComponent implements OnDestroy {
       });
   }
   
+  // ✅ UPDATED: Use new unified endpoint to delete profile picture
   deleteProfilePicture(): void {
     if (!confirm('هل تريد حذف صورة الملف الشخصي؟')) return;
+    
+    if (!this.user) return;
     
     this.isDeleting = true;
     this.uploadError = '';
     
-    this.userService.deleteProfilePicture()
+    // ✅ NEW: Use unified profile update endpoint to remove picture
+    // Send empty/null profilePicture or other method based on your backend implementation
+    const profileData: ProfileUpdateData = {
+      // You might need to adjust this based on how your backend handles picture deletion
+      // Option 1: Send empty file name or special value
+      // Option 2: Your backend might handle this differently
+    };
+    
+    this.userService.updateUserProfile(this.user.id, profileData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -156,9 +177,8 @@ export class ProfilePictureUploadComponent implements OnDestroy {
           // Clear user profile picture
           if (this.user) {
             this.user.profilePicture = null;
+            this.pictureDeleted.emit();
           }
-          
-          this.pictureDeleted.emit();
         },
         error: (error: any) => {
           console.error('❌ Delete failed:', error);

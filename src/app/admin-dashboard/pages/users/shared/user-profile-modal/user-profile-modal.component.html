@@ -6,12 +6,12 @@
       <!-- Modal Header -->
       <div class="modal-header">
         <div class="user-header-info">
-          <!-- ✅ NEW: Profile Picture Upload Component -->
+          <!-- ✅ UPDATED: Profile Picture Upload Component -->
           <div class="user-profile-section">
             <app-profile-picture-upload
               [user]="user"
               [size]="'lg'"
-              [allowEdit]="true"
+              [allowEdit]="isEditMode"
               [showName]="false"
               [shape]="'circle'"
               (pictureUpdated)="onProfilePictureUpdated($event)"
@@ -82,6 +82,13 @@
                   <label>البريد الإلكتروني:</label>
                   <span>{{ user.email }}</span>
                 </div>
+                <!-- ✅ NEW: Display role -->
+                <div class="info-item">
+                  <label>الدور:</label>
+                  <span class="badge" [class]="getRoleBadgeClass()">
+                    {{ getRoleDisplayName() }}
+                  </span>
+                </div>
                 <div class="info-item" *ngIf="user.phone">
                   <label>رقم الهاتف:</label>
                   <span>{{ user.phone }}</span>
@@ -131,7 +138,7 @@
             </div>
           </div>
 
-          <!-- ✅ NEW: Extended Bio Section -->
+          <!-- Extended Bio Section -->
           <div class="row" *ngIf="user.bioLong">
             <div class="col-12">
               <div class="info-section">
@@ -144,7 +151,7 @@
           </div>
 
           <!-- Admin Actions -->
-          <div class="row mt-3" *ngIf="user.role !== 'admin'">
+          <div class="row mt-3" *ngIf="user.role !== 'admin' && isCurrentUserAdmin()">
             <div class="col-12">
               <div class="admin-actions">
                 <button 
@@ -202,6 +209,22 @@
                   <small class="text-muted">لا يمكن تغيير البريد الإلكتروني</small>
                 </div>
 
+                <!-- ✅ NEW: Role field (admin only) -->
+                <div class="mb-3" *ngIf="isCurrentUserAdmin()">
+                  <label class="form-label">الدور</label>
+                  <select 
+                    class="form-control" 
+                    formControlName="role"
+                    [class.is-invalid]="isFieldInvalid('role')">
+                    <option value="student">طالب</option>
+                    <option value="teacher">معلم</option>
+                    <option value="admin">مدير</option>
+                  </select>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('role')">
+                    {{ getFieldError('role') }}
+                  </div>
+                </div>
+
                 <div class="mb-3">
                   <label class="form-label">رقم الهاتف</label>
                   <input 
@@ -237,7 +260,8 @@
                   </div>
                 </div>
 
-                <div class="mb-3">
+                <!-- ✅ NEW: Active status (admin only) -->
+                <div class="mb-3" *ngIf="isCurrentUserAdmin()">
                   <div class="form-check">
                     <input 
                       type="checkbox" 
@@ -248,6 +272,17 @@
                       حساب نشط
                     </label>
                   </div>
+                </div>
+
+                <!-- ✅ NEW: Profile Picture Upload for Edit Mode -->
+                <div class="mb-3">
+                  <label class="form-label">صورة الملف الشخصي</label>
+                  <input 
+                    type="file" 
+                    class="form-control"
+                    accept="image/jpeg,image/png,image/webp"
+                    (change)="onProfilePictureSelected($event)">
+                  <small class="text-muted">اختياري - PNG, JPG, WebP حتى 10MB</small>
                 </div>
               </div>
             </div>
@@ -269,7 +304,7 @@
                 </div>
               </div>
               
-              <!-- ✅ NEW: Extended Bio -->
+              <!-- Extended Bio -->
               <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label">السيرة الذاتية</label>
@@ -312,7 +347,7 @@
   </div>
 </div>
 
-<!-- Delete Confirmation Modal (unchanged) -->
+<!-- Delete Confirmation Modal -->
 <div class="delete-confirmation-modal" *ngIf="showDeleteConfirmation" [class.show]="showDeleteConfirmation">
   <div class="modal-backdrop" (click)="hideDeleteDialog()"></div>
   
@@ -354,4 +389,11 @@
           class="btn btn-danger"
           (click)="confirmDelete()"
           [disabled]="deleteConfirmationText !== 'DELETE' || isDeleting">
-          <i class="pi pi-spinner pi-spin me-1" *ngIf="isDeleting">
+          <i class="pi pi-spinner pi-spin me-1" *ngIf="isDeleting"></i>
+          <i class="pi pi-trash me-1" *ngIf="!isDeleting"></i>
+          {{ isDeleting ? 'جاري الحذف...' : 'حذف المستخدم' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

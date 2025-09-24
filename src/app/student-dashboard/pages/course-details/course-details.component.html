@@ -135,7 +135,7 @@
         </button>
         
         <button 
-          class="btn btn-outline-success"
+          class="btn btn-danger"
           (click)="toggleCourseStatus()"
           [disabled]="isLoading"
         >
@@ -143,13 +143,6 @@
           {{ course.status === 'published' ? 'إلغاء النشر' : 'نشر الكورس' }}
         </button>
         
-        <button 
-          class="btn btn-outline-info"
-          (click)="viewStudents()"
-        >
-          <i class="pi pi-users me-2"></i>
-          عرض الطلاب
-        </button>
       </div>
     </div>
 

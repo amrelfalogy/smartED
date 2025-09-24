@@ -147,6 +147,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     console.log('✅ Teachers prepared for home:', this.teachers);
   }
+  getTeacherProfileImage(teacher: HomeTeacher): string {
+    return this.userService.getProfileImageUrl(teacher);
+  }
 
   private prepareCourses(): void {
     const publishedSubjects = this.allSubjects

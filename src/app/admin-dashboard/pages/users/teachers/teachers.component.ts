@@ -23,7 +23,7 @@ export class TeachersComponent implements OnInit, OnDestroy {
   
   // Data
   teachers: User[] = [];
-  isLoadingStats = true; // ✅ Add separate loading state
+  isLoadingStats = true;
   stats: TeacherStats = { total: 0, active: 0, inactive: 0, recent: 0 };
   
   // State
@@ -92,9 +92,8 @@ export class TeachersComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ✅ UPDATE: In teachers.component.ts
   private loadStats(): void {
-    this.isLoadingStats =true;
+    this.isLoadingStats = true;
 
     this.userService.getUserStats()
       .pipe(takeUntil(this.destroy$))
@@ -102,22 +101,21 @@ export class TeachersComponent implements OnInit, OnDestroy {
         next: (stats) => {
           this.stats = {
             total: stats.totalTeachers || 0,
-            active: Math.floor((stats.totalTeachers|| 0) * 0.85), // Active teachers estimate
-            inactive: Math.floor((stats.totalTeachers || 0) * 0.15), // Inactive teachers estimate  
-            recent: stats.recentRegistrations
+            active: Math.floor((stats.totalTeachers|| 0) * 0.85),
+            inactive: Math.floor((stats.totalTeachers || 0) * 0.15),
+            recent: stats.recentRegistrations || 0
           };
           this.isLoadingStats = false;
         },
         error: (error) => {
           console.error('Failed to load teacher stats:', error);
-          // Fallback to loading basic stats
           this.loadBasicStats();
         }
       });
   }
 
   private loadBasicStats(): void {
-    this.userService.getTeachers({ limit: 1, page: 1 }) // ✅ Fix: Use getTeachers, not getUsers
+    this.userService.getTeachers({ limit: 1, page: 1 })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -163,6 +161,7 @@ export class TeachersComponent implements OnInit, OnDestroy {
       this.teachers[index] = updatedUser;
     }
     this.closeProfileModal();
+    this.loadStats();
   }
 
   onUserDeleted(userId: string): void {
@@ -175,6 +174,16 @@ export class TeachersComponent implements OnInit, OnDestroy {
     return `${user.firstName} ${user.lastName}`.trim() || user.email;
   }
 
+  // ✅ UPDATED: Use userService method for consistent URL construction
+  getProfileImageUrl(user: User): string {
+    return this.userService.getProfileImageUrl(user);
+  }
+
+  // ✅ UPDATED: Use userService method
+  getUserInitials(user: User): string {
+    return this.userService.getUserInitials(user) || 'T';
+  }
+
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('ar-EG', {
       year: 'numeric',
@@ -185,5 +194,11 @@ export class TeachersComponent implements OnInit, OnDestroy {
 
   trackByUserId(index: number, user: User): string {
     return user.id;
+  }
+
+  // ✅ NEW: Handle image load error
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    target.src = 'assets/imgs/aboutt.jpg'; // Fallback image
   }
 }

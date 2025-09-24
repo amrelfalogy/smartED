@@ -91,7 +91,7 @@
     <div class="search-section">
       <div class="row align-items-center">
         <div class="col-md-8">
-          <div class="input-group">
+          <div class="input-group search-input-group">
             <span class="input-group-text">
               <i class="pi pi-search"></i>
             </span>
@@ -104,9 +104,10 @@
         </div>
         <div class="col-md-4 text-end">
           <div class="results-info">
-            <span class="text-muted">
+            <span class="text-muted results-count">
+              <i class="pi pi-users me-1"></i>
               {{ totalItems }} معلم
-              <span *ngIf="searchControl.value">(من البحث)</span>
+              <span *ngIf="searchControl.value" class="search-indicator">(من البحث)</span>
             </span>
           </div>
         </div>
@@ -117,94 +118,151 @@
   <!-- Teachers Grid -->
   <div class="teachers-grid mt-4">
     <!-- Loading State -->
-    <div *ngIf="isLoading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">جاري التحميل...</span>
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary spinner-lg" role="status">
+          <span class="visually-hidden">جاري التحميل...</span>
+        </div>
+        <p class="mt-3 text-muted loading-text">جاري تحميل بيانات المعلمين...</p>
       </div>
-      <p class="mt-2 text-muted">جاري تحميل بيانات المعلمين...</p>
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!isLoading && teachers.length === 0" class="text-center py-5">
-      <i class="pi pi-user-plus text-muted" style="font-size: 4rem;"></i>
-      <h4 class="mt-3">لا يوجد معلمين</h4>
-      <p class="text-muted">
-        <span *ngIf="searchControl.value">لم يتم العثور على معلمين يطابقون البحث</span>
-        <span *ngIf="!searchControl.value">لم يتم تسجيل أي معلمين بعد</span>
-      </p>
+    <div *ngIf="!isLoading && teachers.length === 0" class="empty-state">
+      <div class="text-center py-5">
+        <div class="empty-icon">
+          <i class="pi pi-user-plus"></i>
+        </div>
+        <h4 class="empty-title">لا يوجد معلمين</h4>
+        <p class="text-muted empty-description">
+          <span *ngIf="searchControl.value">لم يتم العثور على معلمين يطابقون البحث</span>
+          <span *ngIf="!searchControl.value">لم يتم تسجيل أي معلمين بعد</span>
+        </p>
+        <button *ngIf="searchControl.value" 
+                class="btn btn-outline-primary btn-sm mt-2"
+                (click)="searchControl.setValue('')">
+          <i class="pi pi-times me-1"></i>
+          مسح البحث
+        </button>
+      </div>
     </div>
 
-    <!-- Teachers Cards -->
+    <!-- Enhanced Teachers Cards -->
     <div *ngIf="!isLoading && teachers.length > 0" class="row">
-      <div class="col-lg-4 col-md-6 mb-4" *ngFor="let teacher of teachers; trackBy: trackByUserId">
-        <app-card [showHeader]="false" blockClass="user-card teacher-card h-100">
-          <div class="user-card-content">
-            <!-- User Avatar & Basic Info -->
-            <div class="user-header">
-              <div class="user-avatar">
-                <img *ngIf="teacher.avatar" [src]="teacher.avatar" [alt]="getDisplayName(teacher)">
-                <div *ngIf="!teacher.avatar" class="avatar-placeholder teacher-avatar">
-                  {{ getDisplayName(teacher).charAt(0).toUpperCase() }}
+      <div class="col-xl-3 col-lg-4 col-md-6 mb-4" *ngFor="let teacher of teachers; trackBy: trackByUserId">
+        <div class="teacher-card-wrapper">
+          <div class="teacher-card">
+            <!-- Card Header with Background -->
+            <div class="teacher-card-header">
+              <div class="card-background"></div>
+              
+              <!-- Profile Picture -->
+              <div class="teacher-avatar-container">
+                <div class="teacher-avatar">
+                  <img *ngIf="getProfileImageUrl(teacher)" 
+                       [src]="getProfileImageUrl(teacher)" 
+                       [alt]="getDisplayName(teacher)"
+                       class="avatar-img"
+                       (error)="onImageError($event)"
+                       loading="lazy">
+                  
+                  <!-- Avatar Placeholder -->
+                  <div *ngIf="!getProfileImageUrl(teacher)" class="avatar-placeholder">
+                    {{ getUserInitials(teacher) }}
+                  </div>
                 </div>
-                <span class="user-status" [class.active]="teacher.isActive" [class.inactive]="!teacher.isActive">
+                
+                <!-- Status Indicator -->
+                <div class="status-indicator" 
+                     [class.active]="teacher.isActive" 
+                     [class.inactive]="!teacher.isActive"
+                     [title]="teacher.isActive ? 'نشط' : 'غير نشط'">
                   <i class="pi" [class.pi-circle-fill]="teacher.isActive" [class.pi-circle]="!teacher.isActive"></i>
-                </span>
+                </div>
+
+                <!-- Verification Badge -->
+                <div class="verification-badge" *ngIf="teacher.emailVerified">
+                  <i class="pi pi-verified" title="حساب موثق"></i>
+                </div>
               </div>
-              <div class="user-info">
-                <h5 class="user-name">{{ getDisplayName(teacher) }}</h5>
-                <p class="user-email">{{ teacher.email }}</p>
-                <div class="user-meta">
+            </div>
+            
+            <!-- Card Body -->
+            <div class="teacher-card-body">
+              <!-- Teacher Info -->
+              <div class="teacher-info">
+                <h5 class="teacher-name">{{ getDisplayName(teacher) }}</h5>
+                <p class="teacher-email">{{ teacher.email }}</p>
+                
+                <div class="teacher-badges">
                   <span class="badge teacher-role">معلم</span>
-                  <span class="badge ms-1" [class.bg-success]="teacher.emailVerified" [class.bg-warning]="!teacher.emailVerified">
-                    {{ teacher.emailVerified ? 'مُفعل' : 'غير مُفعل' }}
+                  <span class="badge email-badge" 
+                        [class.verified]="teacher.emailVerified" 
+                        [class.unverified]="!teacher.emailVerified">
+                    <i class="pi" 
+                       [class.pi-check]="teacher.emailVerified"
+                       [class.pi-times]="!teacher.emailVerified"></i>
+                    {{ teacher.emailVerified ? 'موثق' : 'غير موثق' }}
                   </span>
                 </div>
               </div>
+
+              <!-- Teacher Details -->
+              <div class="teacher-details">
+                <div class="detail-item" *ngIf="teacher.phone">
+                  <div class="detail-icon">
+                    <i class="pi pi-phone"></i>
+                  </div>
+                  <span class="detail-text">{{ teacher.phone }}</span>
+                </div>
+                
+                <div class="detail-item" *ngIf="teacher.bio">
+                  <div class="detail-icon">
+                    <i class="pi pi-info-circle"></i>
+                  </div>
+                  <span class="detail-text bio-text">{{ teacher.bio }}</span>
+                </div>
+                
+                <div class="detail-item" *ngIf="teacher.lastLogin">
+                  <div class="detail-icon">
+                    <i class="pi pi-clock"></i>
+                  </div>
+                  <span class="detail-text">آخر دخول: {{ formatDate(teacher.lastLogin) }}</span>
+                </div>
+                
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="pi pi-calendar"></i>
+                  </div>
+                  <span class="detail-text">انضم: {{ formatDate(teacher.createdAt) }}</span>
+                </div>
+              </div>
             </div>
 
-            <!-- User Details -->
-            <div class="user-details">
-              <div class="detail-item" *ngIf="teacher.phone">
-                <i class="pi pi-phone"></i>
-                <span>{{ teacher.phone }}</span>
-              </div>
-              <div class="detail-item" *ngIf="teacher.bio">
-                <i class="pi pi-info-circle"></i>
-                <span class="bio-text">{{ teacher.bio }}</span>
-              </div>
-              <div class="detail-item" *ngIf="teacher.lastLogin">
-                <i class="pi pi-clock"></i>
-                <span>آخر دخول: {{ formatDate(teacher.lastLogin) }}</span>
-              </div>
-              <div class="detail-item">
-                <i class="pi pi-calendar"></i>
-                <span>انضم في: {{ formatDate(teacher.createdAt) }}</span>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="user-actions">
+            <!-- Card Footer -->
+            <div class="teacher-card-footer">
               <button 
                 type="button" 
-                class="btn btn-primary btn-sm flex-fill"
+                class="btn btn-primary action-btn"
                 (click)="viewProfile(teacher)">
                 <i class="pi pi-eye me-2"></i>
-                عرض الملف الشخصي
+                عرض الملف
               </button>
             </div>
           </div>
-        </app-card>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Pagination -->
-  <div class="d-flex justify-content-center mt-4" *ngIf="!isLoading && totalPages > 1">
-    <nav aria-label="Teacher pagination">
-      <ul class="pagination">
+  <!-- Enhanced Pagination -->
+  <div class="pagination-container" *ngIf="!isLoading && totalPages > 1">
+    <nav aria-label="Teacher pagination" class="d-flex justify-content-center">
+      <ul class="pagination custom-pagination">
         <li class="page-item" [class.disabled]="currentPage === 1">
           <button class="page-link" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
             <i class="pi pi-chevron-right"></i>
+            <span class="sr-only">السابق</span>
           </button>
         </li>
         
@@ -219,10 +277,17 @@
         <li class="page-item" [class.disabled]="currentPage === totalPages">
           <button class="page-link" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages">
             <i class="pi pi-chevron-left"></i>
+            <span class="sr-only">التالي</span>
           </button>
         </li>
       </ul>
     </nav>
+    
+    <div class="pagination-info text-center mt-2">
+      <small class="text-muted">
+        صفحة {{ currentPage }} من {{ totalPages }} ({{ totalItems }} معلم)
+      </small>
+    </div>
   </div>
 </div>
 

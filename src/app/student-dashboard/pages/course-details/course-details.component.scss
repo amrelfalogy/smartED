@@ -2,6 +2,11 @@
   background: #f8f9fa;
   min-height: 100vh;
 
+  .alert-info{
+    margin-left: 24px;
+    margin-right: 24px;
+
+  }
   .loading-container {
     display: flex;
     justify-content: center;
@@ -25,10 +30,21 @@
   }
 
   .course-content {
+    .admin-actions .actions-bar{
+      margin: 24px;
+      display: flex;
+      gap: 12px;
+      .btn{
+        border-radius: 8px;
+      }
+    }
+
     .course-header {
       background: var(--gradient-color);
       color: white;
       padding: 24px;
+      margin: 0 24px;
+      border-radius: 16px;
 
       .back-btn {
         background: rgba(255, 255, 255, 0.2);
@@ -1111,6 +1127,7 @@
       padding: 20px;
 
       .lesson-type-cards {
+        grid-auto-flow: row;
         .lesson-type-card {
           padding: 20px;
 
@@ -1153,7 +1170,7 @@
 
         .lesson-actions {
           grid-column: 2;
-          justify-self: center;
+          justify-self: self-start;
           margin-top: 8px;
         }
 
