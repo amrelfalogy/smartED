@@ -103,6 +103,7 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
     lessonType: [lesson?.lessonType || 'video', Validators.required], // ✅ Consistent default
     price: [lesson?.price ?? 0, [Validators.min(0)]],
     videoUrl: [lesson?.videoUrl || null], // ✅ Single value
+    document: [lesson?.document || null], // ✅ Single value
     pdfUrl: [lesson?.pdfUrl || null], // ✅ Single value
     pdfFileName: [lesson?.pdfFileName ?? null],
     pdfFileSize: [lesson?.pdfFileSize ?? null],
@@ -201,6 +202,7 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
       ...updated,
       unitId: updated.unitId || parentUnitId || updated.lectureId,
       videoUrl: updated.videoUrl || null,
+      document: updated.document || null,
       pdfUrl: updated.pdfUrl || null,
       pdfFileName: updated.pdfFileName || null,
       pdfFileSize: updated.pdfFileSize || null
@@ -280,8 +282,8 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
         const videoUrl = lessonGroup.get('videoUrl')?.value;
         contentValid = !!videoUrl;
       } else if (lessonType === 'pdf' || lessonType === 'document') {
-        const pdfUrl = lessonGroup.get('pdfUrl')?.value;
-        contentValid = !!pdfUrl;
+        const document = lessonGroup.get('document')?.value;
+        contentValid = !!document;
       }
       
       // ✅ Price validation
@@ -330,7 +332,7 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
       if (lessonType === 'video' && !lessonGroup.get('videoUrl')?.value) {
         issues.push('رابط الفيديو');
       }
-      if ((lessonType === 'pdf' || lessonType === 'document') && !lessonGroup.get('pdfUrl')?.value) {
+      if ((lessonType === 'pdf' || lessonType === 'document') && !lessonGroup.get('document')?.value) {
         issues.push('رابط المستند');
       }
       
@@ -367,6 +369,7 @@ export class UnitsSectionComponent implements OnInit, OnDestroy {
         lessonType: l.lessonType,
         price: l.isFree ? 0 : l.price,
         videoUrl: l.videoUrl || null,
+        document: l.document || null,
         pdfUrl: l.pdfUrl || null,
         pdfFileName: l.pdfFileName || null,
         pdfFileSize: l.pdfFileSize || null,

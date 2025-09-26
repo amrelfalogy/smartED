@@ -12,7 +12,7 @@
     </div>
     
     <div class="header-actions">
-      <button class="btn btn-outline-primary" (click)="exploreMore()">
+      <button class="btn btn-primary" (click)="exploreMore()">
         <i class="pi pi-search me-2"></i>
         استكشف المزيد
       </button>
@@ -31,7 +31,7 @@
   <div class="alert alert-danger" *ngIf="error && !isLoading">
     <i class="pi pi-exclamation-triangle me-2"></i>
     {{ error }}
-    <button class="btn btn-outline-danger btn-sm ms-2" (click)="loadAllData()">
+    <button class="btn btn-danger btn-sm ms-2" (click)="loadAllData()">
       <i class="pi pi-refresh me-1"></i>
       إعادة المحاولة
     </button>
@@ -220,7 +220,7 @@
                 متابعة التعلم
               </button>
               
-              <button class="btn btn-outline-secondary" 
+              <button class="btn btn-secondary" 
                       (click)="viewSubject(subject)">
                 <i class="pi pi-info-circle me-2"></i>
                 التفاصيل
@@ -253,7 +253,7 @@
             <i class="pi pi-filter me-2"></i>
             تصفية الدروس
           </h4>
-          <button class="btn btn-outline-secondary btn-sm" 
+          <button class="btn btn-secondary btn-sm" 
                   (click)="clearFilters()" 
                   [disabled]="!hasActiveFilters">
             <i class="pi pi-times me-1"></i>

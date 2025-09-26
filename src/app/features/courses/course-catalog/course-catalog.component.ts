@@ -8,6 +8,9 @@ import { AcademicYear, StudentYear } from 'src/app/core/models/academic-year.mod
 import { SubjectService } from 'src/app/core/services/subject.service';
 import { AcademicYearService } from 'src/app/core/services/academic-year.service';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { User } from 'src/app/core/models/user.model';
+import { UserService } from 'src/app/core/services/user.service';
+
 
 type SessionFilter = 'all' | 'recorded' | 'studio';
 
@@ -38,6 +41,10 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
   searchTerm = '';
   selectedDifficulty: string | null = null;
 
+  teachers: User[] = [];
+  teacherMap = new Map<string, User>();
+
+
   // View options
   viewMode: 'grid' | 'list' = 'grid';
   sortBy: 'name' | 'createdAt' | 'popularity' = 'name';
@@ -55,16 +62,43 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
     private router: Router,
     private subjectService: SubjectService,
     private academicYearService: AcademicYearService,
-    private authService: AuthService
+    private authService: AuthService,
+    private userService: UserService // ✅ Inject UserService
+
   ) {}
 
   ngOnInit(): void {
     this.loadInitialData();
+    this.loadTeachers();
+
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private loadTeachers(): void {
+    this.userService.getTeachers({ page: 1, limit: 100 }).subscribe({
+      next: (response) => {
+        this.teachers = response.users || [];
+        this.teacherMap.clear();
+        this.teachers.forEach(t => this.teacherMap.set(t.id, t));
+      },
+      error: (err) => {
+        console.error('Error loading teachers:', err);
+        this.teachers = [];
+        this.teacherMap.clear();
+      }
+    });
+  }
+
+  getTeacherNameById(teacherId?: string): string {
+    if (!teacherId) return 'غير محدد';
+    const teacher = this.teacherMap.get(teacherId);
+    if (!teacher) return 'غير محدد';
+    const fullName = [teacher.firstName, teacher.lastName].filter(Boolean).join(' ');
+    return fullName || teacher.email || 'غير محدد';
   }
 
   // Data loading
@@ -383,7 +417,7 @@ export class CourseCatalogComponent implements OnInit, OnDestroy {
   // Instructor fallback
   getInstructorName(subject: CourseSubject): string {
     const anySubject = subject as any;
-    return anySubject?.instructor || anySubject?.instructorName || 'غير محدد';
+    return anySubject?.teacher || anySubject?.instructorName || 'غير محدد';
   }
 
   // Role-aware navigation

@@ -12,7 +12,7 @@
     <div class="alert alert-danger">
       <i class="pi pi-exclamation-triangle me-2"></i>
       {{ errorMessage }}
-      <button class="btn btn-outline-danger btn-sm ms-2" (click)="loadCourseDetails()">
+      <button class="btn btn-danger btn-sm ms-2" (click)="loadCourseDetails()">
         <i class="pi pi-refresh me-1"></i>
         إعادة المحاولة
       </button>
@@ -30,93 +30,79 @@
   <!-- Course Details Content -->
   <div class="course-content" *ngIf="!isLoadingContent && course">
     <!-- Course Header -->
-    <div class="course-header">
-      <button class="btn btn-ghost back-btn" (click)="goBack()">
-        <i class="pi pi-arrow-right me-2"></i>
-        {{ isAdminMode ? 'العودة للكورسات' : 'العودة' }}
-      </button>
-      
-      <div class="course-info">
-        <div class="course-image-container">
-          <img 
-            [src]="course.imageUrl" 
-            [alt]="course.name" 
-            class="course-image" 
-            onerror="this.src='assets/imgs/aboutt.jpg'"
-          >
-          <div class="course-overlay">
-            <div class="enrollment-status" [class]="enrollmentStatus" *ngIf="showEnrollmentActions">
-              <i class="pi pi-check-circle" *ngIf="enrollmentStatus === 'enrolled'"></i>
-              <i class="pi pi-lock" *ngIf="enrollmentStatus === 'not_enrolled'"></i>
-              <i class="pi pi-clock" *ngIf="enrollmentStatus === 'pending'"></i>
-              <span *ngIf="enrollmentStatus === 'enrolled'">مسجل</span>
-              <span *ngIf="enrollmentStatus === 'not_enrolled'">غير مسجل</span>
-              <span *ngIf="enrollmentStatus === 'pending'">في انتظار التأكيد</span>
-            </div>
-            <!-- ✅ Admin Status Indicator -->
-            <div class="course-status" *ngIf="isAdminMode">
-              <span class="status-badge" [class]="'status-' + course.status">
-                <i class="pi pi-{{ course.status === 'published' ? 'eye' : 'eye-slash' }}"></i>
-                {{ course.status === 'published' ? 'منشور' : 'مسودة' }}
+    <div class="course-header" [ngStyle]="{'background-image': 'url(' + (course.imageUrl || 'assets/imgs/aboutt.jpg') + ')'}">
+      <div class="course-header-overlay">
+        <div class="header-row d-flex justify-content-between align-items-center mb-3">
+          <button class="btn btn-ghost back-btn" (click)="goBack()">
+            <i class="pi pi-arrow-right me-2"></i>
+            {{ isAdminMode ? 'العودة للكورسات' : 'العودة' }}
+          </button>
+          <div class="enrollment-status" [class]="enrollmentStatus" *ngIf="showEnrollmentActions">
+            <i class="pi pi-check-circle" *ngIf="enrollmentStatus === 'enrolled'"></i>
+            <i class="pi pi-lock" *ngIf="enrollmentStatus === 'not_enrolled'"></i>
+            <i class="pi pi-clock" *ngIf="enrollmentStatus === 'pending'"></i>
+            <span *ngIf="enrollmentStatus === 'enrolled'">مسجل</span>
+            <span *ngIf="enrollmentStatus === 'not_enrolled'">غير مسجل</span>
+            <span *ngIf="enrollmentStatus === 'pending'">في انتظار التأكيد</span>
+          </div>         
+        </div>          
+        <div class="course-info">              
+          <div class="course-details">
+            <h1 class="course-title">{{ course.name }}</h1>
+            <p class="course-description">{{ course.description }}</p>
+            <div class="teacher-section" *ngIf="teacher">
+              <img
+                class="teacher-avatar"
+                [src]="teacher.avatar || 'assets/imgs/avatar/avatar-1.jpg'"
+                alt="صورة المعلم"
+                loading="lazy"                
+              />
+              <span class="teacher-name">
+                {{ teacher.firstName }} {{ teacher.lastName }}
               </span>
             </div>
-          </div>
-        </div>
-        
-        <div class="course-details">
-          <h1 class="course-title">{{ course.name }}</h1>
-          <p class="course-description">{{ course.description }}</p>
-          
-          <div class="course-meta">
-            <div class="meta-item" *ngIf="course.instructorName">
-              <i class="pi pi-user-tie"></i>
-              <span>{{ course.instructorName }}</span>
-            </div>
-            <div class="meta-item" *ngIf="course.duration">
-              <i class="pi pi-clock"></i>
-              <span>{{ course.duration }}</span>
-            </div>
-            <div class="meta-item" *ngIf="course.difficulty">
-              <i class="pi pi-signal"></i>
-              <span class="difficulty-badge" [class]="'badge-' + getDifficultyColor(course.difficulty)">
-                {{ getDifficultyLabel(course.difficulty) }}
-              </span>
-            </div>
-            <div class="meta-item" *ngIf="hasLessons">
-              <i class="pi pi-play-circle"></i>
-              <span>{{ lessons.length }} درس</span>
-            </div>
-            <div class="meta-item" *ngIf="course.sessionType">
-              <i class="pi pi-tag"></i>
-              <span>
-                {{
-                  course.sessionType === 'center_recorded' || course.sessionType === 'recorded' ? 'مسجل - المركز' :
-                  course.sessionType === 'studio' ? 'منتج - الاستوديو' :
-                  course.sessionType === 'live' || course.sessionType === 'zoom' ? 'مباشر' : 'غير محدد'
-                }}
-              </span>
-            </div>
-          </div>
-
-          <!-- ✅ NEW: Header Enrollment Actions -->
-          <div class="header-enrollment-actions" *ngIf="canEnroll && hasLessons">
-            <div class="enrollment-summary" *ngIf="hasPartialAccess">
-              <div class="access-indicator">
-                <i class="pi pi-info-circle"></i>
-                <span>لديك وصول لبعض الدروس</span>
+            <div class="course-meta">                          
+              <div class="meta-item" *ngIf="course.price">
+                <span class="price-badge" >
+                  {{ course.price }} جنيه
+                </span>
+              </div>
+              <div class="meta-item" *ngIf="hasLessons">
+                <i class="pi pi-play-circle"></i>
+                <span>{{ lessons.length }} درس</span>
+              </div>
+              <div class="meta-item" *ngIf="course.sessionType">
+                <i class="pi pi-tag"></i>
+                <span>
+                  {{
+                    course.sessionType === 'center_recorded' || course.sessionType === 'recorded' ? 'مسجل - المركز' :
+                    course.sessionType === 'studio' ? 'منتج - الاستوديو' :
+                    course.sessionType === 'live' || course.sessionType === 'zoom' ? 'مباشر' : 'غير محدد'
+                  }}
+                </span>
               </div>
             </div>
-            
-            <div class="enrollment-buttons">
-              <button 
-                class="btn btn-enrollment-primary"
-                (click)="navigateToPlanSubject()"
-              >
-                <i class="pi pi-credit-card me-2"></i>
-                <span class="btn-text">
-                  {{ hasPartialAccess ? 'اشترك في المادة كاملة' : 'سجل في المادة' }}
-                </span>
-              </button>            
+
+            <!-- ✅ NEW: Header Enrollment Actions -->
+            <div class="header-enrollment-actions" *ngIf="canEnroll && hasLessons">
+              <div class="enrollment-summary" *ngIf="hasPartialAccess">
+                <div class="access-indicator">
+                  <i class="pi pi-info-circle"></i>
+                  <span>لديك وصول لبعض الدروس</span>
+                </div>
+              </div>
+              
+              <div class="enrollment-buttons">
+                <button 
+                  class="btn btn-primary"
+                  (click)="navigateToPlanSubject()"
+                >
+                  <i class="pi pi-credit-card me-2"></i>
+                  <span class="btn-text">
+                    {{ hasPartialAccess ? 'اشترك في المادة كاملة' : 'سجل في المادة' }}
+                  </span>
+                </button>            
+              </div>
             </div>
           </div>
         </div>
@@ -318,11 +304,7 @@
                       <span class="meta-chip" *ngIf="lesson.duration">
                         <i class="pi pi-clock"></i>
                         {{ formatDuration(lesson.duration) }}
-                      </span>
-                      <span class="meta-chip difficulty" [class]="'difficulty-' + lesson.difficulty" *ngIf="lesson.difficulty">
-                        <i class="pi pi-signal"></i>
-                        {{ getDifficultyLabel(lesson.difficulty) }}
-                      </span>
+                      </span>                      
                       <span class="meta-chip type" *ngIf="course?.sessionType">
                         <i class="pi pi-tag"></i>
                         {{
@@ -350,7 +332,7 @@
                     <button class="btn btn-sm"
                             [class.btn-primary]="isAdminMode || lesson.isFree || lesson.hasAccess"
                             [class.btn-warning]="!isAdminMode && lesson.requiresPayment && !lesson.hasAccess"
-                            [class.btn-outline-secondary]="!isAdminMode && !lesson.isFree && !lesson.hasAccess && !lesson.requiresPayment"
+                            [class.btn-muted]="!isAdminMode && !lesson.isFree && !lesson.hasAccess && !lesson.requiresPayment"
                             (click)="onLessonAction(lesson, $event)">
                       <span *ngIf="isAdminMode"><i class="pi pi-eye me-1"></i> معاينة</span>
                       <span *ngIf="!isAdminMode && (lesson.isFree || lesson.hasAccess)"><i class="pi pi-play me-1"></i> ابدأ</span>
@@ -383,38 +365,7 @@
         </div>
       </div>
 
-      <!-- ✅ Enhanced Enrollment CTA (Students Only) -->
-      <div class="enrollment-cta" *ngIf="canEnroll && hasLessons">
-        <div class="cta-content">
-          <!-- ✅ Different messages based on access status -->
-          <div *ngIf="!hasPartialAccess" class="cta-full-enrollment">
-            <h3>هل أنت مستعد للبدء؟</h3>
-            <p>اشترك في المادة للوصول إلى جميع الدروس والمواد التعليمية</p>
-          </div>
-          
-          <div *ngIf="hasPartialAccess" class="cta-upgrade-enrollment">
-            <h3>احصل على الوصول الكامل</h3>
-            <p>لديك وصول لبعض الدروس، اشترك في المادة كاملة للحصول على جميع المحتويات</p>
-            <div class="access-status">
-              <i class="pi pi-info-circle text-info me-2"></i>
-              <small class="text-muted">لديك وصول لدروس منفردة من هذه المادة</small>
-            </div>
-          </div>
-
-          <button class="btn btn-primary btn-lg" (click)="navigateToPlanSubject()">
-            <i class="pi pi-credit-card me-2"></i>
-            {{ hasPartialAccess ? 'اشترك في المادة كاملة' : 'سجل في المادة' }}
-          </button>
-          
-          <!-- ✅ Optional: Show current access info -->
-          <div class="current-access-info" *ngIf="hasPartialAccess">
-            <small class="text-info">
-              <i class="pi pi-check-circle me-1"></i>
-              لديك حالياً وصول لدروس منفردة - اشترك للحصول على جميع المحتويات
-            </small>
-          </div>
-        </div>
-      </div>
+      
 
     <!-- ✅ No Content Available -->
     <div class="no-content-container" *ngIf="!hasLessons && !isLoadingContent">

@@ -448,7 +448,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   if (lesson.lessonType === 'video') {
     contentValid = !!lesson.videoUrl;
   } else if (lesson.lessonType === 'pdf' || lesson.lessonType === 'document') {
-    contentValid = !!lesson.pdfUrl;
+    contentValid = !!lesson.document;
   }
   
   // ✅ Price validation
@@ -707,6 +707,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
         order: lesson.order,
         price: lesson.price || 0,
         videoUrl: lesson.videoUrl || '',
+        document: lesson.document || '',
         pdfUrl: lesson.pdfUrl || '',
         duration: lesson.duration,
         lessonType: lesson.lessonType,

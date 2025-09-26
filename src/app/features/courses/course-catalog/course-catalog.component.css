@@ -58,7 +58,6 @@
 
 .reset-btn {
   flex: none;
-  background: #ef4444; /* red-500 */
   border: none;
   color: white;
   padding: 6px 12px;
@@ -71,8 +70,7 @@
   align-items: center;
   gap: 6px;
 }
-.reset-btn:hover {
-  background: #dc2626; /* red-600 */
+.reset-btn:hover {  
   transform: translateY(-1px);
 }
 

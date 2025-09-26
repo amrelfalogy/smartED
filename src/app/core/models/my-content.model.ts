@@ -11,6 +11,7 @@ export interface AccessibleLesson {
   duration: number;
   thumbnail?: string;
   videoUrl?: string;
+  document?: string;
   pdfUrl?: string;
   isFree: boolean;
   price?: number;

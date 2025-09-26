@@ -23,7 +23,7 @@
   <div class="alert alert-danger" *ngIf="errorMessage">
     <i class="pi pi-exclamation-triangle me-2"></i>
     {{ errorMessage }}
-    <button class="btn btn-outline-danger btn-sm ms-3" (click)="retryLoading()">
+    <button class="btn btn-danger btn-sm ms-3" (click)="retryLoading()">
       <i class="pi pi-refresh me-1"></i>
       إعادة المحاولة
     </button>
@@ -80,11 +80,11 @@
 
         <!-- Admin Actions -->
         <div class="admin-actions" *ngIf="isAdminMode">
-          <button class="btn btn-outline-primary me-2" (click)="editLesson()">
+          <button class="btn btn-primary me-2" (click)="editLesson()">
             <i class="pi pi-pencil me-1"></i>
             تعديل الدرس
           </button>
-          <button class="btn btn-outline-success" (click)="generateActivationCode()">
+          <button class="btn btn-success" (click)="generateActivationCode()">
             <i class="pi pi-key me-1"></i>
             إنشاء رمز تفعيل
           </button>
@@ -124,7 +124,7 @@
 
           <!-- Video Controls (if multiple videos) -->
           <div class="video-controls" *ngIf="videoUrls.length > 1">
-            <button class="btn btn-sm btn-outline-secondary" 
+            <button class="btn btn-sm btn-secondary" 
                     [disabled]="currentVideoIndex === 0" 
                     (click)="previousVideo()">
               <i class="pi pi-step-backward"></i>
@@ -135,7 +135,7 @@
               الفيديو {{ currentVideoIndex + 1 }} من {{ videoUrls.length }}
             </span>
             
-            <button class="btn btn-sm btn-outline-secondary" 
+            <button class="btn btn-sm btn-secondary" 
                     [disabled]="currentVideoIndex === videoUrls.length - 1" 
                     (click)="nextVideo()">
               التالي
@@ -229,7 +229,7 @@
                 </div>
               </div>
               <div class="doc-actions">
-                <a class="btn btn-outline-primary" 
+                <a class="btn btn-primary" 
                    [href]="doc" 
                    target="_blank" 
                    rel="noopener">
@@ -284,7 +284,7 @@
 
         <div class="activation-option">
           <p class="text-muted">أم لديك رمز تفعيل؟</p>
-          <button class="btn btn-outline-info" (click)="openActivationModal()">
+          <button class="btn btn-secondary" (click)="openActivationModal()">
             <i class="pi pi-key me-2"></i>
             استخدام رمز التفعيل
           </button>

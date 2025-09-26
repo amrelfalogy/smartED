@@ -101,7 +101,7 @@
                     <div class="error-content">
                         <i class="pi pi-exclamation-triangle"></i>
                         <p>{{ coursesError }}</p>
-                        <button class="btn btn-sm btn-outline-primary" (click)="reloadCourses()">
+                        <button class="btn btn-sm btn-primary" (click)="reloadCourses()">
                             <i class="pi pi-refresh me-1"></i>
                             إعادة المحاولة
                         </button>
@@ -118,28 +118,45 @@
                     />
                     <div class="card-info course-info">
                         <!-- Instructor -->
-                        <div class="instructor-info">
-                            <img
-                                [src]="course.instructorImg || 'assets/imgs/bio.jpg'"
-                                [alt]="course.instructor"
+                        <div class="d-flex align-items-center mb-2" style="justify-content: space-between;">
+                            <div class="instructor-info me-2">
+                                <img
                                 class="instructor-avatar"
+                                [src]="'assets/imgs/avatar/avatar-1.jpg'"
+                                alt="instructor"
                                 (error)="onImageError($event)"
-                            />
-                            <span class="instructor-name">{{ course.instructor }}</span>
+                                />
+                                <span class="instructor-name">{{ getTeacherNameById(course.teacherId) }}</span>
+                            </div>
+                            <span class="price-badge ms-2">
+                                {{ course.price | number }} ج.م
+                            </span>
                         </div>
-
                         <!-- Title -->
                         <h4 class="course-title">{{ course.name }}</h4>
 
                         <!-- Academic Year + Tags + Price -->
                         <div class="meta-row">
-                            <span class="academic-year">{{ course.academicYearName }}</span>
+                            <span class="meta-item academic-year">
+                                <i class="pi pi-graduation-cap"></i>
+                                {{ course.academicYearName }} 
+                            </span>
+                            <span class="meta-item student-year">
+                                <i class="pi pi-people"></i>
+                                {{course.studentYearName}} 
+                            </span>
                         </div>
                         <div class="meta-row tags-row">
                             <span
                                 class="chip"
                                 [ngClass]="course.lessonType === 'center_recorded' ? 'chip--center' : 'chip--studio'"
                             >
+                                <i
+                                    class="pi"
+                                    [ngClass]="
+                                        course.lessonType === 'center_recorded'
+                                            ? 'pi-microphone'
+                                            : 'pi-video'"></i>
                                 {{ course.lessonType === 'center_recorded' ? 'الدروس المسجلة - المركز' : 'الدروس المنتجة - الاستوديو' }}
                             </span>
                         </div>              
@@ -160,97 +177,103 @@
 
         <!-- ✅ NEW: Real Teachers Carousel -->
        <app-card-carousel
-    [items]="teachers"
-    sectionTitle="فريق المعلمين المتميز"
-    sectionHint="نخبة من أفضل المدرسين"
-    viewAllText="عرض الكل"
-    viewAllLink="/teachers">
-    <ng-template #cardTemplate let-teacher>
-        <!-- Loading State -->
-        <div *ngIf="isLoadingTeachers" class="teacher-card-loading">
-            <div class="loading-placeholder">
-                <div class="loading-avatar"></div>
-                <div class="loading-content">
-                    <div class="loading-line"></div>
-                    <div class="loading-line short"></div>
-                    <div class="loading-line medium"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Error State -->
-        <div *ngIf="teachersError && !isLoadingTeachers" class="teacher-card-error">
-            <div class="error-content">
-                <i class="pi pi-exclamation-triangle"></i>
-                <p>{{ teachersError }}</p>
-                <button class="btn btn-sm btn-outline-primary" (click)="retryLoadTeachers()">
-                    <i class="pi pi-refresh me-1"></i>
-                    إعادة المحاولة
-                </button>
-            </div>
-        </div>
-
-        <!-- ✅ UPDATED: Teacher Card with Fixed Image URLs -->
-        <div *ngIf="!isLoadingTeachers && !teachersError" class="teacher-card-content" (click)="viewTeacher(teacher)">
-            <div class="teacher-photo-container">
-                <img 
-                    *ngIf="getTeacherProfileImage(teacher)"
-                    [src]="getTeacherProfileImage(teacher)" 
-                    [alt]="teacher.firstName + ' ' + teacher.lastName"
-                    class="card-image teacher-photo"
-                    (error)="onImageError($event)"
-                    loading="lazy" />
-                
-                <!-- Teacher Placeholder -->
-                <div *ngIf="!getTeacherProfileImage(teacher)" class="teacher-placeholder">
-                    <span class="teacher-initials">
-                        {{ (teacher.firstName?.charAt(0) || '') + (teacher.lastName?.charAt(0) || '') }}
-                    </span>
-                </div>
-            </div>
-            
-            <div class="card-info teacher-info">
-                <div class="teacher-header">
-                    <h4 class="teacher-name">
-                        {{ teacher.firstName }} {{ teacher.lastName }}
-                        <i class="pi pi-verified verified" *ngIf="teacher.verified"></i>
-                    </h4>
-                </div>
-                
-                <p class="specialization">
-                    <i class="pi pi-briefcase me-1"></i>
-                    {{ teacher.specialization || 'معلم متخصص' }}
-                </p>
-                
-                <p class="experience" *ngIf="teacher.experience">
-                    <i class="pi pi-clock me-1"></i>
-                    {{ teacher.experience }} سنة خبرة
-                </p>
-
-                <p class="teacher-bio" *ngIf="teacher.bio">
-                    {{ teacher.bio.length > 80 ? (teacher.bio.substring(0, 80) + '...') : teacher.bio }}
-                </p>
-
-                <div class="rating" *ngIf="teacher.rating">
-                    <i
-                        *ngFor="let star of [].constructor(5); let i = index"
-                        class="pi"
-                        [ngClass]="i < teacher.rating ? 'pi-star-fill' : 'pi-star'"
-                    ></i>
-                    <span class="rating-count">({{ teacher.rating }}.0)</span>
+            [items]="teachers"
+            sectionTitle="فريق المعلمين المتميز"
+            sectionHint="نخبة من أفضل المدرسين"
+            viewAllText="عرض الكل"
+            viewAllLink="/teachers">
+            <ng-template #cardTemplate let-teacher>
+                <!-- Loading State -->
+                <div *ngIf="isLoadingTeachers" class="teacher-card-loading">
+                    <div class="loading-placeholder">
+                        <div class="loading-avatar"></div>
+                        <div class="loading-content">
+                            <div class="loading-line"></div>
+                            <div class="loading-line short"></div>
+                            <div class="loading-line medium"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="actions">
-                    <button class="btn btn-primary teacher-btn" (click)="viewTeacher(teacher); $event.stopPropagation()">
-                        <i class="pi pi-user me-2"></i>
-                        عرض الملف
-                    </button>
+                <!-- Error State -->
+                <div *ngIf="teachersError && !isLoadingTeachers" class="teacher-card-error">
+                    <div class="error-content">
+                        <i class="pi pi-exclamation-triangle"></i>
+                        <p>{{ teachersError }}</p>
+                        <button class="btn btn-sm btn-primary" (click)="retryLoadTeachers()">
+                            <i class="pi pi-refresh me-1"></i>
+                            إعادة المحاولة
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </ng-template>
-</app-card-carousel>
 
-       
+                <!-- ✅ UPDATED: Teacher Card with Fixed Image URLs -->
+                <div *ngIf="!isLoadingTeachers && !teachersError" class="teacher-card-content" (click)="viewTeacher(teacher)">
+                    <div class="teacher-photo-container">
+                        <img 
+                            *ngIf="getTeacherProfileImage(teacher)"
+                            [src]="getTeacherProfileImage(teacher)" 
+                            [alt]="teacher.firstName + ' ' + teacher.lastName"
+                            class="teacher-photo"
+                            (error)="onImageError($event)"
+                            loading="lazy" />
+                        
+                        <!-- Teacher Placeholder -->
+                        <div *ngIf="!getTeacherProfileImage(teacher)" class="teacher-placeholder">
+                            <span class="teacher-initials">
+                                {{ (teacher.firstName?.charAt(0) || '') + (teacher.lastName?.charAt(0) || '') }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-info teacher-info">
+                        <div class="teacher-header">
+                            <h4 class="teacher-name">
+                                {{ teacher.firstName }} {{ teacher.lastName }}                             
+                            </h4>
+                        </div>
+                        
+                        <p class="specialization">
+                            <i class="pi pi-briefcase me-1"></i>
+                            {{ teacher.specialization || 'معلم متخصص' }}
+                        </p>
+                        
+                        <p class="experience" *ngIf="teacher.experience">
+                            <i class="pi pi-clock me-1"></i>
+                            {{ teacher.experience }} سنة خبرة
+                        </p>
+
+                        <p class="teacher-bio" *ngIf="teacher.bio">
+                            {{ teacher.bio.length > 80 ? (teacher.bio.substring(0, 80) + '...') : teacher.bio }}
+                        </p>
+
+                        <div class="rating" *ngIf="teacher.rating">
+                            <i
+                                *ngFor="let star of [].constructor(5); let i = index"
+                                class="pi"
+                                [ngClass]="i < teacher.rating ? 'pi-star-fill' : 'pi-star'"
+                            ></i>
+                            <span class="rating-count">({{ teacher.rating }}.0)</span>
+                        </div>
+
+                        <div class="actions">
+                            <button class="btn btn-primary teacher-btn" (click)="viewTeacher(teacher); $event.stopPropagation()">
+                                <i class="pi pi-user me-2"></i>
+                                عرض الملف
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </app-card-carousel>       
     </section>
 </div>
+<!-- User Profile Modal -->
+<app-user-profile-modal
+  *ngIf="showTeacherProfileModal && selectedTeacher"
+  [user]="selectedTeacher"
+  [isVisible]="showTeacherProfileModal"
+  (close)="closeProfileModal()"
+  (userUpdated)="onUserUpdated($event)"
+  (userDeleted)="onUserDeleted($event)">
+</app-user-profile-modal>

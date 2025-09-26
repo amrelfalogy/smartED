@@ -22,10 +22,10 @@
     </div>
 
     <div class="lesson-actions" (click)="$event.stopPropagation()">
-      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleExpansion()" title="{{ isExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل' }}">
+      <button type="button" class="btn btn-sm btn-secondary" (click)="toggleExpansion()" title="{{ isExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل' }}">
         <i class="pi" [ngClass]="isExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
       </button>
-      <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteLesson()" title="حذف الدرس">
+      <button type="button" class="btn btn-sm btn-danger" (click)="deleteLesson()" title="حذف الدرس">
         <i class="pi pi-trash"></i>
       </button>
     </div>
@@ -120,12 +120,7 @@
               <button type="button" class="btn btn-primary" (click)="addVideoUrl(videoUrlInput)">
                 <i class="pi pi-plus"></i>
                 إضافة رابط
-              </button>
-              <label class="btn btn-outline-secondary mb-0">
-                <i class="pi pi-upload"></i>
-                رفع ملف فيديو
-                <input type="file" accept="video/*" class="d-none" (change)="onVideoFileSelected($event)" />
-              </label>
+              </button>             
             </div>
             <div class="upload-progress" *ngIf="isLoadingMedia">
               <div class="progress">
@@ -142,13 +137,13 @@
             <div class="d-flex align-items-center gap-2 mb-2" *ngFor="let ctrl of videosFA.controls; let i = index">
               <span class="badge bg-light text-dark">#{{ i + 1 }}</span>
               <input type="text" class="form-control" [value]="ctrl.value" readonly />
-              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="moveVideo(i, 'up')" [disabled]="i===0">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="moveVideo(i, 'up')" [disabled]="i===0">
                 <i class="pi pi-arrow-up"></i>
               </button>
-              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="moveVideo(i, 'down')" [disabled]="i===videosFA.length-1">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="moveVideo(i, 'down')" [disabled]="i===videosFA.length-1">
                 <i class="pi pi-arrow-down"></i>
               </button>
-              <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeVideo(i)">
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeVideo(i)">
                 <i class="pi pi-trash"></i>
               </button>
             </div>
@@ -157,18 +152,12 @@
             سيتم إرسال أول رابط فقط إلى الخادم كـ videoUrl.
           </small>
         </div>
-
-        <!-- Documents (first URL sent as pdfUrl) -->
+        <!-- Documents (first sent as document) -->
         <div class="content-upload-section mt-3">
           <label class="form-label"><i class="pi pi-file"></i> مستندات الدرس (اختياري)</label>
           <div class="upload-area" [class.has-content]="documentsFA.length > 0">
-            <div class="upload-input-group">
-              <input type="url" class="form-control" placeholder="https://example.com/file.pdf" #docUrlInput />
-              <button type="button" class="btn btn-outline-primary" (click)="addDocumentUrl(docUrlInput)">
-                <i class="pi pi-plus"></i>
-                إضافة رابط
-              </button>
-              <label class="btn btn-outline-secondary mb-0">
+            <div class="upload-input-group">              
+              <label class="btn btn-primary ">
                 <i class="pi pi-upload"></i>
                 رفع ملف مستند
                 <input type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" class="d-none" (change)="onDocumentFileSelected($event)" />
@@ -189,16 +178,16 @@
             <div class="d-flex align-items-center gap-2 mb-2" *ngFor="let ctrl of documentsFA.controls; let i = index">
               <span class="badge bg-light text-dark">#{{ i + 1 }}</span>
               <input type="text" class="form-control" [value]="ctrl.value" readonly />
-              <a class="btn btn-outline-primary btn-sm" [href]="ctrl.value" target="_blank" rel="noopener">
+              <a class="btn btn-primary btn-sm" [href]="ctrl.value" target="_blank" rel="noopener">
                 <i class="pi pi-external-link"></i>
               </a>
-              <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeDocument(i)">
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeDocument(i)">
                 <i class="pi pi-trash"></i>
               </button>
             </div>
           </div>
           <small class="text-muted d-block mt-1">
-            سيتم إرسال أول رابط فقط إلى الخادم كـ pdfUrl.
+            سيتم إرسال أول رابط فقط إلى الخادم كـ document.
           </small>
         </div>
       </div>

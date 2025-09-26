@@ -28,16 +28,17 @@
             </div>
           </div>
           
-          <div class="user-info">
+          <div class="user-info me-3">
             <h4 class="user-name">{{ getUserDisplayName() }}</h4>
             <p class="user-email">{{ user.email }}</p>
             <div class="user-badges">
               <span class="badge" [class]="getRoleBadgeClass()">
                 {{ getRoleDisplayName() }}
-              </span>
-              <span class="badge ms-1" [class.bg-success]="user.emailVerified" [class.bg-warning]="!user.emailVerified">
-                {{ user.emailVerified ? 'بريد مُفعل' : 'بريد غير مُفعل' }}
-              </span>
+              </span>              
+            </div>
+            <div class="info-item" *ngIf="user.address">
+              <label>الوصف/التخصص:</label>
+              <span>{{ user.bio }}</span>
             </div>
           </div>
         </div>
@@ -45,18 +46,18 @@
         <div class="modal-actions">
           <button 
             type="button" 
-            class="btn btn-outline-secondary btn-sm me-2" 
+            class="btn btn-secondary btn-sm me-2" 
             (click)="toggleEditMode()"
-            *ngIf="!isEditMode && user.role !== 'admin'">
+            *ngIf="!isEditMode && isCurrentUserAdmin()">
             <i class="pi pi-pencil me-1"></i>
             تعديل
           </button>
           
           <button 
             type="button" 
-            class="btn btn-outline-danger btn-sm me-2"
+            class="btn btn-danger btn-sm me-2"
             (click)="showDeleteDialog()"
-            *ngIf="!isEditMode && user.role !== 'admin'">
+            *ngIf="!isEditMode && isCurrentUserAdmin()">
             <i class="pi pi-trash me-1"></i>
             حذف
           </button>
@@ -92,13 +93,7 @@
                 <div class="info-item" *ngIf="user.phone">
                   <label>رقم الهاتف:</label>
                   <span>{{ user.phone }}</span>
-                </div>
-                <div class="info-item">
-                  <label>الحالة:</label>
-                  <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
-                    {{ user.isActive ? 'نشط' : 'غير نشط' }}
-                  </span>
-                </div>
+                </div>                
               </div>
             </div>
 
@@ -106,13 +101,16 @@
             <div class="col-md-6">
               <div class="info-section">
                 <h6 class="section-title">معلومات إضافية</h6>
-                <div class="info-item" *ngIf="user.dateOfBirth">
-                  <label>تاريخ الميلاد:</label>
-                  <span>{{ formatDate(user.dateOfBirth) }}</span>
-                </div>
+                
                 <div class="info-item" *ngIf="user.address">
-                  <label>العنوان:</label>
-                  <span>{{ user.address }}</span>
+                  <label>الوصف/التخصص:</label>
+                  <span>{{ user.bio }}</span>
+                </div>
+                <div class="info-item">
+                  <label>الحالة:</label>
+                  <span class="status-badge" [class.active]="user.isActive" [class.inactive]="!user.isActive">
+                    {{ user.isActive ? 'نشط' : 'غير نشط' }}
+                  </span>
                 </div>
                 <div class="info-item">
                   <label>تاريخ التسجيل:</label>
@@ -156,7 +154,7 @@
               <div class="admin-actions">
                 <button 
                   type="button" 
-                  class="btn btn-outline-primary btn-sm"
+                  class="btn btn-primary btn-sm"
                   (click)="toggleUserStatus()"
                   [disabled]="isLoading">
                   <i class="pi pi-spinner pi-spin me-1" *ngIf="isLoading"></i>
@@ -328,7 +326,7 @@
       <div class="modal-footer" *ngIf="isEditMode">
         <button 
           type="button" 
-          class="btn btn-outline-secondary"
+          class="btn btn-secondary"
           (click)="toggleEditMode()"
           [disabled]="isSaving">
           إلغاء
@@ -379,7 +377,7 @@
       <div class="modal-footer">
         <button 
           type="button" 
-          class="btn btn-outline-secondary"
+          class="btn btn-secondary"
           (click)="hideDeleteDialog()"
           [disabled]="isDeleting">
           إلغاء

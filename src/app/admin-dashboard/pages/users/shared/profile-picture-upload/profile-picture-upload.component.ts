@@ -159,12 +159,11 @@ export class ProfilePictureUploadComponent implements OnDestroy {
     this.isDeleting = true;
     this.uploadError = '';
     
-    // ✅ NEW: Use unified profile update endpoint to remove picture
-    // Send empty/null profilePicture or other method based on your backend implementation
+    // ✅ For deletion, you might need a separate endpoint or send a special value
+    // This depends on your backend implementation
     const profileData: ProfileUpdateData = {
       // You might need to adjust this based on how your backend handles picture deletion
-      // Option 1: Send empty file name or special value
-      // Option 2: Your backend might handle this differently
+      profilePicture: null
     };
     
     this.userService.updateUserProfile(this.user.id, profileData)
@@ -208,24 +207,22 @@ export class ProfilePictureUploadComponent implements OnDestroy {
     return true;
   }
   
-  // ✅ Get profile image URL (prioritize profilePicture)
+  // ✅ UPDATED: Get profile image URL using UserService method
   get profileImageUrl(): string {
     if (!this.user) return '';
-    return this.user.profilePicture || this.user.avatar || '';
+    return this.userService.getProfileImageUrl(this.user);
   }
   
   // ✅ Get user initials for placeholder
   get userInitials(): string {
     if (!this.user) return 'U';
-    const firstName = this.user.firstName || '';
-    const lastName = this.user.lastName || '';
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
+    return this.userService.getUserInitials(this.user);
   }
   
   // ✅ Get user display name
   get userDisplayName(): string {
     if (!this.user) return '';
-    return `${this.user.firstName} ${this.user.lastName}`.trim() || this.user.email;
+    return this.userService.getUserDisplayName(this.user);
   }
   
   // ✅ Get size class

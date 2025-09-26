@@ -25,7 +25,7 @@
       </div>
       <button
         *ngIf="hasActiveFilters"
-        class="reset-btn"
+        class="reset-btn btn-secondary"
         (click)="resetFilters()"
       >
         <i class="pi pi-undo"></i>
@@ -98,7 +98,7 @@
     <div class="alert alert-danger">
       <i class="pi pi-exclamation-triangle me-2"></i>
       {{ errorMessage }}
-      <button class="btn btn-outline-danger btn-sm ms-2" (click)="reload()">
+      <button class="btn btn-danger btn-sm ms-2" (click)="reload()">
         <i class="pi pi-refresh me-1"></i>
         إعادة المحاولة
       </button>
@@ -129,7 +129,7 @@
           alt="instructor"
           (error)="onImageError($event)"
         />
-        <span class="instructor-name">{{ getInstructorName(s) }}</span>
+        <span class="instructor-name">{{ getTeacherNameById(s.teacherId) }}</span>
       </div>
 
       <div class="card-body">
@@ -212,7 +212,7 @@
     <div class="no-courses-msg" *ngIf="!isLoading && !errorMessage">
       <h3>لا توجد دورات مطابقة</h3>
       <p>جرّب تغيير المرشحات أو البحث</p>
-      <button class="btn btn-outline-secondary" (click)="resetFilters()">
+      <button class="btn btn-secondary" (click)="resetFilters()">
         <i class="pi pi-refresh me-2"></i>
         إعادة تعيين
       </button>

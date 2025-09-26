@@ -34,11 +34,11 @@
 }
 
 .teacher-photo {
-  width: 120px;
-  height: 120px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #fff;
+  border: 3px solid #fff;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -368,14 +368,16 @@
   margin-bottom: 6px;
   flex-wrap: wrap;
 }
-.academic-year {
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  color: #1d4ed8;
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  color: #6b7280;
+  gap: 6px;
+  padding: 4px 8px;
   border-radius: 8px;
-  padding: 3px 8px;
-  font-size: 0.8rem;
-  font-weight: 700;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  font-size: 0.8rem;  
 }
 .tags-row {
   justify-content: space-between;
@@ -386,21 +388,21 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.8rem;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 0.7rem;
   font-weight: 700;
   border: 1px solid transparent;
 }
 .chip--center {
-  background: #f0f9ff;
-  color: #0ea5e9;
-  border-color: #bae6fd;
+  background: #94afca36;
+  color: var(--primary-color);
+  border-color: #566f9566;
 }
 .chip--studio {
-  background: #fef3c7;
-  color: #b45309;
-  border-color: #fde68a;
+  background: #dc35452e;
+  color: var(--danger-color);
+  border-color: #dc35451f;
 }
 .price {
   margin-inline-start: auto;
@@ -409,20 +411,19 @@
   display: inline-flex;
   align-items: center;
 }
+.price-badge {
+  background: var(--secondary-color);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 18px;
+  padding: 0.35em 1em;
+  font-size: .75rem;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  display: inline-block;
+  margin-left: 0.5em;
+}
 
-/* Rating */
-.rating {
-  display: flex;
-  gap: 4px;
-  margin-top: auto;
-  align-items: center;
-}
-.rating .pi-star-fill {
-  color: #ffc600;
-}
-.rating .pi-star {
-  color: var(--gray-color);
-}
+
 
 /* Actions */
 .actions {
@@ -445,11 +446,7 @@
   font-weight: 600;
   color: var(--dark-color);
 }
-.verified {
-  color: #10b981;
-  font-size: 1rem;
-  vertical-align: middle;
-}
+
 .specialization,
 .department {
   margin: 0.15rem 0;

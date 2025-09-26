@@ -72,17 +72,17 @@
       <div class="test-codes" style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
         <small><strong>اختبار سريع:</strong></small>
         <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-          <button type="button" class="btn btn-sm btn-outline-info" 
+          <button type="button" class="btn btn-sm btn-secondary" 
                   (click)="testCode('LMS-9B31BD06-MFU43820')"
                   style="font-size: 10px; padding: 2px 6px;">
             Test Available Code
           </button>
-          <button type="button" class="btn btn-sm btn-outline-secondary" 
+          <button type="button" class="btn btn-sm btn-secondary" 
                   (click)="testCode('LMS-INVALID-CODE123')"
                   style="font-size: 10px; padding: 2px 6px;">
             Test Invalid
           </button>
-          <button type="button" class="btn btn-sm btn-outline-warning" 
+          <button type="button" class="btn btn-sm btn-warning" 
                   (click)="testCode('')"
                   style="font-size: 10px; padding: 2px 6px;">
             Clear
@@ -157,7 +157,7 @@
       
       <button
         type="button"
-        class="btn btn-outline-secondary"
+        class="btn btn-secondary"
         (click)="onCancel()"
         [disabled]="isSubmitting"
       >

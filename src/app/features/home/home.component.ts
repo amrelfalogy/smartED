@@ -46,9 +46,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   studentYearsCache = new Map<string, StudentYear[]>();
 
   // ✅ NEW: Teachers data
-  teachers: HomeTeacher[] = [];
+
+  teachers: User[] = [];
+  teacherMap = new Map<string, User>();
+
   isLoadingTeachers = false;
   teachersError = '';
+
+  selectedTeacher: User | null = null;
+  showTeacherProfileModal = false;
+
 
   isLoadingCourses = false;
   coursesError = '';
@@ -112,10 +119,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: ({ subjects, academicYears, teachers }) => {
         this.allSubjects = subjects || [];
         this.academicYears = academicYears || [];
-        this.prepareCourses();
         this.prepareTeachers(teachers.users || []); // ✅ NEW
         this.isLoadingCourses = false;
         this.isLoadingTeachers = false;
+        
+        this.loadStudentYearsForAllAcademicYears(() => {
+          this.prepareCourses();
+        });
+
       },
       error: (error) => {
         console.error('Error loading home data:', error);
@@ -124,6 +135,29 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.isLoadingCourses = false;
         this.isLoadingTeachers = false;
       }
+    });
+  }
+
+  private loadStudentYearsForAllAcademicYears(onComplete?: () => void): void {
+    if (!this.academicYears || this.academicYears.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+    let loadedCount = 0;
+    const total = this.academicYears.length;
+    this.academicYears.forEach(ay => {
+      this.academicYearService.getStudentYears(ay.id).subscribe({
+        next: (studentYears: StudentYear[]) => {
+          this.studentYearsCache.set(ay.id, studentYears);
+          loadedCount++;
+          if (loadedCount === total && onComplete) onComplete();
+        },
+        error: (err) => {
+          console.error('Error loading student years for academic year', ay.id, err);
+          loadedCount++;
+          if (loadedCount === total && onComplete) onComplete();
+        }
+      });
     });
   }
 
@@ -140,36 +174,53 @@ export class HomeComponent implements OnInit, OnDestroy {
         ...teacher,
         specialization: this.generateSpecialization(teacher),
         yearsExperience: this.generateExperience(teacher),
-        rating: this.generateRating(teacher),
         verified: this.generateVerificationStatus(teacher)
       }))
-      .slice(0, 8); // Show max 8 teachers
+      .slice(0, 5); // Show max 5 teachers
 
-    console.log('✅ Teachers prepared for home:', this.teachers);
+    this.teacherMap.clear();
+    this.teachers.forEach(t => this.teacherMap.set(t.id, t));  
   }
   getTeacherProfileImage(teacher: HomeTeacher): string {
     return this.userService.getProfileImageUrl(teacher);
   }
 
   private prepareCourses(): void {
-    const publishedSubjects = this.allSubjects
-      .filter(subject => subject.status === 'published')
-      .sort((a, b) => {
-        const dateA = new Date(a.createdAt || 0).getTime();
-        const dateB = new Date(b.createdAt || 0).getTime();
-        return dateB - dateA;
-      })
-      .slice(0, 8);
+  const publishedSubjects = this.allSubjects
+    .filter(subject => subject.status === 'published')
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    })
+    .slice(0, 5);
 
-    this.courses = publishedSubjects.map(subject => ({
+  this.courses = publishedSubjects.map(subject => {
+    const teacher = this.teacherMap.get(subject.teacherId || '');
+    const instructorName = teacher
+      ? [teacher.firstName, teacher.lastName].filter(Boolean).join(' ')
+      : 'غير محدد';
+
+    return {
       ...subject,
       academicYearName: this.getAcademicYearName(subject.academicYearId),
       studentYearName: this.getStudentYearName(subject.studentYearId),
       lessonType: this.determineLessonType(subject),
-      price: this.generatePrice(subject),
-      rating: this.generateRating(subject),
-      image: subject.imageUrl || subject.thumbnail || 'assets/imgs/aboutt.jpg'
-    }));
+      price: subject.price ?? 0, // ✅ Use subject.price directly
+      image: subject.imageUrl || subject.thumbnail || 'assets/imgs/aboutt.jpg',
+      instructor: instructorName
+    };
+  });
+}
+
+
+
+  getTeacherNameById(teacherId?: string): string {
+    if (!teacherId) return 'غير محدد';
+    const teacher = this.teacherMap.get(teacherId);
+    if (!teacher) return 'غير محدد';
+    const fullName = [teacher.firstName, teacher.lastName].filter(Boolean).join(' ');
+    return fullName || teacher.email || 'غير محدد';
   }
 
   // ✅ NEW: Teacher data generators
@@ -220,12 +271,26 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // ✅ NEW: View teacher profile
   viewTeacher(teacher: HomeTeacher): void {
-    // For now, just log - you can implement teacher profile page later
-    console.log('View teacher profile:', teacher);
-    // this.router.navigate(['/teachers', teacher.id]);
+    this.selectedTeacher = teacher;
+    this.showTeacherProfileModal = true;
+  }
+    closeProfileModal(): void {
+    this.showTeacherProfileModal = false;
+    this.selectedTeacher = null;
   }
 
-  // ✅ Keep existing instructor navigation for demo cards
+  onUserUpdated(updatedUser: User): void {
+    const index = this.teachers.findIndex(t => t.id === updatedUser.id);
+    if (index !== -1) {
+      this.teachers[index] = updatedUser;
+    }
+    this.closeProfileModal();
+  }
+
+  onUserDeleted(userId: string): void {
+    this.teachers = this.teachers.filter(t => t.id !== userId);
+    this.closeProfileModal();
+  }
  
 
   // ✅ NEW: Retry teachers loading
@@ -267,18 +332,9 @@ export class HomeComponent implements OnInit, OnDestroy {
     return hash % 2 === 0 ? 'center_recorded' : 'studio_produced';
   }
 
-  private generatePrice(subject: CourseSubject): number {
-    const hash = this.hashString(subject.name || '');
-    const basePrices = [150, 180, 200, 220, 250, 280, 300];
-    return basePrices[hash % basePrices.length];
-  }
+ 
 
-  private generateRating(subject: any): number {
-    const hash = this.hashString((subject.name || subject.firstName || '') + (subject.lastName || ''));
-    const ratings = [3, 4, 5];
-    return ratings[hash % ratings.length];
-  }
-
+ 
   private hashString(str: string): number {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {

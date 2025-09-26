@@ -23,14 +23,14 @@ export interface NavigationItem {
 export const NavigationItems: NavigationItem[] = [
   {
     id: 'dashboard',
-    title: 'Dashboard',
+    title: 'لوحة التحكم',
     type: 'group',
     icon: 'pi pi-home',
     role: ['admin', 'support'],
     children: [
       {
         id: 'default',
-        title: 'Dashboard',
+        title: 'الرئيسية',
         type: 'item',
         classes: 'nav-item',
         url: '/admin/dashboard',
@@ -42,21 +42,21 @@ export const NavigationItems: NavigationItem[] = [
   },
   {
     id: 'courses',
-    title: 'Course Management',
+    title: ' الدورات',
     type: 'group',
     icon: 'pi pi-book',
     role: ['admin', 'support'],
     children: [
       {
         id: 'courses-admin',
-        title: 'Courses',
+        title: 'إدارة الدورات',
         type: 'collapse',
         classes: 'nav-item',
         icon: 'pi pi-play-circle',
         role: ['admin', 'support'],
         children: [
           {
-            id: 'courses-list',
+            id: 'جميع الدورات',
             title: 'Courses List',
             type: 'item',
             classes: 'nav-item',
@@ -67,7 +67,7 @@ export const NavigationItems: NavigationItem[] = [
           },
           {
             id: 'courses-form',
-            title: 'Add Course',
+            title: 'إضافة دورة جديدة',
             type: 'item',
             classes: 'nav-item',
             url: '/admin/courses/new',
@@ -79,7 +79,7 @@ export const NavigationItems: NavigationItem[] = [
       },
       {
         id: 'payments-admin',
-        title: 'Payments',
+        title: 'المدفوعات',
         type: 'item',
         classes: 'nav-item',
         url: '/admin/payments',
@@ -101,14 +101,14 @@ export const NavigationItems: NavigationItem[] = [
   },
   {
     id: 'users',
-    title: 'User Management',
+    title: 'إدارة المستخدمين',
     type: 'group',
     icon: 'pi pi-users',
     role: ['admin'],
     children: [
       {
         id: 'students',
-        title: 'Students',
+        title: 'الطلاب',
         type: 'item',
         classes: 'nav-item',
         url: '/admin/users/students',
@@ -118,7 +118,7 @@ export const NavigationItems: NavigationItem[] = [
       },
       {
         id: 'teachers',
-        title: 'Teachers',
+        title: 'المعلمين',
         type: 'item',
         classes: 'nav-item',
         url: '/admin/users/teachers',
@@ -128,7 +128,7 @@ export const NavigationItems: NavigationItem[] = [
       },
       {
         id: 'support',
-        title: 'Support',
+        title: 'الدعم الفني',
         type: 'item',
         classes: 'nav-item',
         url: '/admin/users/support',
@@ -187,17 +187,7 @@ export const StudentNavigationItems: NavigationItem[] = [
         icon: 'pi pi-list',
         breadcrumbs: false,
         role: ['student']
-      },
-      {
-        id: 'course-progress',
-        title: 'تقدم الدورات',
-        type: 'item',
-        classes: 'nav-item',
-        url: '/student-dashboard/progress',
-        icon: 'pi pi-chart-line',
-        breadcrumbs: false,
-        role: ['student']
-      }
+      },      
     ]
   },
   {
@@ -207,16 +197,7 @@ export const StudentNavigationItems: NavigationItem[] = [
     icon: 'pi pi-credit-card',
     role: ['student'],
     children: [
-      // {
-      //   id: 'my-payments',
-      //   title: 'مدفوعاتي',
-      //   type: 'item',
-      //   classes: 'nav-item',
-      //   url: '/student-dashboard/my-payments',
-      //   icon: 'pi pi-receipt',
-      //   breadcrumbs: false,
-      //   role: ['student']
-      // },
+    
       {
         id: 'payment-history',
         title: 'سجل المدفوعات',

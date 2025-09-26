@@ -111,6 +111,7 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
         price: lessonData?.price ?? 0,
         currency: lessonData?.currency ?? 'جنيه',
         videoUrl: lessonData?.videoUrl ?? null,
+        document: lessonData?.document ?? null,
         pdfUrl: lessonData?.pdfUrl ?? null,
         pdfFileName: lessonData?.pdfFileName ?? null,
         pdfFileSize: lessonData?.pdfFileSize ?? null,
@@ -127,7 +128,7 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
 
       // Set content URLs
       this.videoUrls = this.lesson.videoUrl ? [this.lesson.videoUrl] : [];
-      this.docUrls = this.lesson.pdfUrl ? [this.lesson.pdfUrl] : [];
+      // this.docUrls = this.lesson.document ? [this.lesson.document] : [];
 
       await this.loadCourseInfo();
       await this.checkLessonAccess();

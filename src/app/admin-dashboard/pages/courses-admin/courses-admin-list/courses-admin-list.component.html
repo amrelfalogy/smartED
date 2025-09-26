@@ -85,7 +85,7 @@
       <!-- Filters Toggle -->
       <button 
         type="button" 
-        class="btn btn-outline-secondary filter-toggle"
+        class="btn btn-secondary filter-toggle"
         [class.active]="showFilters"
         (click)="toggleFilters()"
       >
@@ -100,7 +100,7 @@
       <div class="view-toggle">
         <button 
           type="button" 
-          class="btn btn-outline-secondary"
+          class="btn btn-secondary"
           [class.active]="viewMode === 'grid'"
           (click)="viewMode = 'grid'"
           title="عرض الشبكة"
@@ -109,7 +109,7 @@
         </button>
         <button 
           type="button" 
-          class="btn btn-outline-secondary"
+          class="btn btn-secondary"
           [class.active]="viewMode === 'list'"
           (click)="viewMode = 'list'"
           title="عرض القائمة"
@@ -127,7 +127,7 @@
 
       <button 
         type="button" 
-        class="btn btn-outline-secondary sort-order"
+        class="btn btn-secondary sort-order"
         (click)="sortOrderControl.setValue(sortOrderControl.value === 'asc' ? 'desc' : 'asc')"
         [title]="sortOrderControl.value === 'asc' ? 'ترتيب تصاعدي' : 'ترتيب تنازلي'"
       >
@@ -178,7 +178,7 @@
       </div>
 
       <div class="filter-actions">
-        <button type="button" class="btn btn-outline-secondary" (click)="resetFilters()">
+        <button type="button" class="btn btn-secondary" (click)="resetFilters()">
           <i class="pi pi-refresh"></i>
           إعادة تعيين
         </button>
@@ -192,7 +192,7 @@
       <span class="selected-count">{{ selectedCourses.length }} مادة محددة</span>
     </div>
     <div class="bulk-actions">
-      <button type="button" class="btn btn-outline-secondary" (click)="clearSelection()">
+      <button type="button" class="btn btn-secondary" (click)="clearSelection()">
         <i class="pi pi-times"></i>
         إلغاء التحديد
       </button>
@@ -203,7 +203,7 @@
   <div class="alert alert-danger" *ngIf="errorMessage">
     <i class="pi pi-exclamation-triangle"></i>
     {{ errorMessage }}
-    <button type="button" class="btn btn-sm btn-outline-danger ms-2" (click)="loadCourses()">
+    <button type="button" class="btn btn-sm btn-danger ms-2" (click)="loadCourses()">
       <i class="pi pi-refresh"></i>
       إعادة المحاولة
     </button>
@@ -241,7 +241,7 @@
         </button>
         <button 
           type="button" 
-          class="btn btn-outline-secondary"
+          class="btn btn-secondary"
           (click)="resetFilters()"
           *ngIf="filters.search || filters.status !== 'all' || filters.academicYear !== 'all' || filters.studentYear !== 'all' || filters.sessionType !== 'all'"
         >
@@ -436,7 +436,7 @@
           <div class="action-buttons">
             <button 
               type="button" 
-              class="btn btn-sm btn-outline-primary"
+              class="btn btn-sm btn-primary"
               (click)="viewCourseDetails(course.id!)"
               title="عرض المادة"
             >
@@ -444,7 +444,7 @@
             </button>
             <button 
               type="button" 
-              class="btn btn-sm btn-outline-secondary"
+              class="btn btn-sm btn-secondary"
               (click)="editCourse(course)"
               title="تعديل المادة"
             >
@@ -452,7 +452,7 @@
             </button>
             <button 
               type="button" 
-              class="btn btn-sm btn-outline-danger"
+              class="btn btn-sm btn-danger"
               (click)="confirmDeleteCourse(course)"
               title="حذف المادة"
             >

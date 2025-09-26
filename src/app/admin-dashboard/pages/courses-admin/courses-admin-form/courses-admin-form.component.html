@@ -227,7 +227,7 @@
       <p><strong>Lesson {{ j + 1 }}:</strong> {{ lesson.title || 'No title' }} 
         - Type: {{ lesson.lessonType }} 
         - Video: {{ lesson.videoUrl ? 'Yes' : 'No' }} 
-        - PDF: {{ lesson.pdfUrl ? 'Yes' : 'No' }}
+        - PDF: {{ lesson.document ? 'Yes' : 'No' }}
       </p>
     </div>
   </div>
@@ -235,7 +235,7 @@
 
 <div class="form-actions">
   <div class="actions-left">
-    <button type="button" class="btn btn-outline-secondary" (click)="cancel()" [disabled]="isSaving">
+    <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isSaving">
       <i class="pi pi-times"></i>
       إلغاء
     </button>
@@ -244,7 +244,7 @@
   <div class="actions-center">
     <button
       type="button"
-      class="btn btn-outline-primary"
+      class="btn btn-primary"
       (click)="previousStep()"
       [disabled]="isFirstStep || isSaving"
       *ngIf="!isFirstStep"
@@ -271,7 +271,7 @@
     <ng-container *ngIf="courseData.subject.status !== 'published'; else publishedActions">
       <button
         type="button"
-        class="btn btn-outline-info"
+        class="btn btn-info"
         (click)="saveCourse()"
         [disabled]="!formState.isValid || isSaving"
       >
@@ -307,7 +307,7 @@
 
       <button
         type="button"
-        class="btn btn-outline-danger"
+        class="btn btn-danger"
         (click)="unpublishCourse()"
         [disabled]="isSaving"
       >

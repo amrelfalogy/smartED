@@ -143,7 +143,7 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
     this.documentsFA.clear();
 
     if (lesson.videoUrl) this.videosFA.push(this.fb.nonNullable.control(lesson.videoUrl));
-    if (lesson.pdfUrl) this.documentsFA.push(this.fb.nonNullable.control(lesson.pdfUrl));
+    if (lesson.document) this.documentsFA.push(this.fb.nonNullable.control(lesson.document));
 
     this.lessonForm.patchValue({
       id: lesson.id ?? null,
@@ -365,10 +365,6 @@ addDocumentUrl(input: HTMLInputElement): void {
           } else {
             this.documentsFA.at(0).setValue(ev.url);
           }
-          this.lessonForm.patchValue({
-            pdfFileName: ev.fileName || file.name,
-            pdfFileSize: ev.fileSize || file.size
-          }, { emitEvent: false });
           this.isLoadingMediaDoc = false;
           this.uploadProgressDoc = 100;
           this.lessonForm.updateValueAndValidity();
@@ -382,6 +378,7 @@ addDocumentUrl(input: HTMLInputElement): void {
       }
     });
   }
+
 
   moveVideo(i: number, dir: 'up' | 'down'): void {
     const j = dir === 'up' ? i - 1 : i + 1;
@@ -470,7 +467,7 @@ addDocumentUrl(input: HTMLInputElement): void {
 
   private inferContentType(lesson?: Lesson): ContentType {
     const hasVideo = lesson?.videoUrl || (lesson?.videos && lesson.videos.length > 0);
-    const hasDoc = lesson?.pdfUrl || (lesson?.documents && lesson.documents.length > 0);
+    const hasDoc = lesson?.document || (lesson?.documents && lesson.documents.length > 0);
     if (hasVideo) return 'video';
     if (hasDoc) return 'pdf';
     return 'text';
@@ -503,9 +500,7 @@ addDocumentUrl(input: HTMLInputElement): void {
       currency: v.currency || 'EGP',
       thumbnail: v.thumbnail ?? null,
       videoUrl: firstVideo, // ✅ Single URL, not array
-      pdfUrl: firstDoc, // ✅ Single URL, not array
-      pdfFileName: v.pdfFileName ?? null,
-      pdfFileSize: v.pdfFileSize ?? null,
+      document: firstDoc, // ✅ Single URL, not array      
       zoomUrl: v.lessonType === 'live' ? (v.zoomUrl || null) : null,
       zoomMeetingId: v.lessonType === 'live' ? (v.zoomMeetingId || null) : null,
       zoomPasscode: v.lessonType === 'live' ? (v.zoomPasscode || null) : null,

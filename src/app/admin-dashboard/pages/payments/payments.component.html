@@ -57,7 +57,7 @@
                        placeholder="البحث بالاسم، البريد الإلكتروني، أو رقم الدفعة..."
                        [(ngModel)]="searchTerm"
                        (keyup.enter)="onSearch()">
-                <button class="btn btn-outline-secondary" (click)="onSearch()">بحث</button>
+                <button class="btn btn-secondary" (click)="onSearch()">بحث</button>
               </div>
             </div>
           </div>
@@ -66,7 +66,7 @@
               <label class="form-label">تصفية حسب الحالة:</label>
               <div class="btn-group" role="group">
                 <button type="button" 
-                        class="btn btn-outline-secondary"
+                        class="btn btn-secondary"
                         [class.active]="statusFilter === 'all'"
                         (click)="filterByStatus('all')">
                   الكل
@@ -347,7 +347,7 @@
               <div class="detail-section">
                 <h6 class="section-title">إيصال الدفع</h6>
                 <div class="receipt-preview">
-                  <a [href]="selectedPayment.receiptUrl" target="_blank" class="btn btn-outline-primary">
+                  <a [href]="selectedPayment.receiptUrl" target="_blank" class="btn btn-primary">
                     <i class="pi pi-file-pdf me-2"></i>
                     عرض الإيصال
                   </a>

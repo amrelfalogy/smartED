@@ -49,6 +49,7 @@ export interface CodeGenerateResponse {
     studentYearId?: string | null;
     thumbnail?: string | null;
     videoUrl?: string | null;
+    document?: string | null;
     pdfUrl?: string | null;
     pdfFileName?: string | null;
     pdfFileSize?: number | null;

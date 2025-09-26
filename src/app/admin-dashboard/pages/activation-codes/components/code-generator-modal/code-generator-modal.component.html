@@ -18,7 +18,7 @@
           <div class="code-header">
             <h3>رمز التفعيل الجديد</h3>
             <button 
-              class="btn btn-outline-primary btn-sm"
+              class="btn btn-primary btn-sm"
               (click)="copyCodeToClipboard(generatedCode.activationCode.code)"
               title="نسخ الرمز"
             >
@@ -48,7 +48,7 @@
             <i class="pi pi-plus me-2"></i>
             إنشاء رمز آخر
           </button>
-          <button class="btn btn-outline-secondary" (click)="onClose()">
+          <button class="btn btn-secondary" (click)="onClose()">
             إنهاء
           </button>
         </div>
@@ -161,7 +161,7 @@
       <div class="modal-footer">
         <button 
           type="button" 
-          class="btn btn-outline-secondary" 
+          class="btn btn-secondary" 
           (click)="onClose()"
           [disabled]="isSubmitting"
         >

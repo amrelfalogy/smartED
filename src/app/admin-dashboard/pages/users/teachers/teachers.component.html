@@ -1,14 +1,23 @@
 <div class="teachers-management">
   <!-- Header Section -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+   <!-- Header Section for Admin -->
+  <div *ngIf="isAdmin()" class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h1 class="page-title">إدارة المعلمين</h1>
       <p class="text-muted">إدارة حسابات المعلمين وبياناتهم</p>
     </div>
   </div>
 
+  <!-- Header Section for Non-Admin -->
+  <div *ngIf="!isAdmin()" class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="page-title">قائمة المعلمين</h1>
+      <p class="text-muted">تعرف على المعلمين المتاحين في المنصة</p>
+    </div>
+  </div>
+
   <!-- Statistics Cards -->
-  <div class="row mb-4">
+  <div *ngIf="isAdmin()" class="row mb-4">
     <div class="col-md-3 col-sm-6 mb-3">
       <app-card [showHeader]="false" blockClass="stat-card">
         <div class="stat-content">
@@ -139,7 +148,7 @@
           <span *ngIf="!searchControl.value">لم يتم تسجيل أي معلمين بعد</span>
         </p>
         <button *ngIf="searchControl.value" 
-                class="btn btn-outline-primary btn-sm mt-2"
+                class="btn btn-primary btn-sm mt-2"
                 (click)="searchControl.setValue('')">
           <i class="pi pi-times me-1"></i>
           مسح البحث
@@ -149,13 +158,9 @@
 
     <!-- Enhanced Teachers Cards -->
     <div *ngIf="!isLoading && teachers.length > 0" class="row">
-      <div class="col-xl-3 col-lg-4 col-md-6 mb-4" *ngFor="let teacher of teachers; trackBy: trackByUserId">
+      <div class=" col-lg-4 col-md-6 mb-4" *ngFor="let teacher of teachers; trackBy: trackByUserId">
         <div class="teacher-card-wrapper">
-          <div class="teacher-card">
-            <!-- Card Header with Background -->
-            <div class="teacher-card-header">
-              <div class="card-background"></div>
-              
+          <div class="teacher-card">            
               <!-- Profile Picture -->
               <div class="teacher-avatar-container">
                 <div class="teacher-avatar">
@@ -170,72 +175,24 @@
                   <div *ngIf="!getProfileImageUrl(teacher)" class="avatar-placeholder">
                     {{ getUserInitials(teacher) }}
                   </div>
-                </div>
-                
-                <!-- Status Indicator -->
-                <div class="status-indicator" 
-                     [class.active]="teacher.isActive" 
-                     [class.inactive]="!teacher.isActive"
-                     [title]="teacher.isActive ? 'نشط' : 'غير نشط'">
-                  <i class="pi" [class.pi-circle-fill]="teacher.isActive" [class.pi-circle]="!teacher.isActive"></i>
-                </div>
-
-                <!-- Verification Badge -->
-                <div class="verification-badge" *ngIf="teacher.emailVerified">
-                  <i class="pi pi-verified" title="حساب موثق"></i>
-                </div>
-              </div>
-            </div>
+                </div>                                                
+              </div>            
             
             <!-- Card Body -->
             <div class="teacher-card-body">
               <!-- Teacher Info -->
               <div class="teacher-info">
                 <h5 class="teacher-name">{{ getDisplayName(teacher) }}</h5>
-                <p class="teacher-email">{{ teacher.email }}</p>
-                
-                <div class="teacher-badges">
-                  <span class="badge teacher-role">معلم</span>
-                  <span class="badge email-badge" 
-                        [class.verified]="teacher.emailVerified" 
-                        [class.unverified]="!teacher.emailVerified">
-                    <i class="pi" 
-                       [class.pi-check]="teacher.emailVerified"
-                       [class.pi-times]="!teacher.emailVerified"></i>
-                    {{ teacher.emailVerified ? 'موثق' : 'غير موثق' }}
-                  </span>
-                </div>
+                <p class="teacher-email">{{ teacher.email }}</p>                             
               </div>
 
               <!-- Teacher Details -->
-              <div class="teacher-details">
-                <div class="detail-item" *ngIf="teacher.phone">
-                  <div class="detail-icon">
-                    <i class="pi pi-phone"></i>
-                  </div>
-                  <span class="detail-text">{{ teacher.phone }}</span>
-                </div>
+              <div class="teacher-details mt-3">              
                 
-                <div class="detail-item" *ngIf="teacher.bio">
-                  <div class="detail-icon">
-                    <i class="pi pi-info-circle"></i>
-                  </div>
+                <div class="detail-item mt-2" *ngIf="teacher.bio">
+                    <i class="pi pi-info-circle ms-2"></i>
                   <span class="detail-text bio-text">{{ teacher.bio }}</span>
-                </div>
-                
-                <div class="detail-item" *ngIf="teacher.lastLogin">
-                  <div class="detail-icon">
-                    <i class="pi pi-clock"></i>
-                  </div>
-                  <span class="detail-text">آخر دخول: {{ formatDate(teacher.lastLogin) }}</span>
-                </div>
-                
-                <div class="detail-item">
-                  <div class="detail-icon">
-                    <i class="pi pi-calendar"></i>
-                  </div>
-                  <span class="detail-text">انضم: {{ formatDate(teacher.createdAt) }}</span>
-                </div>
+                </div>                                            
               </div>
             </div>
 

@@ -134,7 +134,7 @@ export class UserService {
   }
 
   // ✅ UPDATED: Helper to get profile picture URL with proper construction
-  getProfileImageUrl(user: User): string {
+ getProfileImageUrl(user: User): string {
     if (!user) return '';
     
     const profilePicture = user.profilePicture || user.avatar;
@@ -146,9 +146,9 @@ export class UserService {
     }
     
     // If it's just a filename, construct the full URL
-    if (profilePicture.includes('/')) {
-      // Already has path, just prepend base URL
-      return `${this.uploadsBaseUrl}${profilePicture.startsWith('/') ? '' : '/'}${profilePicture}`;
+    if (profilePicture.includes('/uploads/')) {
+      // Already has full path, just prepend base URL
+      return `${this.uploadsBaseUrl}${profilePicture}`;
     } else {
       // Just filename, construct full path
       return `${this.uploadsBaseUrl}/uploads/profiles/${profilePicture}`;

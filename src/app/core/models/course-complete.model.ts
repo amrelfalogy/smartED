@@ -93,6 +93,7 @@ export interface Lesson {
   price?: number | null;
   currency?: 'EGP' | string | null;
   videoUrl?: string | null;
+  document?: string | null;
   pdfUrl?: string | null;
   pdfFileName?: string | null;
   pdfFileSize?: number | null;

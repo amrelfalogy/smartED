@@ -3,8 +3,10 @@ import { Subject } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { FormControl } from '@angular/forms';
 
+
 import { UserService } from 'src/app/core/services/user.service';
 import { User, UsersResponse } from 'src/app/core/models/user.model';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 interface TeacherStats {
   total: number;
@@ -40,7 +42,10 @@ export class TeachersComponent implements OnInit, OnDestroy {
   selectedUser: User | null = null;
   showProfileModal = false;
 
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private authService: AuthService 
+  ){}
 
   ngOnInit(): void {
     this.loadTeachers();
@@ -64,6 +69,10 @@ export class TeachersComponent implements OnInit, OnDestroy {
         this.currentPage = 1;
         this.loadTeachers();
       });
+  }
+
+  isAdmin(): boolean {
+    return this.authService.getUserRole() === 'admin';
   }
 
   loadTeachers(): void {

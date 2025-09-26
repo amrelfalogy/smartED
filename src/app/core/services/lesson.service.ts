@@ -26,6 +26,7 @@ export interface CreateLessonDto {
   
   // Media
   videoUrl?: string | null;
+  document?: string | null;
   pdfUrl?: string | null;
   pdfFileName?: string | null;
   pdfFileSize?: number | null;
@@ -243,13 +244,14 @@ export class LessonService {
       // Media
       thumbnail: rawLesson.thumbnail || null,
       videoUrl: rawLesson.videoUrl || null,
+      document: rawLesson.document || null,
       pdfUrl: rawLesson.pdfUrl || null,
       pdfFileName: rawLesson.pdfFileName || null,
       pdfFileSize: rawLesson.pdfFileSize || null,
       
       // ✅ For UI compatibility - create arrays from single URLs
       videos: rawLesson.videoUrl ? [rawLesson.videoUrl] : [],
-      documents: rawLesson.pdfUrl ? [rawLesson.pdfUrl] : [],
+      documents: rawLesson.document ? [rawLesson.document] : [],
       
       // Pricing
       price: rawLesson.price || 0,

@@ -111,7 +111,7 @@
           [routerLinkActiveOptions]="{exact: true}" (click)="closeNavbar()" >الدورات</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" [routerLink]="['/instructors']" routerLinkActive="active"
+          <a class="nav-link" [routerLink]="['/teachers']" routerLinkActive="active"
           [routerLinkActiveOptions]="{exact: true}" (click)="closeNavbar()">المعلميــن</a>
         </li>
       </ul>
@@ -121,7 +121,7 @@
         
         <!-- Not Logged In -->
         <div class="auth-buttons" *ngIf="!isLoggedIn && !isLoading">
-          <button class="btn btn-outline-primary me-2" (click)="login()">
+          <button class="btn btn-primary me-2" (click)="login()">
             تسجيل الدخول
           </button>
           <button class="btn btn-primary me-2" (click)="register()">

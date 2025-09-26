@@ -12,6 +12,8 @@ import { LessonService } from 'src/app/core/services/lesson.service';
 import { PaymentService } from 'src/app/core/services/payment.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ActivationCodeService } from 'src/app/core/services/activation-code.service';
+import { UserService } from 'src/app/core/services/user.service';
+import { User } from 'src/app/core/models/user.model';
 
 type EnrollmentStatus = 'enrolled' | 'not_enrolled' | 'pending';
 
@@ -25,6 +27,7 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
   course: CourseSubject | null = null;
   units: Unit[] = [];
   lessons: Lesson[] = [];
+  teacher: User | null = null;
 
   isLoading = false;
   isLoadingUnits = false;
@@ -52,7 +55,8 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
     private lessonService: LessonService,
     private paymentService: PaymentService,
     private authService: AuthService,
-    private activationCodeService: ActivationCodeService
+    private activationCodeService: ActivationCodeService,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -254,6 +258,18 @@ export class CourseDetailsComponent implements OnInit, OnDestroy {
               : st === 'live' || st === 'zoom' ? 'zoom'
               : null;
 
+            // Load teacher details if available
+            const teacherId = normalized.teacherId;
+            if (teacherId) {
+              this.userService.getUserById(teacherId).subscribe({
+                next: (teacher: User) => {
+                  this.teacher = teacher;
+                },
+                error: () => {
+                  this.teacher = null;
+                }
+              });
+            }            
             // Load units and lessons using updated lesson service
             this.unitService.getUnitsBySubject(this.courseId).pipe(takeUntil(this.destroy$)).subscribe({
               next: (units) => {
@@ -616,23 +632,7 @@ private checkLessonsAccess(): void {
     return remainingMinutes > 0 ? `${hours} ساعة ${remainingMinutes} دقيقة` : `${hours} ساعة`;
   }
 
-  getDifficultyLabel(difficulty: string): string {
-    switch (difficulty) {
-      case 'beginner': return 'مبتدئ';
-      case 'intermediate': return 'متوسط';
-      case 'advanced': return 'متقدم';
-      default: return 'غير محدد';
-    }
-  }
-
-  getDifficultyColor(difficulty: string): string {
-    switch (difficulty) {
-      case 'beginner': return 'success';
-      case 'intermediate': return 'warning';
-      case 'advanced': return 'danger';
-      default: return 'secondary';
-    }
-  }
+  
 
   getTotalDuration(): string {
     const totalSeconds = this.lessons.reduce((total, lesson) => total + (lesson.duration || 0), 0);
