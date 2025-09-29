@@ -18,6 +18,13 @@ export class AuthGuard implements CanActivate {
     route: ActivatedRouteSnapshot, 
     state: RouterStateSnapshot
   ): Observable<boolean> {
+
+    const requiresAuth = route.data['requiresAuth'] || false; 
+    if (!requiresAuth) {
+      // Allow access to public routes
+      return of(true);
+    }
+
     // Check if user has token first (for immediate access)
     const hasToken = !!this.authService.getToken();
     

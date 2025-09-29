@@ -144,15 +144,7 @@
                 <option value="inactive">غير نشط</option>
               </select>
             </div>
-          </div>
-          <div class="col-md-2">
-            <div class="form-group">
-              <label class="form-label">&nbsp;</label>
-              <div class="results-count">
-                {{ totalItems }} رمز
-              </div>
-            </div>
-          </div>
+          </div>          
         </div>
       </div>
     </div>
@@ -193,11 +185,11 @@
           <thead>
             <tr>
               <th>الرمز</th>
+              <th>اسم الدرس</th>
               <th>النوع</th>
               <th>الاستخدام</th>
               <th>الحالة</th>
-              <th>تاريخ الإنشاء</th>
-              <th>تاريخ الانتهاء</th>
+              <th>تاريخ الإنشاء</th>              
               <th>الإجراءات</th>
             </tr>
           </thead>
@@ -215,10 +207,29 @@
                       <i class="pi pi-copy"></i>
                     </button>
                   </div>
+                  <button
+                    *ngIf="code.contentType === 'lesson'"
+                    class="btn btn-sm btn-ghost copy-btn"
+                    (click)="copyAllCodesForLesson(code.lessonId ?? '')"
+                    title="نسخ جميع رموز الدرس"
+                  >
+                    <i class="pi pi-copy"></i> نسخ جميع رموز الدرس
+                  </button>
                   <div class="code-meta" *ngIf="code.name">
                     <small class="text-muted">{{ code.name }}</small>
                   </div>
                 </div>
+              </td>
+              <td>
+                <span *ngIf="code.contentType === 'lesson'" style="font-weight: bold;">
+                  <ng-container *ngIf="!isLoadingLessonTitles">
+                    {{ lessonTitles.get(code.lessonId ?? '') || 'غير متاح' }}
+                  </ng-container>
+                  <ng-container *ngIf="isLoadingLessonTitles">
+                    <i class="pi pi-spinner pi-spin"></i>
+                  </ng-container>
+                </span>
+                <span *ngIf="code.contentType !== 'lesson'">—</span>
               </td>
               <td class="content-type-cell">
                 <span class="content-type-badge" [class]="'type-' + code.contentType">
@@ -252,12 +263,7 @@
                 <div class="date-info">
                   {{ formatDate(code.createdAt) }}
                 </div>
-              </td>
-              <td class="expiry-cell">
-                <div class="date-info">
-                  {{ formatDate(code.expiresAt) }}
-                </div>
-              </td>
+              </td>             
               <td class="actions-cell">
                 <div class="action-buttons">
                   <button
@@ -318,6 +324,7 @@
   *ngIf="showGeneratorModal"
   [isVisible]="showGeneratorModal"
   (close)="closeGeneratorModal()"
+  (codesGenerated)="onCodesGenerated($event)"
   (codeGenerated)="onCodeGenerated($event)"
 >
 </app-code-generator-modal>

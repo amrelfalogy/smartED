@@ -47,17 +47,17 @@
   .table th { background: #f8f9fc; border-bottom: 1px solid #e3e6f0; font-weight: 600; color: #5a5c69; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px; }
   .table td { vertical-align: middle; border-bottom: 1px solid #e3e6f0; font-size: 0.875rem; }
   .table th, .table td { padding: 0.9rem .6rem; }
-  .payment-id .text-primary { font-weight: 600; }
+  .payment-id .text-primary { font-weight: 600; color: var(--primary-color)!important; }
   .student-info .student-name { font-weight: 500; color: #2c3e50; }
-  .payment-method { display: flex; align-items: center; i { color: #007bff; } }
-  .dropdown .btn { border: none; background: none; color: #6c757d; &:hover { color: #007bff; } }
+  .payment-method { display: flex; align-items: center; i { color: var(--primary-color); } }
+  .dropdown .btn { border: none; background: none; color: #6c757d; &:hover { color: var(--primary-color); } }
   .dropdown .dropdown-menu { border: 1px solid #e3e6f0; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
     .dropdown-item { font-size: 0.875rem; padding: 0.5rem 1rem; &:hover { background: #f8f9fa; } i { width: 16px; } }
   }
   .loading-state, .empty-state { color: #6c757d; i { color: #dee2e6; } }
   .pagination-section { background: #f8f9fc;
-    .pagination .page-link { color: #007bff; border-color: #dee2e6; &:hover { background: #e9ecef; border-color: #dee2e6; } }
-    .pagination .page-item.active .page-link { background: #007bff; border-color: #007bff; }
+    .pagination .page-link { color: var(--primary-color); border-color: #dee2e6; &:hover { background: #e9ecef; border-color: #dee2e6; } }
+    .pagination .page-item.active .page-link { background: var(--primary-color); border-color: var(primary-color); color: #fff; }
     .pagination .page-item.disabled .page-link { color: #6c757d; background: #fff; border-color: #dee2e6; }
   }
 }

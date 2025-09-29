@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, map } from 'rxjs';
 import {
   ActivationCode,
   CodeGenerateRequest,
@@ -25,6 +25,14 @@ export class ActivationCodeService {
   public onActivationSuccess = this.activationSuccessSubject.asObservable();
 
   constructor(private http: HttpClient) {}
+
+  generateMultipleCodes(request: { lessonId: string; count: number }): Observable<ActivationCode[]> {
+    return this.http.post<{ activationCodes: ActivationCode[] }>(`${this.apiUrl}/generate-multiple`, request)
+      .pipe(
+        map(response => response.activationCodes) // Extract the activationCodes array
+      );
+  }
+  
 
   // ✅ FIXED: Updated validation based on your actual API codes
   validateCodeFormat(code: string): CodeValidationResult {

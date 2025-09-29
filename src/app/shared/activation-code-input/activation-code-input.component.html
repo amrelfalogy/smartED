@@ -1,26 +1,5 @@
 <div class="activation-code-input">
-  <!-- Debug Panel (remove in production) -->
-  <div class="debug-panel" style="background: #f0f8ff; padding: 12px; margin-bottom: 16px; border-radius: 8px; border: 2px solid #007bff; font-family: monospace; font-size: 12px;">
-    <h4 style="margin: 0 0 8px 0; color: #007bff;">🔧 Debug Info</h4>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-      <div><strong>Form Valid:</strong> {{ debugInfo.formValid ? '✅' : '❌' }}</div>
-      <div><strong>Button Disabled:</strong> {{ debugInfo.buttonDisabled ? '❌' : '✅' }}</div>
-      <div><strong>Is Submitting:</strong> {{ isSubmitting ? '⏳' : '✅' }}</div>
-      <div><strong>Validation Valid:</strong> {{ validationResult.isValid ? '✅' : '❌' }}</div>
-    </div>
-    <div style="margin-top: 8px;">
-      <strong>Input Value:</strong> "{{ codeControl.value || 'empty' }}" ({{ (codeControl.value || '').length }}/21)
-    </div>
-    <div style="margin-top: 4px;">
-      <strong>Last API Call:</strong> {{ debugInfo.lastApiCall ? debugInfo.lastApiCall.toLocaleTimeString() : 'None' }}
-    </div>
-    <div style="margin-top: 4px;" *ngIf="debugInfo.validationErrors.length > 0">
-      <strong style="color: #dc3545;">Validation Errors:</strong>
-      <ul style="margin: 4px 0; padding-right: 16px; color: #dc3545;">
-        <li *ngFor="let error of debugInfo.validationErrors">{{ error }}</li>
-      </ul>
-    </div>
-  </div>
+ 
 
   <!-- Header -->
   <div class="activation-header">
@@ -68,28 +47,6 @@
         </div>
       </div>
 
-      <!-- Quick Test Buttons -->
-      <div class="test-codes" style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-        <small><strong>اختبار سريع:</strong></small>
-        <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px;">
-          <button type="button" class="btn btn-sm btn-secondary" 
-                  (click)="testCode('LMS-9B31BD06-MFU43820')"
-                  style="font-size: 10px; padding: 2px 6px;">
-            Test Available Code
-          </button>
-          <button type="button" class="btn btn-sm btn-secondary" 
-                  (click)="testCode('LMS-INVALID-CODE123')"
-                  style="font-size: 10px; padding: 2px 6px;">
-            Test Invalid
-          </button>
-          <button type="button" class="btn btn-sm btn-warning" 
-                  (click)="testCode('')"
-                  style="font-size: 10px; padding: 2px 6px;">
-            Clear
-          </button>
-        </div>
-      </div>
-
       <!-- Validation Help -->
       <div id="code-help" class="form-help" *ngIf="showValidationHelp">
         <div class="validation-errors" *ngIf="hasValidationErrors">
@@ -127,15 +84,16 @@
       </div>
 
       <!-- Error Message -->
-      <div class="error-message" 
-           *ngIf="activationAttempt?.result && activationAttempt?.result !== 'success'"
-           [@slideInUp]>
+     <div class="error-message"
+          *ngIf="activationAttempt?.result && activationAttempt?.result !== 'success'"
+          [@slideInUp]>
         <div class="error-content" [class]="'error-' + activationAttempt?.result">
-          <i class="pi pi-exclamation-triangle" *ngIf="activationAttempt?.result === 'error'"></i>
-          <i class="pi pi-clock" *ngIf="activationAttempt?.result === 'expired'"></i>
-          <i class="pi pi-ban" *ngIf="activationAttempt?.result === 'used'"></i>
-          <i class="pi pi-times-circle" *ngIf="activationAttempt?.result === 'invalid'"></i>
+          <i class="pi pi-times-circle text-danger me-2"></i>
           <span>{{ activationAttempt?.message }}</span>
+        </div>
+        <div class="error-suggestion" *ngIf="activationAttempt?.result === 'invalid' || activationAttempt?.result === 'error'">
+          <i class="pi pi-info-circle text-muted me-1"></i>
+          <span>تأكد من كتابة الرمز بشكل صحيح وبالصيغة المطلوبة: LMS-XXXXXXXX-XXXXXXXX</span>
         </div>
       </div>
     </div>

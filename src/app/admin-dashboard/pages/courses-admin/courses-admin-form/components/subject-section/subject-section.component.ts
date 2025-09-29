@@ -6,6 +6,7 @@ import { Subject as CourseSubject } from 'src/app/core/models/course-complete.mo
 import { User } from 'src/app/core/models/user.model';
 import { FileUploadService } from 'src/app/core/services/file-upload.service';
 import { UserService } from 'src/app/core/services/user.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-subject-section',
@@ -221,6 +222,10 @@ export class SubjectSectionComponent implements OnInit, OnDestroy, OnChanges {
         if ('progress' in event) {
           this.uploadProgress = event.progress;
         } else {
+           let url = event.url;
+          if (url && !url.startsWith('http')) {
+            url = `${environment.uploadsBaseUrl}${url}`;
+          }
           this.imagePreview = event.url;
           this.subjectForm.patchValue({ imageUrl: event.url });
           this.isUploading = false;

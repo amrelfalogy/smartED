@@ -26,7 +26,8 @@ export interface CreateLessonDto {
   
   // Media
   videoUrl?: string | null;
-  document?: string | null;
+  documentFile?: File | null;
+
   pdfUrl?: string | null;
   pdfFileName?: string | null;
   pdfFileSize?: number | null;
@@ -146,27 +147,122 @@ export class LessonService {
   }
 
   // ✅ Handle wrapped response from backend
+  // ✅ FIXED: Update the createLesson method
   createLesson(payload: CreateLessonDto): Observable<Lesson> {
-    // ✅ Clean payload - remove null/undefined zoomUrl if not live lesson
-    const cleanPayload = { ...payload };
-    if (payload.lessonType !== 'live') {
-      delete cleanPayload.zoomUrl;
-      delete cleanPayload.zoomMeetingId;
-      delete cleanPayload.zoomPasscode;
-      delete cleanPayload.scheduledAt;
+    const formData = new FormData();
+    
+    // Add all text fields
+    formData.append('title', payload.title);
+    formData.append('description', payload.description);
+    formData.append('unitId', payload.unitId);
+    formData.append('order', payload.order.toString());
+    formData.append('lessonType', payload.lessonType ?? '');
+    formData.append('difficulty', payload.difficulty ?? '');
+    formData.append('isFree', payload.isFree?.toString() || 'false');
+    formData.append('isActive', payload.isActive?.toString() || 'true');
+    
+    if (payload.price !== undefined && payload.price !== null) {
+      formData.append('price', payload.price.toString());
     }
     
-    console.log('🚀 Creating lesson:', cleanPayload);
+    if (payload.currency) {
+      formData.append('currency', payload.currency);
+    }
     
-    return this.http.post<CreateLessonResponse>(this.baseUrl, cleanPayload).pipe(
+    if (payload.content) {
+      formData.append('content', payload.content);
+    }
+    
+    if (payload.videoUrl) {
+      formData.append('videoUrl', payload.videoUrl);
+    }
+    
+    // ✅ FIX: Change 'document' to match backend expectation
+    if (payload.documentFile) {
+      formData.append('document', payload.documentFile); // ✅ Changed from 'documentFile' to 'document'
+    }
+    
+    // Add live session fields if applicable
+    if (payload.lessonType === 'live') {
+      if (payload.zoomUrl) formData.append('zoomUrl', payload.zoomUrl);
+      if (payload.zoomMeetingId) formData.append('zoomMeetingId', payload.zoomMeetingId);
+      if (payload.zoomPasscode) formData.append('zoomPasscode', payload.zoomPasscode);
+      if (payload.scheduledAt) formData.append('scheduledAt', payload.scheduledAt);
+    }
+    
+    console.log('🚀 Creating lesson with FormData. Document file:', payload.documentFile?.name);
+    
+    return this.http.post<CreateLessonResponse>(this.baseUrl, formData).pipe(
       map((response: CreateLessonResponse) => {
-        console.log('✅ Lesson created:', response);
+        console.log('✅ Lesson created response:', response);
         return this.normalizeLessonData(response.lesson);
       })
     );
   }
 
-  updateLesson(lessonId: string, payload: UpdateLessonDto): Observable<Lesson> {
+  // ✅ NEW: Add updateLesson method with file upload support
+  // ✅ ENHANCED: Better error handling and debugging for lesson updates
+updateLesson(lessonId: string, payload: UpdateLessonDto): Observable<Lesson> {
+  console.log('🔄 UpdateLesson called with:', {
+    lessonId,
+    hasFile: !!payload.documentFile,
+    fileName: payload.documentFile?.name,
+    title: payload.title
+  });
+
+  // ✅ If there's a file to upload, use FormData
+  if (payload.documentFile) {
+    const formData = new FormData();
+    
+    // Add all fields that might be updated - be more explicit
+    if (payload.title) formData.append('title', payload.title);
+    if (payload.description) formData.append('description', payload.description);
+    if (payload.unitId) formData.append('unitId', payload.unitId);
+    if (payload.order !== undefined && payload.order !== null) formData.append('order', payload.order.toString());
+    if (payload.lessonType) formData.append('lessonType', payload.lessonType);
+    if (payload.difficulty) formData.append('difficulty', payload.difficulty);
+    if (payload.isFree !== undefined && payload.isFree !== null) formData.append('isFree', payload.isFree.toString());
+    if (payload.isActive !== undefined && payload.isActive !== null) formData.append('isActive', payload.isActive.toString());
+    if (payload.price !== undefined && payload.price !== null) formData.append('price', payload.price.toString());
+    if (payload.currency) formData.append('currency', payload.currency);
+    if (payload.content) formData.append('content', payload.content);
+    if (payload.videoUrl) formData.append('videoUrl', payload.videoUrl);
+    if (payload.duration !== undefined && payload.duration !== null) formData.append('duration', payload.duration.toString());
+    
+    // ✅ FIX: Use 'document' key for file upload (matching backend expectation)
+    formData.append('document', payload.documentFile);
+    
+    // Live session fields
+    if (payload.lessonType === 'live') {
+      if (payload.zoomUrl) formData.append('zoomUrl', payload.zoomUrl);
+      if (payload.zoomMeetingId) formData.append('zoomMeetingId', payload.zoomMeetingId);
+      if (payload.zoomPasscode) formData.append('zoomPasscode', payload.zoomPasscode);
+      if (payload.scheduledAt) formData.append('scheduledAt', payload.scheduledAt);
+    }
+       
+    
+    return this.http.put<CreateLessonResponse>(`${this.baseUrl}/${encodeURIComponent(lessonId)}`, formData).pipe(
+      map((response: CreateLessonResponse) => {
+        console.log('✅ Lesson updated with file - Full response:', response);
+        
+        // ✅ Check for document upload errors
+        if ((response as any).documentUploadError) {
+          console.warn('⚠️ Document upload error:', (response as any).documentUploadError);
+        }
+        
+        if ((response as any).documentUpload) {
+          console.log('✅ Document upload success:', (response as any).documentUpload);
+        }
+        
+        return this.normalizeLessonData(response.lesson);
+      }),
+      catchError((error) => {
+        console.error('❌ Lesson update with file failed:', error);
+        throw error;
+      })
+    );
+  } else {
+    // ✅ Regular JSON update (no file)
     const cleanPayload = { ...payload };
     if (payload.lessonType !== 'live') {
       delete cleanPayload.zoomUrl;
@@ -175,15 +271,23 @@ export class LessonService {
       delete cleanPayload.scheduledAt;
     }
     
-    console.log('🔄 Updating lesson:', lessonId, cleanPayload);
+    // Remove file-related fields for JSON request
+    delete cleanPayload.documentFile;
+    
+    console.log('🔄 Updating lesson (JSON only):', lessonId, cleanPayload);
     
     return this.http.put<CreateLessonResponse>(`${this.baseUrl}/${encodeURIComponent(lessonId)}`, cleanPayload).pipe(
       map((response: CreateLessonResponse) => {
-        console.log('✅ Lesson updated:', response);
+        console.log('✅ Lesson updated (JSON):', response);
         return this.normalizeLessonData(response.lesson || response);
+      }),
+      catchError((error) => {
+        console.error('❌ Lesson update (JSON) failed:', error);
+        throw error;
       })
     );
   }
+}
 
   deleteLesson(lessonId: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.baseUrl}/${encodeURIComponent(lessonId)}`);

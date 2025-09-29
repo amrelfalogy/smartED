@@ -197,7 +197,7 @@ export class DashboardComponent implements OnInit {
 
   // ✅ NEW: Process payment stats from new API structure
   private processPaymentStats(paymentStats: any): void {
-    const stats = paymentStats.stats || [];
+    const stats = (paymentStats.stats || []).filter((s: { status: string; }) => s.status === 'approved');
     
     // Group by status for method analysis (mock data since API doesn't provide method breakdown)
     const methodData = this.generateMethodData(stats);

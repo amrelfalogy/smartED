@@ -53,11 +53,7 @@
             }"></i>
             {{ getLessonTypeLabel(lesson.lessonType) }}
           </span>
-
-          <!-- Difficulty Badge -->
-          <span class="badge badge-difficulty" [class]="'badge-difficulty-' + (lesson.difficulty || 'beginner')">
-            {{ getDifficultyLabel(lesson.difficulty) }}
-          </span>
+       
 
           <!-- Duration -->
           <span class="badge badge-duration" *ngIf="lesson.duration">
@@ -209,44 +205,87 @@
       </div>
 
       <!-- Document Content -->
-      <div class="content-section document-section" *ngIf="docUrls.length > 0">
+      <!-- ✅ Update the Document Content section -->
+      <div class="content-section document-section" *ngIf="(lesson.lessonType === 'pdf' || lesson.lessonType === 'document') && docUrls.length > 0">
         <div class="document-card">
           <div class="document-header">
             <h3>
               <i class="pi pi-file-pdf me-2"></i>
               المستندات المرفقة
             </h3>
+            <div class="document-meta" *ngIf="lesson.pdfFileName || lesson.pdfFileSize">
+              <span class="file-count">{{ docUrls.length }} ملف</span>
+            </div>
           </div>
           <div class="document-list">
             <div class="document-item" *ngFor="let doc of docUrls; let i = index">
               <div class="doc-info">
-                <i class="pi pi-file-pdf text-danger"></i>
+                <div class="doc-icon">
+                  <i class="pi pi-file-pdf text-danger"></i>
+                </div>
                 <div class="doc-details">
-                  <span class="doc-name">{{ lesson.pdfFileName || ('مستند ' + (i + 1)) }}</span>
-                  <span class="doc-size" *ngIf="lesson.pdfFileSize">
-                    {{ formatFileSize(lesson.pdfFileSize) }}
-                  </span>
+                  <h4 class="doc-name">{{ lesson.pdfFileName || ('مستند ' + (i + 1)) }}</h4>
+                  <div class="doc-metadata">
+                    <span class="doc-size" *ngIf="lesson.pdfFileSize">
+                      <i class="pi pi-database me-1"></i>
+                      {{ formatFileSize(lesson.pdfFileSize) }}
+                    </span>
+                    <span class="doc-type">
+                      <i class="pi pi-tag me-1"></i>
+                      PDF
+                    </span>
+                    <span class="doc-uploaded" *ngIf="lesson.updatedAt">
+                      <i class="pi pi-calendar me-1"></i>
+                      {{ lesson.updatedAt | date:'short' }}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div class="doc-actions">
-                <a class="btn btn-primary" 
-                   [href]="doc" 
-                   target="_blank" 
-                   rel="noopener">
+                <a class="btn btn-primary me-2" 
+                  [href]="doc" 
+                  target="_blank" 
+                  rel="noopener">
                   <i class="pi pi-eye me-1"></i>
                   عرض
                 </a>
-                <a class="btn btn-primary" 
-                   [href]="doc" 
-                   download>
+                <a class="btn btn-outline-primary" 
+                  [href]="doc" 
+                  download
+                  [attr.download]="lesson.pdfFileName || 'document.pdf'">
                   <i class="pi pi-download me-1"></i>
                   تحميل
                 </a>
               </div>
             </div>
           </div>
+          
+          <!-- ✅ Add PDF Viewer Option -->
+          <div class="pdf-viewer-section" *ngIf="docUrls.length > 0">
+            <div class="viewer-controls">
+              <button class="btn btn-outline-secondary" 
+                      (click)="showPdfViewer = !showPdfViewer">
+                <i class="pi" [ngClass]="showPdfViewer ? 'pi-eye-slash' : 'pi-eye'"></i>
+                {{ showPdfViewer ? 'إخفاء المعاينة' : 'معاينة الملف' }}
+              </button>
+            </div>
+            
+            <!-- Embedded PDF Viewer -->
+            <div class="pdf-embed" *ngIf="showPdfViewer && docUrls[0]">
+              <iframe 
+                [src]="docUrls[0] + '#toolbar=1&navpanes=1&scrollbar=1'"
+                width="100%" 
+                height="600px"
+                frameborder="0">
+                <p>المتصفح الخاص بك لا يدعم عرض ملفات PDF. 
+                  <a [href]="docUrls[0]" target="_blank">انقر هنا لتحميل الملف</a>
+                </p>
+              </iframe>
+            </div>
+          </div>
         </div>
       </div>
+     
 
       <!-- Text/Assignment Content -->
       <div class="content-section text-section" 

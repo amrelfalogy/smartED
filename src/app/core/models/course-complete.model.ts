@@ -94,6 +94,7 @@ export interface Lesson {
   currency?: 'EGP' | string | null;
   videoUrl?: string | null;
   document?: string | null;
+  documentFile?: File | null;
   pdfUrl?: string | null;
   pdfFileName?: string | null;
   pdfFileSize?: number | null;

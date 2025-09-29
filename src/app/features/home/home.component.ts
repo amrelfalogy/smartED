@@ -105,37 +105,36 @@ export class HomeComponent implements OnInit, OnDestroy {
       academicYears: this.academicYearService.getAcademicYears().pipe(
         catchError(err => {
           console.error('Error loading academic years for home:', err);
-          return of([]);
+          return of([]); // Fallback to empty array
         })
       ),
-      teachers: this.userService.getTeachers({ limit: 12 }).pipe( // ✅ NEW
+      teachers: this.userService.getTeachers({ limit: 12 }).pipe(
         catchError(err => {
           console.error('Error loading teachers for home:', err);
           return of({ users: [], pagination: { current: 1, total: 1, totalItems: 0 } });
         })
       )
     }).pipe(takeUntil(this.destroy$))
-    .subscribe({
-      next: ({ subjects, academicYears, teachers }) => {
-        this.allSubjects = subjects || [];
-        this.academicYears = academicYears || [];
-        this.prepareTeachers(teachers.users || []); // ✅ NEW
-        this.isLoadingCourses = false;
-        this.isLoadingTeachers = false;
-        
-        this.loadStudentYearsForAllAcademicYears(() => {
-          this.prepareCourses();
-        });
+      .subscribe({
+        next: ({ subjects, academicYears, teachers }) => {
+          this.allSubjects = subjects || [];
+          this.academicYears = academicYears || [];
+          this.prepareTeachers(teachers.users || []);
+          this.isLoadingCourses = false;
+          this.isLoadingTeachers = false;
 
-      },
-      error: (error) => {
-        console.error('Error loading home data:', error);
-        this.coursesError = 'حدث خطأ أثناء تحميل الدورات';
-        this.teachersError = 'حدث خطأ أثناء تحميل بيانات المعلمين';
-        this.isLoadingCourses = false;
-        this.isLoadingTeachers = false;
-      }
-    });
+          this.loadStudentYearsForAllAcademicYears(() => {
+            this.prepareCourses();
+          });
+        },
+        error: (error) => {
+          console.error('Error loading home data:', error);
+          this.coursesError = 'حدث خطأ أثناء تحميل الدورات';
+          this.teachersError = 'حدث خطأ أثناء تحميل بيانات المعلمين';
+          this.isLoadingCourses = false;
+          this.isLoadingTeachers = false;
+        }
+      });
   }
 
   private loadStudentYearsForAllAcademicYears(onComplete?: () => void): void {

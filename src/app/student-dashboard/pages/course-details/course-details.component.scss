@@ -51,9 +51,9 @@
       
         .course-header-overlay {
           width: 100%;
-          background: linear-gradient(180deg, rgba(30,41,59,0.7) 0%, rgba(30,41,59,0.85) 100%);
+          background: linear-gradient(180deg, rgb(30 41 59 / 55%) 0%, rgb(30 41 59 / 56%) 100%);
           border-radius: 16px;
-          padding: 32px 24px 24px 24px;
+          padding: 52px 24px 64px 24px;
           position: relative;
           z-index: 2;
           display: flex;
@@ -124,6 +124,11 @@
           .teacher-section{
             margin-bottom: 20px;
             font-size: 1rem;
+            .teacher-avatar{
+              border-radius: 50%;
+              width: 50px;
+              height: 50px;
+            }
           }
 
           .course-meta {
@@ -1111,7 +1116,7 @@
   .course-details-page .course-content {
     .course-header .course-info {
       flex-direction: column;
-      text-align: center;
+      text-align: flex-start;
 
       .course-image-container .course-image {
         width: 150px;
@@ -1155,13 +1160,13 @@
       }
 
       .units-container .unit-card .unit-header {
-        grid-template-columns: 1fr auto 24px;
+        grid-template-columns: 1fr auto 15px;
         gap: 8px;
 
         .unit-info .unit-title-row .unit-title {
-          font-size: 16px;
+          font-size: 14px;
         }
-      }
+      }      
 
       .units-container .unit-card .lessons-list .lesson-item .lesson-content {
         grid-template-columns: 32px 1fr;

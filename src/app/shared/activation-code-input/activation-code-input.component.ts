@@ -76,8 +76,7 @@ export class ActivationCodeInputComponent implements OnInit, OnDestroy, AfterVie
       autoNavigate: this.autoNavigate
     });
     
-    this.setupValidation();
-    this.setupFormatting();
+    this.setupValidation();    
     this.updateDebugInfo();
   }
 
@@ -121,21 +120,7 @@ export class ActivationCodeInputComponent implements OnInit, OnDestroy, AfterVie
       });
   }
 
-  private setupFormatting(): void {
-    this.codeControl.valueChanges
-      .pipe(
-        takeUntil(this.destroy$),
-        debounceTime(100)
-      )
-      .subscribe(value => {
-        if (value) {
-          const formatted = this.activationService.formatCodeInput(value);
-          if (formatted !== value) {
-            this.codeControl.setValue(formatted, { emitEvent: false });
-          }
-        }
-      });
-  }
+ 
 
   private updateDebugInfo(): void {
     this.debugInfo = {
@@ -367,12 +352,9 @@ export class ActivationCodeInputComponent implements OnInit, OnDestroy, AfterVie
 
   onCodePaste(event: ClipboardEvent): void {
     event.preventDefault();
-    const pastedText = event.clipboardData?.getData('text') || '';
-    console.log('📋 Pasted text:', pastedText);
-    if (pastedText) {
-      const formatted = this.activationService.formatCodeInput(pastedText);
-      this.codeControl.setValue(formatted);
-    }
+    const pastedText = event.clipboardData?.getData('text') || '';    
+    this.codeControl.setValue(pastedText);
+    
   }
 
   // ✅ Template helper methods

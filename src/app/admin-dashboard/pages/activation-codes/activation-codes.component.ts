@@ -10,6 +10,7 @@ import {
   CodeStats,
   CodeDetailsResponse
 } from 'src/app/core/models/activation-code.model';
+import { LessonService } from 'src/app/core/services/lesson.service';
 
 @Component({
   selector: 'app-activation-codes',
@@ -18,6 +19,9 @@ import {
 })
 export class ActivationCodesComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+
+  lessonTitles = new Map<string, string>();
+  isLoadingLessonTitles = false;
 
   // Data
   codes: ActivationCode[] = [];
@@ -52,7 +56,10 @@ export class ActivationCodesComponent implements OnInit, OnDestroy {
   selectedCode: ActivationCode | null = null;
   selectedCodeDetails: CodeDetailsResponse | null = null;
 
-  constructor(private activationCodeService: ActivationCodeService) {}
+  constructor(
+    private activationCodeService: ActivationCodeService,
+    private lessonService: LessonService
+  ) {}
 
   ngOnInit(): void {
     this.loadCodes();
@@ -102,18 +109,24 @@ export class ActivationCodesComponent implements OnInit, OnDestroy {
     if (this.selectedStatus && this.selectedStatus !== '' && this.selectedStatus !== 'all') {
       params.isActive = this.selectedStatus === 'active';
     }
-
-    console.log('🔍 Loading codes with params:', params);
+    
 
     this.activationCodeService.getCodes(params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
-          console.log('✅ Codes loaded successfully:', response);
+        next: (response) => {          
           this.codes = response.codes;
+          // Client-side filtering for lesson names
+          if (searchValue) {
+            this.codes = this.codes.filter(code => {
+              const lessonTitle = this.lessonTitles.get(code.lessonId ?? '') || '';
+              return code.code.includes(searchValue) || lessonTitle.includes(searchValue);
+            });
+          }
           this.totalPages = response.pagination.total;
           this.totalItems = response.pagination.totalItems;
           this.isLoading = false;
+          this.fetchLessonTitles();
         },
         error: (error) => {
           console.error('❌ Failed to load codes:', error);
@@ -122,6 +135,31 @@ export class ActivationCodesComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       });
+  }
+
+  fetchLessonTitles(): void {
+    this.isLoadingLessonTitles = true;
+    const lessonIds = Array.from(
+      new Set(
+        this.codes
+          .filter(c => c.contentType === 'lesson' && typeof c.lessonId === 'string' && c.lessonId)
+          .map(c => c.lessonId as string)
+      )
+    );
+    if (lessonIds.length === 0) {
+      this.isLoadingLessonTitles = false;
+      return;
+    }
+    // Fetch all lesson titles in parallel
+    Promise.all(
+      lessonIds.map(id =>
+        this.lessonService.getLessonById(id).toPromise()
+          .then(lesson => this.lessonTitles.set(id, lesson?.title || 'غير متاح'))
+          .catch(() => this.lessonTitles.set(id, 'غير متاح'))
+      )
+    ).finally(() => {
+      this.isLoadingLessonTitles = false;
+    });
   }
 
   private loadStats(): void {
@@ -141,6 +179,8 @@ export class ActivationCodesComponent implements OnInit, OnDestroy {
         }
       });
   }
+
+  
 
   // ✅ FIXED: Filter methods with proper value handling
   onContentTypeChange(type: string): void {
@@ -172,15 +212,7 @@ export class ActivationCodesComponent implements OnInit, OnDestroy {
     this.showGeneratorModal = false;
   }
 
-  onCodeGenerated(code: ActivationCode): void {
-    this.closeGeneratorModal();
-    this.success = `تم إنشاء رمز التفعيل: ${code.code}`;
-    this.loadCodes();
-    this.loadStats();
-    
-    // Clear success message after 5 seconds
-    setTimeout(() => this.success = null, 5000);
-  }
+ 
 
   viewCodeDetails(code: ActivationCode): void {
     this.selectedCode = code;
@@ -299,23 +331,96 @@ export class ActivationCodesComponent implements OnInit, OnDestroy {
     this.success = null;
   }
 
-  getVisiblePageNumbers(): number[] {
-    const pages: number[] = [];
-    const maxVisiblePages = 10;
+  
+ // ✅ Add this method to handle multiple codes generation
+  onCodesGenerated(codes: ActivationCode[]): void {
+    console.log('✅ Multiple codes generated:', codes);
     
-    if (this.totalPages <= maxVisiblePages) {
-      // Show all pages if total is less than max
-      for (let i = 1; i <= this.totalPages; i++) {
-        pages.push(i);
+    // Set success message
+    this.success = `تم إنشاء ${codes.length} رمز تفعيل بنجاح`;
+    
+    // Close modal
+    this.showGeneratorModal = false;
+    
+    // Reload codes list to show new codes
+    this.loadCodes();
+    
+    // Clear success message after delay
+    setTimeout(() => {
+      this.success = null;
+    }, 5000);
+  }
+
+  // ✅ Update existing onCodeGenerated method
+  onCodeGenerated(code: ActivationCode): void {
+    console.log('✅ Single code generated:', code);
+    
+    // Set success message
+    this.success = 'تم إنشاء رمز التفعيل بنجاح';
+    
+    // Close modal
+    this.showGeneratorModal = false;
+    
+    // Reload codes list
+    this.loadCodes();
+    
+    // Clear success message after delay
+    setTimeout(() => {
+      this.success = null;
+    }, 5000);
+  }
+
+  // ✅ NEW: Copy all codes for a specific lesson
+  copyAllCodesForLesson(lessonId: string): void {
+    if (!lessonId) return;
+
+    // Filter codes for this lesson
+    const lessonCodes = this.codes.filter(code => code.lessonId === lessonId);
+    
+    if (lessonCodes.length === 0) {
+      this.error = 'لا توجد رموز لهذا الدرس';
+      setTimeout(() => this.error = null, 3000);
+      return;
+    }
+
+    // Create formatted text with all codes
+    const codesText = lessonCodes
+      .map((code, index) => `${index + 1}. ${code.code}`)
+      .join('\n');
+
+    const lessonTitle = this.lessonTitles.get(lessonId) || 'الدرس';
+    const fullText = `رموز التفعيل للدرس: ${lessonTitle}\n\n${codesText}`;
+
+    navigator.clipboard.writeText(fullText).then(() => {
+      this.success = `تم نسخ ${lessonCodes.length} رمز تفعيل للدرس`;
+      setTimeout(() => this.success = null, 3000);
+    }).catch(() => {
+      this.error = 'فشل في نسخ الرموز';
+      setTimeout(() => this.error = null, 3000);
+    });
+  }
+
+  // ✅ Update getVisiblePageNumbers method (fix the pagination issue)
+  getVisiblePageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2; // Show 2 pages on each side of current page
+    
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+    
+    // Ensure we always show at least 5 pages if possible
+    if (end - start < 4) {
+      if (start === 1) {
+        end = Math.min(total, start + 4);
+      } else if (end === total) {
+        start = Math.max(1, end - 4);
       }
-    } else {
-      // Show current page and surrounding pages
-      const startPage = Math.max(1, this.currentPage - 4);
-      const endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
-      
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
-      }
+    }
+    
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
     }
     
     return pages;

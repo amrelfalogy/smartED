@@ -4,15 +4,14 @@
     <div class="header">
       <div class="header-content">
         <h2>
-          <i class="pi pi-credit-card me-3"></i>
           الحصول على الوصول
         </h2>
-        <p class="text-muted">
+        <p class="text-danger" style="font-weight: 700;">
           {{ planType === 'subject' ? 'شراء المادة بالكامل' : 'شراء ' + contentTypeLabel }}
         </p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-secondary" (click)="goBack()">
+        <button class="btn btn-muted" (click)="goBack()">
           <i class="pi pi-arrow-right me-2"></i>
           العودة
         </button>
@@ -22,17 +21,7 @@
         </button>
       </div>
     </div>
-
-    <div class="alert alert-danger" *ngIf="error">
-      <i class="pi pi-exclamation-triangle me-2"></i>
-      {{ error }}
-    </div>
-
-    <div class="alert alert-success" *ngIf="success">
-      <i class="pi pi-check-circle me-2"></i>
-      {{ success }}
-    </div>
-
+   
     <!-- ✅ NEW: Access Method Selection -->
     <div class="access-methods-section" *ngIf="showAccessOptions && !activationSuccess">
       <div class="section-header">
@@ -81,7 +70,7 @@
     </div>
 
     <!-- Payment Form (only show when payment method selected and not success) -->
-    <div class="payment-card" *ngIf="selectedAccessMethod === 'payment' && !error && !activationSuccess">
+    <div class="payment-card" *ngIf="selectedAccessMethod === 'payment'  && !activationSuccess">
       <div class="card-header">
         <h3>تفاصيل الدفع</h3>
       </div>
@@ -101,8 +90,8 @@
           </span>
         </div>
         <div class="summary-line total">
-          <span class="label">المبلغ الإجمالي</span>
-          <span class="value">
+          <span class="label-price">المبلغ الإجمالي</span>
+          <span class="value text-success" style="font-weight: 700;">
             <ng-container *ngIf="amount !== null; else noAmount">
               {{ amount | number }} {{ currency }}
             </ng-container>
@@ -111,58 +100,66 @@
         </div>
       </div>
 
-      <div class="form">
-        <div class="form-group">
+      <div class="form row">
+        <div class="form-group col-md-6">
           <label class="form-label">
             <i class="pi pi-wallet me-2"></i>
             طريقة الدفع
           </label>
-          <select class="form-select" [(ngModel)]="paymentMethod">
-            <option value="cash">كاش</option>
+          <select class="form-select" [(ngModel)]="paymentMethod">            
+            <option value="cash">cash</option>
+            <option value="vodafone_cash">vodafone_cash</option>
             <option value="instapay">InstaPay</option>
-            <option value="vodafone_cash">فودافون كاش</option>
-            <option value="bank_transfer">تحويل بنكي</option>
+            
           </select>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            <i class="pi pi-link me-2"></i>
-            رابط إيصال الدفع (اختياري)
-          </label>
-          <input class="form-control" type="url" [(ngModel)]="receiptUrl" placeholder="https://..." />
-          <small class="form-text">يمكنك رفع الإيصال على أي خدمة ملفات ثم لصق الرابط</small>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group">
-              <label class="form-label">
-                <i class="pi pi-hashtag me-2"></i>
-                رقم المعاملة (اختياري)
-              </label>
-              <input class="form-control" type="text" [(ngModel)]="transactionId" placeholder="رقم المعاملة من التطبيق" />
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group">
-              <label class="form-label">
-                <i class="pi pi-tag me-2"></i>
-                الرقم المرجعي (اختياري)
-              </label>
-              <input class="form-control" type="text" [(ngModel)]="referenceNumber" placeholder="الرقم المرجعي للعملية" />
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
+        <div class="form-group col-md-6">
           <label class="form-label">
             <i class="pi pi-comment me-2"></i>
             ملاحظات (اختياري)
           </label>
-          <textarea class="form-control" rows="3" [(ngModel)]="notes" placeholder="أي ملاحظات إضافية..."></textarea>
+          <textarea class="form-control" rows="1" [(ngModel)]="notes" placeholder="أي ملاحظات إضافية..."></textarea>
         </div>
 
+        <div class="form-group col-md-6">
+          <label class="form-label">
+            <i class="pi pi-link me-2"></i>
+            إيصال الدفع (صورة)
+          </label>
+          <input type="file" accept="image/*" (change)="onReceiptImageSelected($event)" class="form-control" />
+          <small class="form-text">ارفع صورة الإيصال هنا (JPG/PNG، حد أقصى 5MB)</small>
+          <div *ngIf="receiptUploading" class="mt-2">
+            <div class="spinner-border text-primary" role="status" style="width: 32px; height: 32px;">
+              <span class="visually-hidden">جاري رفع الصورة...</span>
+            </div>
+            <span class="ms-2">جاري رفع صورة الإيصال...</span>
+          </div>
+          <div *ngIf="receiptUrl && !receiptUploading " class="mt-2">
+            <img [src]="receiptUrl" alt="إيصال الدفع" style="max-width: 80px; border-radius: 8px; box-shadow: 0 2px 8px #0001;" />
+            <a [href]="receiptUrl" target="_blank" class="btn btn-sm me-2">
+              <i class="pi pi-external-link"></i> فتح الصورة
+            </a>
+          </div>
+        </div>
+        
+        <div class="form-group col-md-6">
+          <label class="form-label">
+            <i class="pi pi-hashtag me-2"></i>
+            رقم العملية - الرقم المرجعي (اختياري)
+          </label>
+          <input class="form-control" type="text" [(ngModel)]="transactionId" placeholder="رقم المعاملة من التطبيق" />
+        </div>  
+        
+        <div class="alert alert-danger" *ngIf="error">
+          <i class="pi pi-exclamation-triangle me-2"></i>
+          {{ error }}
+        </div>
+
+        <div class="alert alert-success" *ngIf="success">
+          <i class="pi pi-check-circle me-2"></i>
+          {{ success }}
+        </div>
+        
         <div class="actions">
           <button class="btn btn-primary btn-lg" [disabled]="isSubmitting" (click)="submit()">
             <i class="pi" [ngClass]="isSubmitting ? 'pi-spinner pi-spin' : 'pi-send'"></i>
@@ -196,7 +193,7 @@
     <div class="page-header">
       <div class="header-content">
         <h1 class="page-title">
-          <i class="pi pi-history me-3"></i>
+          <i class="pi pi-history ms-3"></i>
           تاريخ المدفوعات
         </h1>
         <p class="page-description">عرض جميع عمليات الدفع والاشتراكات السابقة</p>
@@ -256,7 +253,7 @@
     <div class="content-card">
       <div class="card-header">
         <h3 class="card-title">
-          <i class="pi pi-list me-2"></i>
+          <i class="pi pi-list ms-2"></i>
           سجل المدفوعات
         </h3>
       </div>
@@ -281,21 +278,35 @@
         <div class="payment-history" *ngIf="!paymentsLoading && payments.length > 0">
           <div class="payment-item" *ngFor="let payment of payments; trackBy: trackPayment">
             <div class="payment-icon">
-              <i class="pi" [ngClass]="getPaymentType(payment) === 'subject' ? 'pi-book' : 'pi-play-circle'"></i>
+              <i class="pi" [ngClass]="getPaymentTypeLabel(payment) === 'مادة' ? 'pi-book' : 'pi-play-circle'"></i>
             </div>
             <div class="payment-info">
-              <div class="payment-course">{{ getPaymentTitle(payment) }}</div>
+              <div class="payment-course">
+                {{ getPaymentTitle(payment) }}
+              </div>
               <div class="payment-details">
-                طريقة الدفع: {{ getPaymentMethodLabel(payment.paymentMethod) }} • 
+                <i class="pi pi-tag me-1"></i>
+                {{ getPaymentTypeLabel(payment) }}
+              </div>
+              <div class="payment-details">
+                <i class="pi pi-wallet me-1"></i>
+                طريقة الدفع: {{ getPaymentMethodLabel(payment.paymentMethod) }}
+                <span class="mx-2"><br></span>
+                <i class="pi pi-dollar me-1"></i>
                 المبلغ: {{ payment.amount | number }} {{ payment.currency || 'EGP' }}
               </div>
-              <div class="payment-date">{{ formatDate(payment.createdAt) }}</div>
+              <div class="payment-date">
+                <i class="pi pi-calendar me-1"></i>
+                {{ formatDate(payment.createdAt) }}
+              </div>
             </div>
             <div class="payment-status">
               <span class="status-badge" [ngClass]="getStatusBadgeClass(payment.status)">
+                <i class="pi pi-info-circle me-1"></i>
                 {{ getStatusLabel(payment.status) }}
               </span>
               <div class="payment-ref" *ngIf="payment.referenceNumber">
+                <i class="pi pi-hashtag me-1"></i>
                 مرجع: {{ payment.referenceNumber }}
               </div>
             </div>

@@ -57,7 +57,7 @@
                        placeholder="البحث بالاسم، البريد الإلكتروني، أو رقم الدفعة..."
                        [(ngModel)]="searchTerm"
                        (keyup.enter)="onSearch()">
-                <button class="btn btn-secondary" (click)="onSearch()">بحث</button>
+                <button class="btn btn-primary" (click)="onSearch()">بحث</button>
               </div>
             </div>
           </div>
@@ -136,7 +136,7 @@
               <tr *ngFor="let payment of paginatedPayments; trackBy: trackByPayment">
                 <td>
                   <div class="payment-id">
-                    <strong class="text-primary">{{ payment.id.substring(0, 8) }}...</strong>
+                    <strong class="text-primary">{{ payment.targetName }}</strong>
                     <small class="d-block text-muted" *ngIf="payment.transactionId">
                       {{ payment.transactionId }}
                     </small>
@@ -156,7 +156,7 @@
                 </td>
                 <td>{{ payment.targetName }}</td>
                 <td>
-                  <span class="badge bg-primary text-white">{{ payment.paymentMethod }}</span>
+                  <span class="badge btn-primary text-white">{{ payment.paymentMethod }}</span>
                 </td>
                 <td>
                   <span class="badge" [class]="'bg-' + getStatusColor(payment.status)">
@@ -267,15 +267,24 @@
                 <div class="detail-item">
                   <label>البريد الإلكتروني:</label>
                   <span>{{ selectedPayment.studentEmail }}</span>
+                </div>                
+              </div>
+              <!-- Receipt -->
+              <div class="col-12" *ngIf="selectedPayment.receiptUrl">
+                <div class="detail-section">
+                  <h6 class="section-title">إيصال الدفع</h6>
+                  <div class="receipt-preview">
+                    <a [href]="selectedPayment.receiptUrl" target="_blank" class="btn btn-primary mb-2">
+                      <i class="pi pi-external-link me-2"></i>
+                      فتح الإيصال
+                    </a>
+                    <div>
+                      <img [src]="selectedPayment.receiptUrl"
+                          alt="إيصال الدفع"
+                          style="max-width: 320px; border-radius: 8px; box-shadow: 0 2px 8px #0001;" />
+                    </div>
+                  </div>
                 </div>
-                <!-- <div class="detail-item">
-                  <label>المرحلة التعليمية:</label>
-                  <span>{{ selectedPayment.educationalStage }}</span>
-                </div>
-                <div class="detail-item">
-                  <label>الصف الدراسي:</label>
-                  <span>{{ selectedPayment.studentGrade }}</span>
-                </div> -->
               </div>
             </div>
 
@@ -283,6 +292,10 @@
             <div class="col-md-6 mb-3">
               <div class="detail-section">
                 <h6 class="section-title">معلومات الدفع</h6>
+                <div class="detail-item">
+                  <label> الإشتراك في: </label>
+                  <span class="text-primary fw-bold">{{ selectedPayment.targetName   }}</span>
+                </div>
                 <div class="detail-item">
                   <label>رقم الدفعة:</label>
                   <span class="text-primary fw-bold">{{ selectedPayment.id }}</span>
@@ -295,9 +308,9 @@
                   <label>طريقة الدفع:</label>
                   <span>{{ selectedPayment.paymentMethod }}</span>
                 </div>
-                <div class="detail-item" *ngIf="selectedPayment.referenceNumber">
+                <div class="detail-item" *ngIf="selectedPayment.transactionId">
                   <label>رقم المرجع:</label>
-                  <span class="text-muted">{{ selectedPayment.referenceNumber }}</span>
+                  <span class="text-muted">{{ selectedPayment.transactionId }}</span>
                 </div>
               </div>
             </div>

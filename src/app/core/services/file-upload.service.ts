@@ -234,8 +234,13 @@ export class FileUploadService {
           const body = event.body;
           
           if (body?.url) {
+             let url = body.url;
+            // ✅ If the URL is relative
+            if (!url.startsWith('http')) {
+              url = `${environment.uploadsBaseUrl}${url}`;
+            }
             return { 
-              url: body.url,
+              url,
               fileName: body.fileName || body.originalName || file.name,
               fileSize: body.fileSize || file.size,
               fileType: body.fileType || file.type,

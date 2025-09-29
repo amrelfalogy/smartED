@@ -77,7 +77,7 @@ const routes: Routes = [
         data: { 
           title: 'المدفوعات', 
           breadcrumb: 'المدفوعات',
-          role: 'admin' // ✅ Only admin can access payments
+          role: 'admin_or_support' // ✅ Only admin can access payments
         }
       },
       {
@@ -87,7 +87,7 @@ const routes: Routes = [
         data: { 
           title: 'رموز التفعيل', 
           breadcrumb: 'رموز التفعيل',
-          role: 'admin' // ✅ Only admin can access activation codes
+          role: 'admin_or_support' // ✅ Only admin can access activation codes
         }
       },
       {

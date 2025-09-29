@@ -57,7 +57,7 @@ export const NavigationItems: NavigationItem[] = [
         children: [
           {
             id: 'جميع الدورات',
-            title: 'Courses List',
+            title: 'جميع الدورات',
             type: 'item',
             classes: 'nav-item',
             url: '/admin/courses',

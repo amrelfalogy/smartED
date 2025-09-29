@@ -12,11 +12,7 @@
           <span class="lesson-duration" *ngIf="lessonForm.get('duration')?.value">
             <i class="pi pi-clock"></i>
             {{ formatDuration(lessonForm.get('duration')?.value) }}
-          </span>
-          <span class="lesson-difficulty" *ngIf="selectedDifficulty">
-            <i class="pi" [style.color]="selectedDifficulty.color"></i>
-            {{ selectedDifficulty.label }}
-          </span>
+          </span>         
         </div>
       </div>
     </div>
@@ -70,17 +66,7 @@
               <input type="number" class="form-control" formControlName="duration" min="0" placeholder="0" />
               <div class="form-text">يمكن تركها صفر واحتسابها لاحقاً</div>
             </div>
-          </div>
-          <div class="col-md-4">
-            <div class="form-group">
-              <label class="form-label">المستوى <span class="required">*</span></label>
-              <select class="form-select" formControlName="difficulty" [class.is-invalid]="isFieldInvalid('difficulty')">
-                <option value="">اختر المستوى</option>
-                <option *ngFor="let d of difficultyOptions" [value]="d.value">{{ d.label }}</option>
-              </select>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('difficulty')">{{ getFieldError('difficulty') }}</div>
-            </div>
-          </div>
+          </div>          
           <div class="col-md-4">
             <div class="form-group">
               <label class="form-label">نوع المحتوى <span class="required">*</span></label>
@@ -89,6 +75,16 @@
                 <option *ngFor="let lt of lessonTypes" [value]="lt.value">{{ lt.label }}</option>
               </select>
               <div class="invalid-feedback" *ngIf="isFieldInvalid('lessonType')">{{ getFieldError('lessonType') }}</div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="form-group">
+              <label class="form-label">مستوى الصعوبة <span class="required">*</span></label>
+              <select class="form-select" formControlName="difficulty" [class.is-invalid]="isFieldInvalid('difficulty')">
+                <option value="">اختر المستوى</option>
+                <option *ngFor="let diff of difficultyOptions" [value]="diff.value">{{ diff.label }}</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('difficulty')">{{ getFieldError('difficulty') }}</div>
             </div>
           </div>
         </div>
@@ -152,43 +148,85 @@
             سيتم إرسال أول رابط فقط إلى الخادم كـ videoUrl.
           </small>
         </div>
-        <!-- Documents (first sent as document) -->
+
+        <!-- ✅ ENHANCED: Documents Upload Section with Better Status Display -->        
         <div class="content-upload-section mt-3">
-          <label class="form-label"><i class="pi pi-file"></i> مستندات الدرس (اختياري)</label>
-          <div class="upload-area" [class.has-content]="documentsFA.length > 0">
+          <label class="form-label"><i class="pi pi-file"></i> ملف PDF للدرس</label>
+          <div class="upload-area" [class.has-content]="hasExistingDocument || lessonForm.get('documentFile')?.value">
+            
+            <!-- ✅ Upload Input Group -->
             <div class="upload-input-group">              
-              <label class="btn btn-primary ">
+              <label class="btn btn-primary">
                 <i class="pi pi-upload"></i>
-                رفع ملف مستند
-                <input type="file" accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" class="d-none" (change)="onDocumentFileSelected($event)" />
+                {{ hasExistingDocument ? 'تغيير ملف PDF' : 'رفع ملف PDF' }}
+                <input 
+                  type="file" 
+                  accept=".pdf" 
+                  class="d-none" 
+                  (change)="onDocumentFileSelected($event)"
+                />
               </label>
-            </div>
-            <div class="upload-progress" *ngIf="isLoadingMediaDoc">
-              <div class="progress">
-                <div class="progress-bar bg-info" [style.width.%]="uploadProgressDoc"></div>
-              </div>
-              <small>جاري تحميل المستند... {{ uploadProgressDoc }}%</small>
-            </div>
-            <div class="content-status success" *ngIf="documentsFA.length > 0">
-              <i class="pi pi-check-circle"></i>
-              <span>تمت إضافة {{ documentsFA.length }} مستند</span>
-            </div>
-          </div>
-          <div class="doc-list mt-2" *ngIf="documentsFA.length > 0">
-            <div class="d-flex align-items-center gap-2 mb-2" *ngFor="let ctrl of documentsFA.controls; let i = index">
-              <span class="badge bg-light text-dark">#{{ i + 1 }}</span>
-              <input type="text" class="form-control" [value]="ctrl.value" readonly />
-              <a class="btn btn-primary btn-sm" [href]="ctrl.value" target="_blank" rel="noopener">
-                <i class="pi pi-external-link"></i>
-              </a>
-              <button type="button" class="btn btn-danger btn-sm" (click)="removeDocument(i)">
-                <i class="pi pi-trash"></i>
+              
+              <!-- ✅ Clear File Button (when new file selected) -->
+              <button 
+                type="button" 
+                class="btn btn-outline-secondary ms-2" 
+                *ngIf="lessonForm.get('documentFile')?.value"
+                (click)="clearSelectedFile()"
+                title="إلغاء الملف المحدد">
+                <i class="pi pi-times"></i>
+                إلغاء
               </button>
             </div>
+            
+            <!-- ✅ Show Existing Uploaded File (from backend) -->
+            <div class="content-status existing" *ngIf="hasExistingDocument && !lessonForm.get('documentFile')?.value">
+              <i class="pi pi-file-pdf text-danger"></i>
+              <div class="file-info">
+                <strong>ملف مرفوع: {{ getExistingFileName() }}</strong>
+                <div class="file-details">
+                  <small class="text-muted">
+                    حجم الملف: {{ formatFileSize(getExistingFileSize()) }}
+                  </small>
+                  <small class="text-success ms-3">
+                    <i class="pi pi-link"></i>
+                    <a [href]="getExistingFileUrl()" target="_blank" rel="noopener">عرض الملف</a>
+                  </small>
+                </div>
+              </div>
+            </div>
+            
+            <!-- ✅ Show New File Selected for Upload -->
+            <div class="content-status new-file" *ngIf="lessonForm.get('documentFile')?.value">
+              <i class="pi pi-file-plus text-info"></i>
+              <div class="file-info">
+                <strong>
+                  {{ hasExistingDocument ? 'سيتم استبدال الملف الحالي بـ:' : 'جاهز للرفع:' }} 
+                  {{ lessonForm.get('pdfFileName')?.value }}
+                </strong>
+                <div class="file-details">
+                  <small class="text-muted">
+                    حجم الملف الجديد: {{ formatFileSize(lessonForm.get('pdfFileSize')?.value) }}
+                  </small>
+                  <span class="badge bg-info ms-3">ملف جديد</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- ✅ Show Both Files When Replacing -->
+            <div class="replacement-info" *ngIf="hasExistingDocument && lessonForm.get('documentFile')?.value">
+              <div class="alert alert-warning py-2 px-3 mt-2">
+                <i class="pi pi-exclamation-triangle me-2"></i>
+                <strong>تنبيه:</strong> سيتم استبدال "{{ getExistingFileName() }}" بالملف الجديد "{{ lessonForm.get('pdfFileName')?.value }}" عند الحفظ.
+              </div>
+            </div>
+
+            <!-- ✅ No File State -->
+            <div class="content-status empty" *ngIf="!hasExistingDocument && !lessonForm.get('documentFile')?.value">
+              <i class="pi pi-cloud-upload text-muted"></i>
+              <span class="text-muted">لم يتم رفع أي ملف PDF بعد</span>
+            </div>
           </div>
-          <small class="text-muted d-block mt-1">
-            سيتم إرسال أول رابط فقط إلى الخادم كـ document.
-          </small>
         </div>
       </div>
 

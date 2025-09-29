@@ -134,11 +134,6 @@
 
       <div class="card-body">
         <h3 class="subject-name">{{ s.name }}</h3>
-        <p class="course-description">
-          {{ (s.description || '') | slice:0:120 }}
-          <span *ngIf="(s.description || '').length > 120">...</span>
-        </p>
-
         <div class="meta">
           <span class="meta-item">
             <i class="pi pi-graduation-cap"></i>

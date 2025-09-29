@@ -1,8 +1,8 @@
 <div class="modal-overlay" *ngIf="isVisible" (click)="onClose()">
   <div class="modal-container" (click)="$event.stopPropagation()">
     
-    <!-- Success State -->
-    <div *ngIf="generatedCode" class="success-container">
+    <!-- Success State - Single Code -->
+    <div *ngIf="generatedCode && !generatedCodes" class="success-container">
       <div class="modal-header">
         <h2>
           <i class="pi pi-check-circle text-success me-2"></i>
@@ -34,7 +34,7 @@
           <div class="code-details">
             <div class="detail-row">
               <span class="label">المحتوى:</span>
-              <span class="value">{{ generatedCode.contentItem.title }}</span>
+              <span class="value">{{ generatedCode.contentItem.title || selectedContentName }}</span>
             </div>
             <div class="detail-row">
               <span class="label">صالح حتى:</span>
@@ -55,8 +55,78 @@
       </div>
     </div>
 
+    <!-- ✅ NEW: Success State - Multiple Codes -->
+    <div *ngIf="generatedCodes && generatedCodes.length > 0" class="success-container multiple-codes">
+      <div class="modal-header">
+        <h2>
+          <i class="pi pi-check-circle text-success me-2"></i>
+          تم إنشاء {{ generatedCodes.length }} رمز تفعيل بنجاح
+        </h2>
+        <button class="btn btn-ghost" (click)="onClose()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="success-content">
+        <div class="multiple-codes-header">
+          <div class="codes-summary">
+            <h3>{{ generatedCodes.length }} رمز تفعيل للدرس: {{ selectedContentName }}</h3>
+            <div class="summary-actions">
+              <button 
+                class="btn btn-primary"
+                (click)="copyAllCodesToClipboard()"
+                title="نسخ جميع الرموز"
+              >
+                <i class="pi pi-copy me-1"></i>
+                نسخ جميع الرموز
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="codes-list-container">
+          <div class="codes-grid">
+           <div 
+              *ngFor="let code of generatedCodes; let i = index; trackBy: trackByCode" 
+              class="code-item"
+            >
+              <div class="code-index">{{ i + 1 }}</div>
+              <div class="code-content">
+                <code class="activation-code">{{ code.code }}</code>
+                <button 
+                  class="btn btn-sm btn-ghost copy-single-btn"
+                  (click)="copyCodeToClipboard(code.code)"
+                  title="نسخ هذا الرمز"
+                >
+                  <i class="pi pi-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ✅ Codes Summary -->
+          <div class="codes-summary-details">
+            <div class="summary-row">
+              <span class="label">إجمالي الرموز:</span>
+              <span class="value">{{ generatedCodes.length }}</span>
+            </div>           
+          </div>
+        </div>
+
+        <div class="success-actions">
+          <button class="btn btn-primary" (click)="onStartNew()">
+            <i class="pi pi-plus me-2"></i>
+            إنشاء رموز أخرى
+          </button>
+          <button class="btn btn-secondary" (click)="onClose()">
+            إنهاء
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Form State -->
-    <div *ngIf="!generatedCode" class="form-container">
+    <div *ngIf="!generatedCode && !generatedCodes" class="form-container">
       <div class="modal-header">
         <h2>
           <i class="pi pi-key me-2"></i>
@@ -129,25 +199,41 @@
               إعدادات الرمز
             </h3>
 
-            <div class="form-group">
-              <label class="form-label">وصف الرمز (اختياري)</label>
-              <textarea 
-                class="form-control" 
-                formControlName="description"
-                rows="2"
-                placeholder="وصف مختصر للرمز وغرض استخدامه"
-              ></textarea>
+            <!-- ✅ Count Input -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">عدد الرموز <span class="required">*</span></label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    formControlName="count"
+                    min="1"
+                    max="100"
+                    [class.is-invalid]="isFieldInvalid('count')"
+                    placeholder="أدخل عدد الرموز المطلوبة"
+                  />
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('count')">
+                    {{ getFieldError('count') }}
+                  </div>
+                  <div class="form-text">
+                    <i class="pi pi-info-circle me-1"></i>
+                    {{ isGeneratingMultiple ? 'سيتم إنشاء ' + generatorForm.get('count')?.value + ' رمز' : 'سيتم إنشاء رمز واحد' }}
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label class="form-label">وصف الرمز (اختياري)</label>
+                  <textarea 
+                    class="form-control" 
+                    formControlName="description"
+                    rows="2"
+                    placeholder="وصف مختصر للرمز وغرض استخدامه"
+                  ></textarea>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <!-- Validity Period -->
-          <div class="form-section">
-            <h3 class="section-title">
-              <i class="pi pi-calendar me-2"></i>
-              فترة الصلاحية
-            </h3>
-
-
           </div>
 
         </form>
@@ -174,7 +260,7 @@
           [disabled]="isSubmitting || generatorForm.invalid"
         >
           <i class="pi" [ngClass]="isSubmitting ? 'pi-spinner pi-spin' : 'pi-key'"></i>
-          {{ isSubmitting ? 'جاري الإنشاء...' : 'إنشاء الرمز' }}
+          {{ isSubmitting ? 'جاري الإنشاء...' : (isGeneratingMultiple ? 'إنشاء ' + generatorForm.get('count')?.value + ' رمز' : 'إنشاء رمز واحد') }}
         </button>
       </div>
     </div>

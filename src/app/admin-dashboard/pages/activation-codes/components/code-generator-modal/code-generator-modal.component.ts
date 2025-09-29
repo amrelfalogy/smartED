@@ -4,9 +4,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { ActivationCodeService } from 'src/app/core/services/activation-code.service';
-import { SubjectService } from 'src/app/core/services/subject.service';
 import { LessonService } from 'src/app/core/services/lesson.service';
-import { UnitService } from 'src/app/core/services/unit.service';
 import {
   ActivationCode,
   CodeGenerateRequest,
@@ -28,6 +26,7 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
   @Input() isVisible = false;
   @Output() close = new EventEmitter<void>();
   @Output() codeGenerated = new EventEmitter<ActivationCode>();
+  @Output() codesGenerated = new EventEmitter<ActivationCode[]>(); 
 
   generatorForm!: FormGroup;
   
@@ -36,23 +35,19 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
   isLoadingContent = false;
   error: string | null = null;
   generatedCode: CodeGenerateResponse | null = null;
+  generatedCodes: ActivationCode[] | null = null; // For multiple codes
 
   // Content options
-  subjects: ContentItem[] = [];
   lessons: ContentItem[] = [];
-  units: ContentItem[] = [];
-  
-  selectedContentType: 'lesson' | 'subject' | 'unit' = 'lesson';
   availableContent: ContentItem[] = [];
+  selectedContentType: 'lesson' | 'subject' | 'unit' = 'lesson';
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
     private activationService: ActivationCodeService,
-    
     private lessonService: LessonService,
-
   ) {}
 
   ngOnInit(): void {
@@ -67,18 +62,13 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
   }
 
   private buildForm(): void {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const threeMonthsLater = new Date();
-    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
-
     this.generatorForm = this.fb.group({
       contentType: ['lesson', [Validators.required]],
       contentId: ['', [Validators.required]],
       description: [''],
       academicYearId: [''],
-      studentYearId: ['']
+      studentYearId: [''],
+      count: [1, [Validators.required, Validators.min(1), Validators.max(100)]]
     });
   }
 
@@ -91,19 +81,13 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
         this.updateAvailableContent();
         this.generatorForm.get('contentId')?.setValue('');
       });
-
   }
 
   private async loadContent(): Promise<void> {
     this.isLoadingContent = true;
     
     try {
-      // Load all content types in parallel
-      const [ lessonsResponse] = await Promise.all([
-        this.lessonService.getAllLessons().toPromise()
-      ]);
-
-    
+      const lessonsResponse = await this.lessonService.getAllLessons().toPromise();
 
       // Process lessons
       if (Array.isArray(lessonsResponse)) {
@@ -133,15 +117,25 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ✅ FIX: Handle both single and multiple code generation
   onSubmit(): void {
     if (this.generatorForm.invalid || this.isSubmitting) {
       this.markFormGroupTouched();
       return;
     }
 
-    this.isSubmitting = true;
-    this.error = null;
+    const formValue = this.generatorForm.value;
+    const count = parseInt(formValue.count) || 1;
 
+    if (count === 1) {
+      this.generateSingleCode();
+    } else {
+      this.generateMultipleCodes();
+    }
+  }
+
+  // ✅ Generate single code
+  private generateSingleCode(): void {
     const formValue = this.generatorForm.value;
     
     const request: CodeGenerateRequest = {
@@ -151,18 +145,8 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
       studentYearId: formValue.studentYearId || undefined,
     };
 
-    // Set content ID based on type
-    switch (formValue.contentType) {
-      case 'lesson':
-        request.lessonId = formValue.contentId;
-        break;
-      case 'subject':
-        request.subjectId = formValue.contentId;
-        break;
-      case 'unit':
-        request.unitId = formValue.contentId;
-        break;
-    }
+    this.isSubmitting = true;
+    this.error = null;
 
     this.activationService.generateCode(request)
       .pipe(takeUntil(this.destroy$))
@@ -180,19 +164,67 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
       });
   }
 
+  // ✅ Generate multiple codes
+  private generateMultipleCodes(): void {
+    const formValue = this.generatorForm.value;
+    const request = {
+      lessonId: formValue.contentId,
+      count: parseInt(formValue.count)
+    };
+
+    this.isSubmitting = true;
+    this.error = null;
+
+    console.log('🔄 Generating multiple codes:', request);
+
+    this.activationService.generateMultipleCodes(request)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (activationCodes) => {
+          console.log('✅ Multiple codes generated:', activationCodes);
+          this.generatedCodes = activationCodes; // Directly assign the array
+          this.codesGenerated.emit(activationCodes); // Emit the array
+          this.isSubmitting = false;
+        },
+        error: (error) => {
+          console.error('❌ Failed to generate multiple codes:', error);
+          this.error = error?.error?.message || 'فشل في إنشاء الرموز المتعددة';
+          this.isSubmitting = false;
+        }
+      });
+  }
+
   onClose(): void {
     this.close.emit();
   }
 
   onStartNew(): void {
     this.generatedCode = null;
+    this.generatedCodes = null;
     this.generatorForm.reset();
     this.buildForm();
   }
 
   copyCodeToClipboard(code: string): void {
     navigator.clipboard.writeText(code).then(() => {
-      // You could show a temporary success message here
+      // Show success feedback if needed
+    });
+  }
+
+  // ✅ NEW: Copy all generated codes at once
+  copyAllCodesToClipboard(): void {
+    if (!this.generatedCodes) return;
+
+    const allCodes = this.generatedCodes
+      .map(c => c.code) // Access the `code` property directly
+      .join('\n');
+
+    navigator.clipboard.writeText(allCodes).then(() => {
+      console.log('✅ All codes copied to clipboard');
+      // Optionally show success feedback to the user
+    }).catch(() => {
+      console.error('❌ Failed to copy codes to clipboard');
+      // Optionally show error feedback to the user
     });
   }
 
@@ -202,8 +234,6 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
       control?.markAsTouched();
     });
   }
-
-
 
   // Form validation helpers
   isFieldInvalid(fieldName: string): boolean {
@@ -227,4 +257,15 @@ export class CodeGeneratorModalComponent implements OnInit, OnDestroy {
     const content = this.availableContent.find(c => c.id === contentId);
     return content?.name || '';
   }
+
+  // ✅ NEW: Check if generating multiple codes
+  get isGeneratingMultiple(): boolean {
+    const count = this.generatorForm.get('count')?.value;
+    return parseInt(count) > 1;
+  }
+
+  trackByCode(index: number, code: ActivationCode): string {
+    return code.id; 
+  }
+  
 }

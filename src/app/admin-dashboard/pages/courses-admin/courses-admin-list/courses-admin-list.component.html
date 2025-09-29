@@ -287,11 +287,7 @@
           <h3 class="course-title">{{ course.name }}</h3>
           <p class="course-description">{{ course.description | slice:0:100 }}...</p>
           
-          <div class="course-meta">
-            <div class="meta-item" *ngIf="course.duration">
-              <i class="pi pi-clock"></i>
-              <span>{{ formatDuration(course.duration) }}</span>
-            </div>
+          <div class="course-meta">          
             <div class="meta-item">
               <i class="pi pi-graduation-cap"></i>
               <span class="academic-year">{{ getAcademicYearName(course.academicYearId) }}</span>
@@ -311,11 +307,7 @@
             <div class="meta-item">
               <i class="pi pi-calendar"></i>
               <span>{{ formatDate(course.createdAt) }}</span>
-            </div>
-            <div class="meta-item">
-              <i class="pi pi-sort-numeric-up"></i>
-              <span>الترتيب: {{ course.order }}</span>
-            </div>
+            </div>            
           </div>
         </div>
 

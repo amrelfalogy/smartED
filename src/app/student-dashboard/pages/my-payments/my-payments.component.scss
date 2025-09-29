@@ -63,25 +63,25 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       overflow: hidden;
 
-      .card-header {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      .card-header {        
         color: white;
-        padding: 1.5rem;
+        padding: 2rem 1.5rem 1rem;
 
         h3 {
           margin: 0;
-          font-size: 1.25rem;
-          font-weight: 600;
+          font-size: 1.5rem;
+          font-weight: 700;
         }
       }
 
       .summary {
         padding: 1.5rem;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid #cfcfcf;
 
         .summary-line {
+          gap: 15px;
           display: flex;
-          justify-content: space-between;
+          justify-content: flex-start;
           align-items: center;
           padding: 0.75rem 0;
           border-bottom: 1px solid #f1f5f9;
@@ -91,14 +91,14 @@
           }
 
           &.total {
-            border-top: 2px solid #3b82f6;
-            margin-top: 0.5rem;
+            
+            margin-top: 0rem;
             padding-top: 1rem;
             font-weight: 600;
             font-size: 1.125rem;
 
             .value {
-              color: #3b82f6;
+              color: var(--primary-color);
             }
           }
 
@@ -232,12 +232,12 @@
     .form-control {
       border-radius: 8px;
       border: 2px solid #e2e8f0;
-      padding: 0.75rem;
+      
       font-size: 1rem;
       transition: all 0.2s ease;
 
       &:focus {
-        border-color: #3b82f6;
+        border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         outline: none;
       }
@@ -254,8 +254,7 @@
     }
 
     textarea.form-control {
-      resize: vertical;
-      min-height: 80px;
+      resize: vertical;      
     }
   }
 
@@ -272,7 +271,7 @@
       transition: all 0.2s ease;
 
       &:hover {
-        border-color: #3b82f6;
+        border-color: var(--primary-color);
         box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
       }
 
@@ -283,7 +282,7 @@
       .payment-icon {
         width: 48px;
         height: 48px;
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        background: var(--primary-color);
         color: white;
         border-radius: 12px;
         display: flex;
@@ -297,16 +296,16 @@
         flex: 1;
 
         .payment-course {
-          font-weight: 600;
+          font-weight: 700;
           color: #1e293b;
-          font-size: 1rem;
+          font-size: 1.2rem;
           margin-bottom: 0.25rem;
         }
 
         .payment-details {
           color: #64748b;
           margin-bottom: 0.25rem;
-          font-size: 0.875rem;
+          font-size: 0.9rem;
         }
 
         .payment-date {
@@ -412,8 +411,7 @@
     text-decoration: none;
     font-size: 0.875rem;
 
-    &.btn-primary {
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    &.btn-primary {      
       color: white;
 
       &:hover:not(:disabled) {
@@ -530,37 +528,37 @@
       background: white;
       border: 3px solid #e2e8f0;
       border-radius: 16px;
-      padding: 2rem;
+      padding: 1rem;
       cursor: pointer;
       transition: all 0.3s ease;
       position: relative;
       text-align: center;
 
       &:hover {
-        border-color: #3b82f6;
+        border-color: var(--primary-color);
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
       }
 
       &.selected {
-        border-color: #3b82f6;
+        border-color: var(--primary-color);
         background: linear-gradient(135deg, #f8faff, #eff6ff);
         box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
       }
 
       .method-icon {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 1.5rem;
+        margin: 0 auto 1rem;
         font-size: 2rem;
         color: white;
 
         &.payment-icon {
-          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          background: var(--primary-color);
         }
 
         &.activation-icon {
@@ -586,7 +584,7 @@
           .price {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #3b82f6;
+            color: var(--primary-color);
           }
         }
 

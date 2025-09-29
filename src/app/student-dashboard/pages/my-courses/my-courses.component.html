@@ -130,10 +130,7 @@
                     <span class="duration">
                       <i class="pi pi-clock"></i>
                       {{ formatDuration(lesson.duration) }}
-                    </span>
-                    <span class="difficulty" [class]="'text-' + getDifficultyColor(lesson.difficulty)">
-                      {{ getDifficultyLabel(lesson.difficulty) }}
-                    </span>
+                    </span>                   
                   </div>
                 </div>
               </div>
@@ -198,7 +195,7 @@
                   <span class="total-lessons">{{ subject.totalLessons }}</span>
                   <span class="lessons-label">درس</span>
                 </div>
-                <div class="progress-percentage" [class]="'text-' + getDifficultyColor(subject.difficulty)">
+                <div class="progress-percentage" [class]="'text-' ">
                   {{ subject.progressPercentage }}%
                 </div>
               </div>
@@ -298,20 +295,7 @@
                 {{ type.label }}
               </option>
             </select>
-          </div>
-
-          <!-- Difficulty Filter -->
-          <div class="filter-group">
-            <label class="filter-label">المستوى</label>
-            <select class="form-select" 
-                    [(ngModel)]="difficultyFilter"
-                    (ngModelChange)="onDifficultyFilterChange($event)">
-              <option value="all">جميع المستويات</option>
-              <option value="beginner">مبتدئ</option>
-              <option value="intermediate">متوسط</option>
-              <option value="advanced">متقدم</option>
-            </select>
-          </div>
+          </div>          
 
           <!-- Sort By -->
           <div class="filter-group">
@@ -322,7 +306,6 @@
               <option value="recent">الأحدث</option>
               <option value="name">الاسم</option>
               <option value="progress">التقدم</option>
-              <option value="difficulty">المستوى</option>
             </select>
           </div>
         </div>
@@ -373,11 +356,7 @@
                 <span class="duration">
                   <i class="pi pi-clock"></i>
                   {{ formatDuration(lesson.duration) }}
-                </span>
-                <span class="difficulty" [class]="'text-' + getDifficultyColor(lesson.difficulty)">
-                  <i class="pi pi-signal"></i>
-                  {{ getDifficultyLabel(lesson.difficulty) }}
-                </span>
+                </span>               
               </div>
 
               <!-- Progress Indicator -->

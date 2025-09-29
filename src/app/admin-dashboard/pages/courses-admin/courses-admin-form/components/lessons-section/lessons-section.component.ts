@@ -91,6 +91,9 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
         videos: nnb.array<string>([]),
         documents: nnb.array<string>([]),
 
+        documentFile: [null as File | null],
+
+
         // Flags
         isFree: [this.lessonData?.isFree ?? false],
         isActive: [this.lessonData?.isActive ?? true],
@@ -143,7 +146,10 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
     this.documentsFA.clear();
 
     if (lesson.videoUrl) this.videosFA.push(this.fb.nonNullable.control(lesson.videoUrl));
-    if (lesson.document) this.documentsFA.push(this.fb.nonNullable.control(lesson.document));
+      if (lesson.document || lesson.pdfUrl) {
+      const docUrl = lesson.document || lesson.pdfUrl || '';
+      this.documentsFA.push(this.fb.nonNullable.control(docUrl));
+    }
 
     this.lessonForm.patchValue({
       id: lesson.id ?? null,
@@ -341,44 +347,172 @@ addDocumentUrl(input: HTMLInputElement): void {
       }
     });
   }
+  
+  // ✅ Add these helper methods to the existing component class
 
-  onDocumentFileSelected(e: Event): void {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+  // Check if there's an existing document from backend
+  get hasExistingDocument(): boolean {
+    const existingUrl = this.getExistingFileUrl();
+    return !!existingUrl;
+  }
 
-    const validation = this.fileUploadService.validateFile(file, 'document');
-    if (!validation.isValid) {
-      alert(validation.error || 'ملف مستند غير صالح');
+  // Get existing file URL from form or initial data
+  getExistingFileUrl(): string | null {
+    // Check form first, then fall back to initial lesson data
+    const formUrl = this.lessonForm.get('pdfUrl')?.value;
+    if (formUrl) return formUrl;
+    
+    // Check documents array (backward compatibility)
+    const documentsArray = this.documentsFA;
+    if (documentsArray && documentsArray.length > 0) {
+      return documentsArray.at(0).value;
+    }
+    
+    // Check original lesson data
+    if (this.lessonData?.pdfUrl) return this.lessonData.pdfUrl;
+    if (this.lessonData?.document) return this.lessonData.document;
+    
+    return null;
+  }
+
+  // Get existing file name
+  getExistingFileName(): string {
+    const fileName = this.lessonForm.get('pdfFileName')?.value;
+    if (fileName) return fileName;
+    
+    // Fallback: extract filename from URL
+    const url = this.getExistingFileUrl();
+    if (url) {
+      try {
+        const urlParts = url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        // Remove query parameters
+        return filename.split('?')[0] || 'ملف PDF';
+      } catch (error) {
+        return 'ملف PDF';
+      }
+    }
+    
+    return 'ملف PDF';
+  }
+
+  // Get existing file size
+  getExistingFileSize(): number | null {
+    return this.lessonForm.get('pdfFileSize')?.value || null;
+  }
+
+  // Format file size for display
+  formatFileSize(bytes: number | null): string {
+    if (!bytes || bytes <= 0) return 'غير معروف';
+    
+    if (bytes < 1024) return `${bytes} بايت`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  // Clear selected file (reset to existing or empty)
+  clearSelectedFile(): void {
+    this.lessonForm.patchValue({
+      documentFile: null,
+      pdfFileName: this.lessonData?.pdfFileName || null,
+      pdfFileSize: this.lessonData?.pdfFileSize || null
+    });
+    
+    // Clear the file input
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach((input: any) => {
+      if (input.accept === '.pdf') {
+        input.value = '';
+      }
+    });
+    
+    console.log('🗑️ Cleared selected file, reverted to existing');
+  }
+
+  // ✅ Enhanced onDocumentFileSelected method
+  onDocumentFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
+    if (!file) {
+      console.log('❌ No file selected');
       return;
     }
 
-    this.isLoadingMediaDoc = true;
-    this.uploadProgressDoc = 0;
+    // ✅ Validate file type and size
+    if (!file.type.includes('pdf')) {
+      console.error('❌ Only PDF files are allowed');
+      alert('يرجى اختيار ملف PDF فقط');
+      input.value = ''; // Clear the input
+      return;
+    }
 
-    this.fileUploadService.uploadDocument(file).subscribe({
-      next: (ev: FileUploadProgress | FileUploadResponse) => {
-        if ('progress' in ev) {
-          this.uploadProgressDoc = ev.progress;
-        } else if ('url' in ev) {
-          if (this.documentsFA.length === 0) {
-            this.documentsFA.push(this.fb.nonNullable.control(ev.url));
-          } else {
-            this.documentsFA.at(0).setValue(ev.url);
-          }
-          this.isLoadingMediaDoc = false;
-          this.uploadProgressDoc = 100;
-          this.lessonForm.updateValueAndValidity();
-        }
-      },
-      error: (err) => {
-        console.error('Document upload error:', err);
-        alert(err?.message || 'فشل رفع المستند');
-        this.isLoadingMediaDoc = false;
-        this.uploadProgressDoc = 0;
-      }
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      console.error('❌ File size too large');
+      alert('حجم الملف يجب أن يكون أقل من 10 ميجابايت');
+      input.value = ''; // Clear the input
+      return;
+    }
+
+    console.log('✅ Document file selected:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      hasExistingFile: this.hasExistingDocument,
+      existingFileName: this.hasExistingDocument ? this.getExistingFileName() : null
     });
+
+    // ✅ Update form with file and file info
+    this.lessonForm.patchValue({
+      documentFile: file,
+      pdfFileName: file.name,
+      pdfFileSize: file.size
+    });
+
+    // ✅ Trigger form update
+    this.lessonForm.markAsDirty();
+    this.lessonForm.updateValueAndValidity();
+
+    // ✅ Emit the updated lesson data
+    setTimeout(() => {
+      this.lessonUpdated.emit(this.serializeForEmit());
+    }, 0);
   }
 
+  
+
+  private emitLessonUpdate(): void {
+    if (!this.lessonForm.valid) {
+      console.log('🔍 Lesson form invalid, not emitting update');
+      return;
+    }
+
+    const formValue = this.lessonForm.value;
+    
+    // ✅ Create the lesson data with all necessary fields including file
+    const lessonData: Lesson = {
+      ...formValue,
+      // ✅ Ensure documentFile is included for backend processing
+      documentFile: formValue.documentFile || null,
+      // ✅ Keep existing URLs if no new file is selected
+      pdfUrl: formValue.pdfUrl || null,
+      document: formValue.document || null,
+      // ✅ Normalize media arrays (for backward compatibility)
+      videos: formValue.videoUrl ? [formValue.videoUrl] : [],
+      documents: formValue.document ? [formValue.document] : []
+    };
+
+    console.log('📤 Emitting lesson update:', {
+      id: lessonData.id,
+      title: lessonData.title,
+      lessonType: lessonData.lessonType,
+      hasDocumentFile: !!lessonData.documentFile,
+      documentFileName: (lessonData as any).documentFile?.name,
+      existingPdfUrl: lessonData.pdfUrl
+    });
+
+    this.lessonUpdated.emit(lessonData);
+  }
 
   moveVideo(i: number, dir: 'up' | 'down'): void {
     const j = dir === 'up' ? i - 1 : i + 1;
@@ -500,7 +634,13 @@ addDocumentUrl(input: HTMLInputElement): void {
       currency: v.currency || 'EGP',
       thumbnail: v.thumbnail ?? null,
       videoUrl: firstVideo, // ✅ Single URL, not array
-      document: firstDoc, // ✅ Single URL, not array      
+      document: firstDoc, // ✅ Single URL, not array   
+
+      documentFile: v.documentFile || null,
+   
+      pdfFileName: v.pdfFileName || null,
+      pdfFileSize: v.pdfFileSize || null,
+
       zoomUrl: v.lessonType === 'live' ? (v.zoomUrl || null) : null,
       zoomMeetingId: v.lessonType === 'live' ? (v.zoomMeetingId || null) : null,
       zoomPasscode: v.lessonType === 'live' ? (v.zoomPasscode || null) : null,

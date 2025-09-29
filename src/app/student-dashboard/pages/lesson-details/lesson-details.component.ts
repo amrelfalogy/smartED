@@ -38,6 +38,8 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
   hasAccess = false;
   requiresPayment = false;
 
+  showPdfViewer = false;
+
   // Content data
   videoUrls: string[] = [];
   docUrls: string[] = [];
@@ -83,6 +85,7 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // ✅ Update the loadLessonAndAccess method to properly handle PDF URLs
   private async loadLessonAndAccess(): Promise<void> {
     this.isLoading = true;
     this.errorMessage = '';
@@ -126,9 +129,28 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
         accessReason: lessonData?.accessReason ?? null
       };
 
-      // Set content URLs
+      // ✅ Set content URLs properly
       this.videoUrls = this.lesson.videoUrl ? [this.lesson.videoUrl] : [];
-      // this.docUrls = this.lesson.document ? [this.lesson.document] : [];
+      
+      // ✅ FIX: Set document URLs from both pdfUrl and document fields
+      this.docUrls = [];
+      if (this.lesson.pdfUrl) {
+        this.docUrls.push(this.lesson.pdfUrl);
+      } else if (this.lesson.document) {
+        this.docUrls.push(this.lesson.document);
+      }
+
+      console.log('📄 Lesson loaded:', {
+        id: this.lesson.id,
+        title: this.lesson.title,
+        lessonType: this.lesson.lessonType,
+        pdfUrl: this.lesson.pdfUrl,
+        document: this.lesson.document,
+        pdfFileName: this.lesson.pdfFileName,
+        pdfFileSize: this.lesson.pdfFileSize,
+        docUrls: this.docUrls,
+        videoUrls: this.videoUrls
+      });
 
       await this.loadCourseInfo();
       await this.checkLessonAccess();
@@ -145,6 +167,27 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
       this.isLoading = false;
     }
   }
+
+  // ✅ Update hasAnyContent getter to include PDF content
+  get hasAnyContent(): boolean {
+    const hasVideo = this.videoUrls.length > 0;
+    const hasDoc = this.docUrls.length > 0;
+    const hasText = !!this.lesson?.content;
+    const hasZoom = !!this.lesson?.zoomUrl;
+    
+    console.log('📋 Content check:', {
+      hasVideo,
+      hasDoc,
+      hasText,
+      hasZoom,
+      lessonType: this.lesson?.lessonType,
+      pdfUrl: this.lesson?.pdfUrl,
+      document: this.lesson?.document
+    });
+    
+    return hasVideo || hasDoc || hasText || hasZoom;
+  }
+
 
   private async loadCourseInfo(): Promise<void> {
     try {
@@ -248,8 +291,7 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
   }
 
   onActivationError(error: string): void {
-    this.errorMessage = error;
-    setTimeout(() => this.errorMessage = '', 5000);
+    this.errorMessage = error;    
   }
 
   // Navigation methods
@@ -327,12 +369,7 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
-  get hasAnyContent(): boolean {
-    return this.videoUrls.length > 0 || 
-           this.docUrls.length > 0 || 
-           !!this.lesson?.content ||
-           !!this.lesson?.zoomUrl;
-  }
+ 
 
   retryLoading(): void {
     this.loadLessonAndAccess();

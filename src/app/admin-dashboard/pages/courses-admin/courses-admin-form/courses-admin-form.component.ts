@@ -448,7 +448,9 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   if (lesson.lessonType === 'video') {
     contentValid = !!lesson.videoUrl;
   } else if (lesson.lessonType === 'pdf' || lesson.lessonType === 'document') {
-    contentValid = !!lesson.document;
+    const hasDocument = !!lesson.document;
+    const hasDocumentFile = !!(lesson as any).documentFile;
+    contentValid = hasDocument || hasDocumentFile;
   }
   
   // ✅ Price validation
@@ -618,7 +620,74 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       await this.createUnitWithLessons(unit, createdSubject.id);
     }
   }
+  
 
+  private async createUnitWithLessons(unit: Unit, subjectId: string): Promise<void> {
+    const createdUnit: Unit = await firstValueFrom(
+      this.unitService.createUnit({
+        name: unit.name,
+        description: unit.description,
+        subjectId,
+        order: unit.order
+      })
+    );
+
+    if (!createdUnit?.id) {
+      throw new Error(`لم يتم استرجاع معرف للوحدة الجديدة "${unit.name}"`);
+    }
+
+    if (unit.lessons?.length) {
+      for (const lesson of unit.lessons) {
+        await this.createLesson(lesson, createdUnit.id);
+      }
+    }
+  }
+
+  // ✅ Update the createLesson method to handle documentFile properly
+  private async createLesson(lesson: Lesson, unitId: string): Promise<void> {
+    if (!unitId || unitId.trim() === '') {
+      throw new Error(`unitId مفقود أثناء إنشاء الدرس "${lesson.title || ''}"`);
+    }
+
+    console.log('🚀 Creating lesson:', {
+      title: lesson.title,
+      lessonType: lesson.lessonType,
+      unitId: unitId,
+      hasDocumentFile: !!(lesson as any).documentFile,
+      documentFileName: (lesson as any).documentFile?.name,
+      videoUrl: lesson.videoUrl
+    });
+
+    // ✅ Create the payload with proper file handling
+    const createPayload: any = {
+      title: lesson.title,
+      description: lesson.description,
+      unitId: unitId, // REQUIRED
+      order: lesson.order,
+      price: lesson.price || 0,
+      videoUrl: lesson.videoUrl || null,
+      documentFile: (lesson as any).documentFile || null, // ✅ Include the file
+      duration: lesson.duration,
+      lessonType: lesson.lessonType,
+      difficulty: lesson.difficulty,
+      isFree: lesson.isFree,
+      isActive: lesson.isActive,
+      currency: lesson.currency || 'EGP'
+    };
+
+    const createdLesson = await firstValueFrom(
+      this.lessonService.createLesson(createPayload)
+    );
+
+    console.log('✅ Lesson created successfully:', {
+      id: createdLesson.id,
+      title: createdLesson.title,
+      pdfUrl: createdLesson.pdfUrl,
+      pdfFileName: createdLesson.pdfFileName
+    });
+  }
+
+  // ✅ Update the updateExistingCourse method for lesson updates
   private async updateExistingCourse(): Promise<void> {
     if (!this.subjectId) return;
 
@@ -643,19 +712,39 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
                 throw new Error(`unitId مفقود لهذا الدرس: ${lesson.title || lesson.id}`);
               }
 
-              await firstValueFrom(
-                this.lessonService.updateLesson(lesson.id, {
-                  title: lesson.title,
-                  description: lesson.description,
-                  lessonType: lesson.lessonType,
-                  difficulty: lesson.difficulty,
-                  duration: lesson.duration,
-                  isFree: lesson.isFree,
-                  isActive: lesson.isActive,
-                  order: lesson.order,
-                  unitId: ensuredUnitId
-                })
+              console.log('🔄 Updating existing lesson:', {
+                id: lesson.id,
+                title: lesson.title,
+                hasDocumentFile: !!(lesson as any).documentFile,
+                documentFileName: (lesson as any).documentFile?.name
+              });
+
+              // ✅ Create update payload with file if present
+              const updatePayload: any = {
+                title: lesson.title,
+                description: lesson.description,
+                lessonType: lesson.lessonType,
+                difficulty: lesson.difficulty,
+                duration: lesson.duration,
+                isFree: lesson.isFree,
+                isActive: lesson.isActive,
+                order: lesson.order,
+                unitId: ensuredUnitId,
+                price: lesson.price,
+                videoUrl: lesson.videoUrl || null,
+                documentFile: (lesson as any).documentFile || null // ✅ Include file for update
+              };
+
+              const updatedLesson = await firstValueFrom(
+                this.lessonService.updateLesson(lesson.id, updatePayload)
               );
+
+              console.log('✅ Lesson updated:', {
+                id: updatedLesson.id,
+                title: updatedLesson.title,
+                pdfUrl: updatedLesson.pdfUrl
+              });
+
             } else {
               // NEW lesson in EXISTING unit
               const ensuredUnitId = unit.id || lesson.unitId || lesson.lectureId || '';
@@ -671,51 +760,6 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
         await this.createUnitWithLessons(unit, this.subjectId);
       }
     }
-  }
-
-  private async createUnitWithLessons(unit: Unit, subjectId: string): Promise<void> {
-    const createdUnit: Unit = await firstValueFrom(
-      this.unitService.createUnit({
-        name: unit.name,
-        description: unit.description,
-        subjectId,
-        order: unit.order
-      })
-    );
-
-    if (!createdUnit?.id) {
-      throw new Error(`لم يتم استرجاع معرف للوحدة الجديدة "${unit.name}"`);
-    }
-
-    if (unit.lessons?.length) {
-      for (const lesson of unit.lessons) {
-        await this.createLesson(lesson, createdUnit.id);
-      }
-    }
-  }
-
-  private async createLesson(lesson: Lesson, unitId: string): Promise<void> {
-    if (!unitId || unitId.trim() === '') {
-      throw new Error(`unitId مفقود أثناء إنشاء الدرس "${lesson.title || ''}"`);
-    }
-
-    await firstValueFrom(
-      this.lessonService.createLesson({
-        title: lesson.title,
-        description: lesson.description,
-        unitId, // REQUIRED
-        order: lesson.order,
-        price: lesson.price || 0,
-        videoUrl: lesson.videoUrl || '',
-        document: lesson.document || '',
-        pdfUrl: lesson.pdfUrl || '',
-        duration: lesson.duration,
-        lessonType: lesson.lessonType,
-        difficulty: lesson.difficulty,
-        isFree: lesson.isFree,
-        isActive: lesson.isActive
-      })
-    );
   }
 
   // Utility

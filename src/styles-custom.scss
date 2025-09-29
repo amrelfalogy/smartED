@@ -34,5 +34,11 @@ body{
 .btn-muted {
   background-color: var(--muted);
   border-color: var(--muted);
+  color: white;
+}
+.btn-muted:hover {
+  background-color: #6e7583;
+  border-color: #6e7583;
+  color: white
 }
 }

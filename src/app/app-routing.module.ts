@@ -61,7 +61,7 @@ const routes: Routes = [
       },
       
       {
-        path: 'support',
+        path: 'support-me',
         loadChildren: () => import('./features/support/support.module').then(m => m.SupportModule),
         canActivate: [AuthGuard] // Require any logged-in user (no specific role)
       },

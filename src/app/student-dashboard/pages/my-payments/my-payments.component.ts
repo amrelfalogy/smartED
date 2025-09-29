@@ -11,6 +11,8 @@ import { Subject, Lesson } from 'src/app/core/models/course-complete.model';
 
 import { ActivationCodeService } from 'src/app/core/services/activation-code.service';
 import { CodeActivateResponse } from 'src/app/core/models/activation-code.model';
+import { FileUploadService } from 'src/app/core/services/file-upload.service';
+import { environment } from 'src/environments/environment';
 
 type PlanType = 'subject' | 'lesson';
 type ViewMode = 'form' | 'history';
@@ -46,7 +48,7 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
   currency = 'EGP';
 
   // Form
-  paymentMethod: 'cash' | 'instapay' | 'vodafone_cash' | 'bank_transfer' = 'cash';
+  paymentMethod:  'cash' | 'instapay' | 'vodafone_cash' = 'vodafone_cash';
   receiptUrl = '';
   notes = '';
   transactionId = '';
@@ -70,6 +72,7 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   error: string | null = null;
   success: string | null = null;
+  receiptUploading = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -77,7 +80,8 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
     private paymentService: PaymentService,
     private subjectService: SubjectService,
     private lessonService: LessonService,
-    private activationCodeService: ActivationCodeService
+    private activationCodeService: ActivationCodeService,
+    private fileUploadService: FileUploadService
   ) {}
 
   ngOnInit(): void {
@@ -143,11 +147,14 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
 
     try {
       const response = await firstValueFrom(this.paymentService.getMyPayments());
-      this.payments = Array.isArray(response) ? response : (response?.payments || []);
+      const rawPayments = Array.isArray(response) ? response : (response?.payments || []);
       
-      if (this.payments.length > 0) {
-        console.log('Payment object structure:', this.payments[0]);
-      }
+      // Transform payments to include targetName
+      this.payments = rawPayments.map(payment => ({
+        ...payment,
+        targetName: payment.subject?.name || payment.lesson?.title || 'غير محدد',
+        planType: payment.subjectId ? 'subject' : 'lesson'
+      }));
 
       // Calculate stats
       this.totalPayments = this.payments.length;
@@ -167,7 +174,7 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
     this.lesson = null;
     this.amount = null;
     this.currency = 'EGP';
-    this.paymentMethod = 'cash';
+    this.paymentMethod = 'vodafone_cash';
     this.receiptUrl = '';
     this.notes = '';
     this.transactionId = '';
@@ -212,6 +219,37 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
     this.showActivationModal = false;
   }
   
+  onReceiptImageSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.receiptUploading = true;
+    // Optional: Validate file size/type
+    if (file.size > 5 * 1024 * 1024) {
+      this.error = 'حجم الصورة يجب أن يكون أقل من 5MB';
+      return;
+    }
+
+    this.error = null;
+    this.success = null;
+
+    this.fileUploadService.uploadImage(file).subscribe({
+      next: (result: any) => {        
+        let url = result.url;
+        if (url && !url.startsWith('http')) {
+          url = `${environment.uploadsBaseUrl}${url}`;
+        }
+        this.receiptUrl = url;
+        this.receiptUploading = false;
+        this.success = 'تم رفع صورة الإيصال بنجاح';
+      },
+      error: () => {
+        this.error = 'فشل رفع صورة الإيصال، حاول مرة أخرى';
+        this.receiptUploading = false;
+
+      }
+    });
+  }
+
   onActivationClose(): void {
     this.showActivationModal = false;
   }
@@ -222,6 +260,11 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
 
     if (!this.amount || this.amount <= 0) {
       this.error = 'المبلغ غير متاح لهذه العملية';
+      return;
+    }
+
+    if (!this.receiptUrl && !this.transactionId.trim()) {
+      this.error = ' يجب رفع صورة إيصال الدفع أو إدخال رقم العملية بشكل صحيح.';
       return;
     }
 
@@ -252,7 +295,7 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
       this.success = response.message || 'تم إرسال عملية الدفع بنجاح، في انتظار الموافقة.';
       
       setTimeout(() => {
-        this.router.navigate(['/student-dashboard/payments/history']);
+        this.router.navigate(['/student-dashboard/my-payments']);
       }, 1200);
       
     } catch (e: any) {
@@ -313,28 +356,19 @@ export class MyPaymentsComponent implements OnInit, OnDestroy {
   }
 
   getPaymentTitle(payment: any): string {
-    // Try different possible property names from the payment object
-    return payment.subjectName || 
-          payment.courseName || 
-          payment.lessonTitle ||
-          payment.lessonName ||
-          payment.itemName ||
-          payment.title ||
-          payment.name ||
-          (payment.type === 'subject' ? 'مادة دراسية' : 'درس') ||
-          'غير محدد';
+    return payment.targetName || 'غير محدد';
   }
-  getPaymentType(payment: any): 'subject' | 'lesson' {
-    return payment.planType || payment.type || 
-          (payment.subjectId ? 'subject' : 'lesson');
+  getPaymentTypeLabel(payment: any): string {
+    const type = payment.planType || payment.type || (payment.subjectId ? 'subject' : 'lesson');
+    return type === 'subject' ? 'مادة' : 'درس';
   }
 
   getPaymentMethodLabel(method: string): string {
-    switch (method) {
-      case 'cash': return 'كاش';
-      case 'instapay': return 'InstaPay';
-      case 'vodafone_cash': return 'فودافون كاش';
-      case 'bank_transfer': return 'تحويل بنكي';
+    switch (method) {      
+      case 'instapay': return 'Instapay';
+      case 'vodafone_cash': return 'Vodafone_Cash';
+      case 'cash': return 'cash';
+      
       default: return method;
     }
   }
