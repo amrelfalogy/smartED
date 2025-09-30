@@ -16,9 +16,7 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
   @Input() unitId: string = '';
   @Input() lessonIndex!: number;
   @Input() isEdit: boolean = true;
-
   @Input() isExpanded = false;
-
   @Input() academicYearId: string | null = null;
   @Input() studentYearId: string | null = null;
 
@@ -93,7 +91,6 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
 
         documentFile: [null as File | null],
 
-
         // Flags
         isFree: [this.lessonData?.isFree ?? false],
         isActive: [this.lessonData?.isActive ?? true],
@@ -114,7 +111,7 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
         pdfFileName: [this.lessonData?.pdfFileName ?? null],
         pdfFileSize: [this.lessonData?.pdfFileSize ?? null],
 
-        // Live placeholders (safe nulls)
+        // ✅ CRITICAL FIX: Live session fields with proper initial values
         zoomUrl: [this.lessonData?.zoomUrl ?? null],
         zoomMeetingId: [this.lessonData?.zoomMeetingId ?? null],
         zoomPasscode: [this.lessonData?.zoomPasscode ?? null],
@@ -122,19 +119,45 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
       },
       { validators: this.contentByTypeValidator }
     );
+
+    // ✅ Watch for lessonType changes to handle live session validation
+    this.lessonForm.get('lessonType')?.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(lessonType => {
+      this.updateValidationForLessonType(lessonType);
+    });
   }
 
-  // Require video when lessonType=video; require document/pdf when lessonType in ['pdf','document']
+  // ✅ NEW: Update validation based on lesson type
+  private updateValidationForLessonType(lessonType: string): void {
+    const zoomUrlControl = this.lessonForm.get('zoomUrl');
+    
+    if (lessonType === 'live') {
+      // Add validation for live lessons
+      zoomUrlControl?.setValidators([Validators.required]);
+    } else {
+      // Remove validation for non-live lessons
+      zoomUrlControl?.clearValidators();
+    }
+    
+    zoomUrlControl?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  // ✅ UPDATED: Content validation to include live session requirements
   private contentByTypeValidator = (group: AbstractControl): ValidationErrors | null => {
     const lt = group.get('lessonType')?.value as ContentType | undefined;
     const videos = (group.get('videos') as FormArray<FormControl<string>>)?.length || 0;
     const docs = (group.get('documents') as FormArray<FormControl<string>>)?.length || 0;
+    const zoomUrl = group.get('zoomUrl')?.value;
 
     if (lt === 'video' && videos === 0) {
       return { contentMissing: 'video' };
     }
     if ((lt === 'pdf' || lt === 'document') && docs === 0) {
       return { contentMissing: 'document' };
+    }
+    if (lt === 'live' && !zoomUrl) {
+      return { contentMissing: 'zoom' };
     }
     return null;
   };
@@ -146,7 +169,7 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
     this.documentsFA.clear();
 
     if (lesson.videoUrl) this.videosFA.push(this.fb.nonNullable.control(lesson.videoUrl));
-      if (lesson.document || lesson.pdfUrl) {
+    if (lesson.document || lesson.pdfUrl) {
       const docUrl = lesson.document || lesson.pdfUrl || '';
       this.documentsFA.push(this.fb.nonNullable.control(docUrl));
     }
@@ -170,26 +193,32 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
       thumbnail: lesson.thumbnail ?? null,
       pdfFileName: lesson.pdfFileName ?? null,
       pdfFileSize: lesson.pdfFileSize ?? null,
+      // ✅ CRITICAL FIX: Properly set zoom fields
       zoomUrl: lesson.zoomUrl ?? null,
       zoomMeetingId: lesson.zoomMeetingId ?? null,
       zoomPasscode: lesson.zoomPasscode ?? null,
       scheduledAt: lesson.scheduledAt ?? null
     }, { emitEvent: false });
+
+    // ✅ Update validation after patching
+    this.updateValidationForLessonType(lesson.lessonType || 'video');
   }
 
- private subscribeChanges(): void {
+  private subscribeChanges(): void {
     this.lessonForm.valueChanges
       .pipe(
         takeUntil(this.destroy$),
-        debounceTime(500), // ✅ Increased from 300ms to 500ms
+        debounceTime(500),
         distinctUntilChanged((a, b) => {
-          // ✅ Only compare essential fields to avoid infinite loops
           return a.title === b.title && 
                 a.description === b.description && 
                 a.lessonType === b.lessonType &&
                 a.difficulty === b.difficulty &&
                 a.price === b.price &&
-                a.isFree === b.isFree;
+                a.isFree === b.isFree &&
+                a.zoomUrl === b.zoomUrl &&
+                a.zoomMeetingId === b.zoomMeetingId &&
+                a.zoomPasscode === b.zoomPasscode;
         })
       )
       .subscribe(() => {
@@ -197,7 +226,7 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  // Typed getters — arrays of FormControl<string>
+  // Typed getters
   get videosFA(): FormArray<FormControl<string>> {
     return this.lessonForm.get('videos') as FormArray<FormControl<string>>;
   }
@@ -205,7 +234,6 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
     return this.lessonForm.get('documents') as FormArray<FormControl<string>>;
   }
 
-  // ✅ FIX: lessons-section.component.ts - Better URL validation for YouTube/video platforms
   private isValidUrl(url: string): boolean {
     if (!url || typeof url !== 'string') return false;
     
@@ -215,99 +243,83 @@ export class LessonsSectionComponent implements OnInit, OnDestroy, OnChanges {
       
       if (!isHttp) return false;
       
-      // ✅ Allow common video platforms
       const videoHosts = [
-        'youtube.com',
-        'youtu.be',
-        'vimeo.com',
-        'dailymotion.com',
-        'wistia.com',
-        'cloudinary.com',
-        'amazonaws.com',
-        'googleapis.com'
+        'youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com',
+        'wistia.com', 'cloudinary.com', 'amazonaws.com', 'googleapis.com'
       ];
       
       const docHosts = [
-        'drive.google.com',
-        'dropbox.com',
-        'onedrive.live.com',
-        'box.com'
+        'drive.google.com', 'dropbox.com', 'onedrive.live.com', 'box.com'
       ];
       
-      // Check if it's a known video/document host OR has media file extension
       const isKnownHost = videoHosts.some(host => u.hostname.includes(host)) || 
                         docHosts.some(host => u.hostname.includes(host));
       
       const hasMediaExtension = /\.(mp4|webm|ogg|mov|avi|mkv|pdf|doc|docx|txt|ppt|pptx)(\?.*)?$/i.test(u.pathname);
       
-      return isKnownHost || hasMediaExtension || true; // ✅ Accept any valid HTTPS URL as fallback
+      return isKnownHost || hasMediaExtension || true;
     } catch (error) {
       console.warn('URL validation error:', error);
       return false;
     }
   }
 
- addVideoUrl(input: HTMLInputElement): void {
-  const url = (input.value || '').trim();
-  if (!url) {
-    alert('يرجى إدخال رابط الفيديو');
-    return;
+  addVideoUrl(input: HTMLInputElement): void {
+    const url = (input.value || '').trim();
+    if (!url) {
+      alert('يرجى إدخال رابط الفيديو');
+      return;
+    }
+    
+    if (!this.isValidUrl(url)) {
+      alert('رابط الفيديو غير صالح');
+      return;
+    }
+    
+    const existingUrls = this.videosFA.value;
+    if (existingUrls.includes(url)) {
+      alert('هذا الرابط موجود بالفعل');
+      return;
+    }
+    
+    this.videosFA.push(this.fb.nonNullable.control(url));
+    input.value = '';
+    
+    this.lessonForm.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    
+    setTimeout(() => {
+      this.lessonUpdated.emit(this.serializeForEmit());
+    }, 0);
   }
-  
-  if (!this.isValidUrl(url)) {
-    alert('رابط الفيديو غير صالح');
-    return;
-  }
-  
-  // ✅ Check for duplicates
-  const existingUrls = this.videosFA.value;
-  if (existingUrls.includes(url)) {
-    alert('هذا الرابط موجود بالفعل');
-    return;
-  }
-  
-  // ✅ Add URL without triggering multiple events
-  this.videosFA.push(this.fb.nonNullable.control(url));
-  input.value = '';
-  
-  // ✅ Update validation manually to prevent cascade
-  this.lessonForm.updateValueAndValidity({ onlySelf: true, emitEvent: false });
-  
-  // ✅ Manually emit once
-  setTimeout(() => {
-    this.lessonUpdated.emit(this.serializeForEmit());
-  }, 0);
-}
 
-// ✅ FIX: Same for documents
-addDocumentUrl(input: HTMLInputElement): void {
-  const url = (input.value || '').trim();
-  if (!url) {
-    alert('يرجى إدخال رابط المستند');
-    return;
+  addDocumentUrl(input: HTMLInputElement): void {
+    const url = (input.value || '').trim();
+    if (!url) {
+      alert('يرجى إدخال رابط المستند');
+      return;
+    }
+    
+    if (!this.isValidUrl(url)) {
+      alert('رابط المستند غير صالح');
+      return;
+    }
+    
+    const existingUrls = this.documentsFA.value;
+    if (existingUrls.includes(url)) {
+      alert('هذا الرابط موجود بالفعل');
+      return;
+    }
+    
+    this.documentsFA.push(this.fb.nonNullable.control(url));
+    input.value = '';
+    
+    this.lessonForm.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+    
+    setTimeout(() => {
+      this.lessonUpdated.emit(this.serializeForEmit());
+    }, 0);
   }
-  
-  if (!this.isValidUrl(url)) {
-    alert('رابط المستند غير صالح');
-    return;
-  }
-  
-  const existingUrls = this.documentsFA.value;
-  if (existingUrls.includes(url)) {
-    alert('هذا الرابط موجود بالفعل');
-    return;
-  }
-  
-  this.documentsFA.push(this.fb.nonNullable.control(url));
-  input.value = '';
-  
-  this.lessonForm.updateValueAndValidity({ onlySelf: true, emitEvent: false });
-  
-  setTimeout(() => {
-    this.lessonUpdated.emit(this.serializeForEmit());
-  }, 0);
-}
-  // Implement uploads using FileUploadService
+
   onVideoFileSelected(e: Event): void {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -348,45 +360,36 @@ addDocumentUrl(input: HTMLInputElement): void {
     });
   }
   
-  // ✅ Add these helper methods to the existing component class
-
-  // Check if there's an existing document from backend
+  // Document handling methods
   get hasExistingDocument(): boolean {
     const existingUrl = this.getExistingFileUrl();
     return !!existingUrl;
   }
 
-  // Get existing file URL from form or initial data
   getExistingFileUrl(): string | null {
-    // Check form first, then fall back to initial lesson data
     const formUrl = this.lessonForm.get('pdfUrl')?.value;
     if (formUrl) return formUrl;
     
-    // Check documents array (backward compatibility)
     const documentsArray = this.documentsFA;
     if (documentsArray && documentsArray.length > 0) {
       return documentsArray.at(0).value;
     }
     
-    // Check original lesson data
     if (this.lessonData?.pdfUrl) return this.lessonData.pdfUrl;
     if (this.lessonData?.document) return this.lessonData.document;
     
     return null;
   }
 
-  // Get existing file name
   getExistingFileName(): string {
     const fileName = this.lessonForm.get('pdfFileName')?.value;
     if (fileName) return fileName;
     
-    // Fallback: extract filename from URL
     const url = this.getExistingFileUrl();
     if (url) {
       try {
         const urlParts = url.split('/');
         const filename = urlParts[urlParts.length - 1];
-        // Remove query parameters
         return filename.split('?')[0] || 'ملف PDF';
       } catch (error) {
         return 'ملف PDF';
@@ -396,12 +399,10 @@ addDocumentUrl(input: HTMLInputElement): void {
     return 'ملف PDF';
   }
 
-  // Get existing file size
   getExistingFileSize(): number | null {
     return this.lessonForm.get('pdfFileSize')?.value || null;
   }
 
-  // Format file size for display
   formatFileSize(bytes: number | null): string {
     if (!bytes || bytes <= 0) return 'غير معروف';
     
@@ -410,7 +411,6 @@ addDocumentUrl(input: HTMLInputElement): void {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  // Clear selected file (reset to existing or empty)
   clearSelectedFile(): void {
     this.lessonForm.patchValue({
       documentFile: null,
@@ -418,7 +418,6 @@ addDocumentUrl(input: HTMLInputElement): void {
       pdfFileSize: this.lessonData?.pdfFileSize || null
     });
     
-    // Clear the file input
     const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach((input: any) => {
       if (input.accept === '.pdf') {
@@ -429,7 +428,6 @@ addDocumentUrl(input: HTMLInputElement): void {
     console.log('🗑️ Cleared selected file, reverted to existing');
   }
 
-  // ✅ Enhanced onDocumentFileSelected method
   onDocumentFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -439,18 +437,17 @@ addDocumentUrl(input: HTMLInputElement): void {
       return;
     }
 
-    // ✅ Validate file type and size
     if (!file.type.includes('pdf')) {
       console.error('❌ Only PDF files are allowed');
       alert('يرجى اختيار ملف PDF فقط');
-      input.value = ''; // Clear the input
+      input.value = '';
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    if (file.size > 10 * 1024 * 1024) {
       console.error('❌ File size too large');
       alert('حجم الملف يجب أن يكون أقل من 10 ميجابايت');
-      input.value = ''; // Clear the input
+      input.value = '';
       return;
     }
 
@@ -462,56 +459,18 @@ addDocumentUrl(input: HTMLInputElement): void {
       existingFileName: this.hasExistingDocument ? this.getExistingFileName() : null
     });
 
-    // ✅ Update form with file and file info
     this.lessonForm.patchValue({
       documentFile: file,
       pdfFileName: file.name,
       pdfFileSize: file.size
     });
 
-    // ✅ Trigger form update
     this.lessonForm.markAsDirty();
     this.lessonForm.updateValueAndValidity();
 
-    // ✅ Emit the updated lesson data
     setTimeout(() => {
       this.lessonUpdated.emit(this.serializeForEmit());
     }, 0);
-  }
-
-  
-
-  private emitLessonUpdate(): void {
-    if (!this.lessonForm.valid) {
-      console.log('🔍 Lesson form invalid, not emitting update');
-      return;
-    }
-
-    const formValue = this.lessonForm.value;
-    
-    // ✅ Create the lesson data with all necessary fields including file
-    const lessonData: Lesson = {
-      ...formValue,
-      // ✅ Ensure documentFile is included for backend processing
-      documentFile: formValue.documentFile || null,
-      // ✅ Keep existing URLs if no new file is selected
-      pdfUrl: formValue.pdfUrl || null,
-      document: formValue.document || null,
-      // ✅ Normalize media arrays (for backward compatibility)
-      videos: formValue.videoUrl ? [formValue.videoUrl] : [],
-      documents: formValue.document ? [formValue.document] : []
-    };
-
-    console.log('📤 Emitting lesson update:', {
-      id: lessonData.id,
-      title: lessonData.title,
-      lessonType: lessonData.lessonType,
-      hasDocumentFile: !!lessonData.documentFile,
-      documentFileName: (lessonData as any).documentFile?.name,
-      existingPdfUrl: lessonData.pdfUrl
-    });
-
-    this.lessonUpdated.emit(lessonData);
   }
 
   moveVideo(i: number, dir: 'up' | 'down'): void {
@@ -522,6 +481,7 @@ addDocumentUrl(input: HTMLInputElement): void {
     this.videosFA.at(i).setValue(b);
     this.videosFA.at(j).setValue(a);
   }
+
   removeVideo(i: number): void {
     this.videosFA.removeAt(i);
     this.lessonForm.updateValueAndValidity();
@@ -542,11 +502,13 @@ addDocumentUrl(input: HTMLInputElement): void {
   get selectedLessonType() {
     return this.selectedLessonTypeInfo;
   }
+
   get selectedLessonTypeInfo() {
     const lt = this.lessonForm.get('lessonType')?.value;
     const opt = this.lessonTypes.find(o => o.value === lt);
     return opt ? { label: opt.label, color: '#3498db' } : null;
   }
+
   get selectedDifficulty() {
     const d = this.lessonForm.get('difficulty')?.value;
     const opt = this.difficultyOptions.find(o => o.value === d);
@@ -557,9 +519,9 @@ addDocumentUrl(input: HTMLInputElement): void {
     return this.lessonForm?.valid && !this.lessonForm.errors?.['contentMissing'];
   }
 
-  get contentMissingType(): 'video' | 'document' | null {
+  get contentMissingType(): 'video' | 'document' | 'zoom' | null {
     const e = this.lessonForm.errors?.['contentMissing'];
-    return e === 'video' || e === 'document' ? e : null;
+    return e === 'video' || e === 'document' || e === 'zoom' ? e : null;
   }
 
   getCompletionPercentage(): number {
@@ -581,6 +543,7 @@ addDocumentUrl(input: HTMLInputElement): void {
     const c = this.lessonForm.get(name);
     return !!c && c.invalid && (c.dirty || c.touched);
   }
+
   getFieldError(name: string): string {
     const c = this.lessonForm.get(name);
     if (!c?.errors) return '';
@@ -602,6 +565,8 @@ addDocumentUrl(input: HTMLInputElement): void {
   private inferContentType(lesson?: Lesson): ContentType {
     const hasVideo = lesson?.videoUrl || (lesson?.videos && lesson.videos.length > 0);
     const hasDoc = lesson?.document || (lesson?.documents && lesson.documents.length > 0);
+    const hasZoom = lesson?.zoomUrl;
+    if (hasZoom) return 'live';
     if (hasVideo) return 'video';
     if (hasDoc) return 'pdf';
     return 'text';
@@ -612,7 +577,6 @@ addDocumentUrl(input: HTMLInputElement): void {
     const firstVideo = (this.videosFA.length > 0) ? this.videosFA.at(0).value : null;
     const firstDoc = (this.documentsFA.length > 0) ? this.documentsFA.at(0).value : null;
 
-    // ✅ FIX: Ensure price is number and handle free lessons correctly
     const priceValue = v.isFree ? 0 : (Number(v.price) || 0);
 
     const out: Lesson = {
@@ -630,17 +594,17 @@ addDocumentUrl(input: HTMLInputElement): void {
       status: 'published',
       academicYearId: v.academicYearId ?? this.academicYearId ?? null,
       studentYearId: v.studentYearId ?? this.studentYearId ?? null,
-      price: priceValue, // ✅ Always a number
+      price: priceValue,
       currency: v.currency || 'EGP',
       thumbnail: v.thumbnail ?? null,
-      videoUrl: firstVideo, // ✅ Single URL, not array
-      document: firstDoc, // ✅ Single URL, not array   
+      videoUrl: firstVideo,
+      document: firstDoc,
 
       documentFile: v.documentFile || null,
-   
       pdfFileName: v.pdfFileName || null,
       pdfFileSize: v.pdfFileSize || null,
 
+      // ✅ CRITICAL FIX: Always include zoom fields for live lessons
       zoomUrl: v.lessonType === 'live' ? (v.zoomUrl || null) : null,
       zoomMeetingId: v.lessonType === 'live' ? (v.zoomMeetingId || null) : null,
       zoomPasscode: v.lessonType === 'live' ? (v.zoomPasscode || null) : null,

@@ -644,6 +644,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
   }
 
   // ✅ Update the createLesson method to handle documentFile properly
+  // ✅ Update the createLesson method to handle live lessons properly
   private async createLesson(lesson: Lesson, unitId: string): Promise<void> {
     if (!unitId || unitId.trim() === '') {
       throw new Error(`unitId مفقود أثناء إنشاء الدرس "${lesson.title || ''}"`);
@@ -655,10 +656,13 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       unitId: unitId,
       hasDocumentFile: !!(lesson as any).documentFile,
       documentFileName: (lesson as any).documentFile?.name,
-      videoUrl: lesson.videoUrl
+      videoUrl: lesson.videoUrl,
+      isLive: lesson.lessonType === 'live',
+      zoomUrl: lesson.zoomUrl,
+      zoomMeetingId: lesson.zoomMeetingId
     });
 
-    // ✅ Create the payload with proper file handling
+    // ✅ Create the payload with proper file and zoom handling
     const createPayload: any = {
       title: lesson.title,
       description: lesson.description,
@@ -666,7 +670,7 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       order: lesson.order,
       price: lesson.price || 0,
       videoUrl: lesson.videoUrl || null,
-      documentFile: (lesson as any).documentFile || null, // ✅ Include the file
+      documentFile: (lesson as any).documentFile || null,
       duration: lesson.duration,
       lessonType: lesson.lessonType,
       difficulty: lesson.difficulty,
@@ -675,6 +679,14 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
       currency: lesson.currency || 'EGP'
     };
 
+    // ✅ CRITICAL FIX: Add zoom fields for live lessons
+    if (lesson.lessonType === 'live') {
+      createPayload.zoomUrl = lesson.zoomUrl || null;
+      createPayload.zoomMeetingId = lesson.zoomMeetingId || null;
+      createPayload.zoomPasscode = lesson.zoomPasscode || null;
+      createPayload.scheduledAt = lesson.scheduledAt || null;
+    }
+
     const createdLesson = await firstValueFrom(
       this.lessonService.createLesson(createPayload)
     );
@@ -682,8 +694,10 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
     console.log('✅ Lesson created successfully:', {
       id: createdLesson.id,
       title: createdLesson.title,
+      lessonType: createdLesson.lessonType,
       pdfUrl: createdLesson.pdfUrl,
-      pdfFileName: createdLesson.pdfFileName
+      pdfFileName: createdLesson.pdfFileName,
+      zoomUrl: createdLesson.zoomUrl
     });
   }
 
@@ -715,11 +729,14 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
               console.log('🔄 Updating existing lesson:', {
                 id: lesson.id,
                 title: lesson.title,
+                lessonType: lesson.lessonType,
                 hasDocumentFile: !!(lesson as any).documentFile,
-                documentFileName: (lesson as any).documentFile?.name
+                documentFileName: (lesson as any).documentFile?.name,
+                isLive: lesson.lessonType === 'live',
+                zoomUrl: lesson.zoomUrl
               });
 
-              // ✅ Create update payload with file if present
+              // ✅ Create update payload with file and zoom fields if present
               const updatePayload: any = {
                 title: lesson.title,
                 description: lesson.description,
@@ -732,8 +749,16 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
                 unitId: ensuredUnitId,
                 price: lesson.price,
                 videoUrl: lesson.videoUrl || null,
-                documentFile: (lesson as any).documentFile || null // ✅ Include file for update
+                documentFile: (lesson as any).documentFile || null
               };
+
+              // ✅ CRITICAL FIX: Add zoom fields for live lessons in updates
+              if (lesson.lessonType === 'live') {
+                updatePayload.zoomUrl = lesson.zoomUrl || null;
+                updatePayload.zoomMeetingId = lesson.zoomMeetingId || null;
+                updatePayload.zoomPasscode = lesson.zoomPasscode || null;
+                updatePayload.scheduledAt = lesson.scheduledAt || null;
+              }
 
               const updatedLesson = await firstValueFrom(
                 this.lessonService.updateLesson(lesson.id, updatePayload)
@@ -742,7 +767,9 @@ export class CoursesAdminFormComponent implements OnInit, OnDestroy {
               console.log('✅ Lesson updated:', {
                 id: updatedLesson.id,
                 title: updatedLesson.title,
-                pdfUrl: updatedLesson.pdfUrl
+                lessonType: updatedLesson.lessonType,
+                pdfUrl: updatedLesson.pdfUrl,
+                zoomUrl: updatedLesson.zoomUrl
               });
 
             } else {
