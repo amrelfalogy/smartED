@@ -8,6 +8,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { SubjectService } from 'src/app/core/services/subject.service';
 import { ActivationCodeService } from 'src/app/core/services/activation-code.service';
 import { CodeActivateResponse } from 'src/app/core/models/activation-code.model';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-lesson-details',
@@ -131,13 +132,13 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
 
       // ✅ Set content URLs properly
       this.videoUrls = this.lesson.videoUrl ? [this.lesson.videoUrl] : [];
-      
+
       // ✅ FIX: Set document URLs from both pdfUrl and document fields
       this.docUrls = [];
       if (this.lesson.pdfUrl) {
-        this.docUrls.push(this.lesson.pdfUrl);
+        this.docUrls.push(this.getFullUrl(this.lesson.pdfUrl));
       } else if (this.lesson.document) {
-        this.docUrls.push(this.lesson.document);
+        this.docUrls.push(this.getFullUrl(this.lesson.document));
       }
 
       console.log('📄 Lesson loaded:', {
@@ -166,6 +167,14 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
       this.errorMessage = 'حدث خطأ أثناء تحميل بيانات الدرس. يرجى المحاولة مرة أخرى.';
       this.isLoading = false;
     }
+  }
+
+  // ✅ Helper method to construct full URLs
+  private getFullUrl(relativeUrl: string): string {
+    if (!relativeUrl.startsWith('http')) {
+      return `${environment.uploadsBaseUrl}${relativeUrl}`;
+    }
+    return relativeUrl;
   }
 
   // ✅ Update hasAnyContent getter to include PDF content

@@ -2,6 +2,11 @@
   padding: 0 ;  
   padding-left: 30px;
 }
+@media (max-width: 768px) {
+  .list-unstyled {
+    padding-left: 0;
+  } 
+}
 // User Profile styles
 .header-user-profile {
   .user-profile-trigger {

@@ -112,6 +112,14 @@ export class HeaderRightComponent implements OnInit, OnDestroy {
     this.router.navigate(['/admin/settings']);
     this.closeDropdown();
   }
+  navigateToHome(): void {
+    this.router.navigate(['/home']);
+    this.closeDropdown();
+  }
+  navigateToSupport(): void {
+    this.router.navigate(['/support-me']);
+    this.closeDropdown();
+  }
 
   logout(): void {
     if (this.isLoggingOut) return;

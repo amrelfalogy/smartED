@@ -223,8 +223,8 @@
     top: 100% !important;
 
     &.dropdown-menu-end {
-      right: 0 !important;
-      left: auto !important;
+      right: auto !important;
+      left: 0 !important;
     }
   }
 
@@ -457,8 +457,8 @@
       position: static;
 
       .pc-h-dropdown {
-        left: 0 !important;
-        right: 0 !important;
+        left: 30 !important;
+        right: 30 !important;
       }
     }
   }

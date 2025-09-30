@@ -463,20 +463,22 @@
 @media (max-width: 768px) {
   .header {
     padding: 0px 0 80px;
-  }
-  .header .row{
-    flex-direction: column-reverse;
-  }
-  .header .content {
-    margin-top: 10px;
-    text-align: center;
-  }
+  } 
+
   .cta-btn {
     width: 100%;
   }
-  .header-illustration {
-    max-height: 280px;
+}
+
+@media (max-width: 430px) {
+  .header {
+    height: 300px;
+  } 
+  img{
+    height: 100% !important; 
+    object-fit: cover;
   }
+
 }
 // ✅ ADD: Loading states for course cards
 .course-card-loading {

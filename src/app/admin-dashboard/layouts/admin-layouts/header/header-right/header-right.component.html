@@ -5,7 +5,7 @@
     <a 
       href="javascript:" 
       class=" dropdown-toggle arrow-none me-0 user-profile-trigger" 
-      
+      (click)="toggleUserDropdown()"
       title="الملف الشخصي"
     >
       <div class="user-avatar ms-2">
@@ -16,7 +16,7 @@
         <span class="user-name">{{ getUserDisplayName() }}</span>
         <small class="user-role">{{ getUserRole() }}</small>
       </div>
-      <!-- <i class="pi pi-chevron-down ms-2 chevron-icon" [class.rotated]="showUserDropdown"></i> -->
+      <i class="pi pi-chevron-down me-2 chevron-icon" [class.rotated]="showUserDropdown"></i>
     </a>
     
     <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown" [class.show]="showUserDropdown">
@@ -39,35 +39,24 @@
       
       <!-- Menu Items -->
       <div class="dropdown-body">
-        <a href="javascript:" class="dropdown-item profile-menu-item" (click)="navigateToProfile()">
+        <a href="javascript:" class="dropdown-item profile-menu-item" (click)="navigateToHome()">
           <div class="menu-icon bg-primary">
-            <i class="pi pi-user"></i>
+            <i class="pi pi-home"></i>
           </div>
           <div class="menu-content">
-            <span class="menu-title">الملف الشخصي</span>
-            <small class="menu-description">عرض معلوماتك الشخصية</small>
+            <span class="menu-title"> الصفحة الرئيسية</span>
+            <small class="menu-description">العودة الي الصفحة الرئيسية</small>
           </div>
           <i class="pi pi-chevron-left menu-arrow"></i>
-        </a>
+        </a>               
         
-        <a href="javascript:" class="dropdown-item profile-menu-item" (click)="editProfile()">
-          <div class="menu-icon bg-warning">
-            <i class="pi pi-pencil"></i>
+        <a href="javascript:" class="dropdown-item profile-menu-item" (click)="navigateToSupport()">
+          <div class="menu-icon bg-muted">
+            <i class="pi pi-question-circle"></i>
           </div>
           <div class="menu-content">
-            <span class="menu-title">تعديل الملف الشخصي</span>
-            <small class="menu-description">تحديث بياناتك الشخصية</small>
-          </div>
-          <i class="pi pi-chevron-left menu-arrow"></i>
-        </a>
-        
-        <a href="javascript:" class="dropdown-item profile-menu-item" (click)="navigateToSettings()">
-          <div class="menu-icon bg-info">
-            <i class="pi pi-cog"></i>
-          </div>
-          <div class="menu-content">
-            <span class="menu-title">الإعدادات</span>
-            <small class="menu-description">إدارة إعدادات الحساب</small>
+            <span class="menu-title">المساعدة</span>
+            <small class="menu-description"> التواصل مع الدعم الفني</small>
           </div>
           <i class="pi pi-chevron-left menu-arrow"></i>
         </a>

@@ -92,7 +92,7 @@
     <div class="lesson-content-area">
       
       <!-- Video Content -->
-      <div class="content-section video-section" *ngIf="lesson.lessonType === 'video' && videoUrls.length > 0">
+      <div class="content-section video-section" *ngIf="videoUrls.length > 0">
         <div class="video-player-container">
           <div class="video-player">
             <video 
@@ -163,15 +163,15 @@
             <!-- Zoom Access -->
             <div class="zoom-access" *ngIf="lesson.zoomUrl">
               <div class="zoom-info">
-                <div class="zoom-details">
-                  <div class="detail-item" *ngIf="lesson.zoomMeetingId">
+                <div class="zoom-details row">
+                  <div class="detail-item col-md-6" *ngIf="lesson.zoomMeetingId">
                     <label>معرف الاجتماع:</label>
                     <span class="meeting-id">{{ lesson.zoomMeetingId }}</span>
                     <button class="btn btn-sm btn-ghost" (click)="copyToClipboard(lesson.zoomMeetingId)">
                       <i class="pi pi-copy"></i>
                     </button>
                   </div>
-                  <div class="detail-item" *ngIf="lesson.zoomPasscode">
+                  <div class="detail-item col-md-6" *ngIf="lesson.zoomPasscode">
                     <label>رمز المرور:</label>
                     <span class="passcode">{{ lesson.zoomPasscode }}</span>
                     <button class="btn btn-sm btn-ghost" (click)="copyToClipboard(lesson.zoomPasscode)">
@@ -206,7 +206,7 @@
 
       <!-- Document Content -->
       <!-- ✅ Update the Document Content section -->
-      <div class="content-section document-section" *ngIf="(lesson.lessonType === 'pdf' || lesson.lessonType === 'document') && docUrls.length > 0">
+      <div class="content-section document-section" *ngIf="docUrls.length > 0">
         <div class="document-card">
           <div class="document-header">
             <h3>
