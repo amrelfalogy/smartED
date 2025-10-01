@@ -308,35 +308,29 @@ export class AuthService {
     
     console.log('Initializing auth - Token exists:', !!token, 'Stored user:', !!storedUser);
     
-    if (token) {
-      if (storedUser) {
-        // ✅ Both token and user exist - set state immediately
-        console.log('Setting stored user and auth state immediately:', storedUser);
-        this.currentUserSubject.next(storedUser);
-        this.isAuthenticatedSubject.next(true);
-      }
-      
-      // Verify/update user data from server
-      this.getProfile().subscribe({
-        next: (user) => {
-          console.log('Profile verified/updated from server:', user);
-        },
-        error: (error) => {
-          console.log('Profile verification failed, clearing auth:', error);
-          this.handleLogout();
-          if (!this.router.url.includes('/auth/')) {
-            this.router.navigate(['/auth/login']);
-          }
-        },
-        complete: () => {
-          this.isLoadingSubject.next(false);
-        }
-      });
+    if (token && storedUser) {
+      // ✅ Set stored user data immediately
+      console.log('Setting stored user and auth state immediately:', storedUser);
+      this.currentUserSubject.next(storedUser);
+      this.isAuthenticatedSubject.next(true);
     } else {
-      console.log('No token found, user not authenticated');
+      // ✅ No token or user - set unauthenticated state
+      console.log('No valid token/user found, user not authenticated');
       this.handleLogout();
-      this.isLoadingSubject.next(false);
     }
+    
+    this.isLoadingSubject.next(false);
+  }
+
+  // ✅ NEW: Separate method to validate token when needed
+  validateCurrentToken(): Observable<User> {
+    return this.getProfile().pipe(
+      catchError(error => {
+        console.log('Token validation failed, clearing auth:', error);
+        this.handleLogout();
+        return throwError(() => error);
+      })
+    );
   }
 
   // Listen for logout events from interceptor

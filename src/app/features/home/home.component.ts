@@ -95,6 +95,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.coursesError = '';
     this.teachersError = '';
 
+    // ✅ Load public data for all users (authenticated and unauthenticated)
     forkJoin({
       subjects: this.subjectService.getAllSubjects().pipe(
         catchError(err => {
@@ -105,7 +106,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       academicYears: this.academicYearService.getAcademicYears().pipe(
         catchError(err => {
           console.error('Error loading academic years for home:', err);
-          return of([]); // Fallback to empty array
+          return of([]);
         })
       ),
       teachers: this.userService.getTeachers({ limit: 12 }).pipe(
@@ -123,14 +124,24 @@ export class HomeComponent implements OnInit, OnDestroy {
           this.isLoadingCourses = false;
           this.isLoadingTeachers = false;
 
-          this.loadStudentYearsForAllAcademicYears(() => {
-            this.prepareCourses();
-          });
+          // ✅ Only load student years if user is authenticated
+          if (this.authService.isLoggedIn() && this.authService.getCurrentUser()) {
+            this.loadStudentYearsForAllAcademicYears(() => {
+              this.prepareCourses();
+            });
+          } else {
+            this.prepareCourses(); // Skip student years for public users
+          }
         },
         error: (error) => {
           console.error('Error loading home data:', error);
-          this.coursesError = 'حدث خطأ أثناء تحميل الدورات';
-          this.teachersError = 'حدث خطأ أثناء تحميل بيانات المعلمين';
+          if (!this.coursesError) {
+            this.coursesError = 'حدث خطأ في الشبكة. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.';
+          }
+          if (!this.teachersError) {
+            this.teachersError = 'حدث خطأ في الشبكة. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.';
+          }
+          
           this.isLoadingCourses = false;
           this.isLoadingTeachers = false;
         }
@@ -163,9 +174,15 @@ export class HomeComponent implements OnInit, OnDestroy {
   // ✅ NEW: Prepare teachers data
   private prepareTeachers(teachersData: User[]): void {
     if (!teachersData || teachersData.length === 0) {
-      this.teachersError = 'لا يوجد معلمين متاحين حالياً';
+      if (!this.teachersError) {
+        this.teachersError = 'لا يوجد معلمين متاحين في الوقت الحالي.';
+      }
+      this.teachers = [];
+      this.teacherMap.clear();
       return;
     }
+
+    this.teachersError = '';
 
     this.teachers = teachersData
       .filter(teacher => teacher.isActive)
@@ -175,16 +192,26 @@ export class HomeComponent implements OnInit, OnDestroy {
         yearsExperience: this.generateExperience(teacher),
         verified: this.generateVerificationStatus(teacher)
       }))
-      .slice(0, 5); // Show max 5 teachers
+      .slice(0, 5);
 
     this.teacherMap.clear();
-    this.teachers.forEach(t => this.teacherMap.set(t.id, t));  
+    this.teachers.forEach(t => this.teacherMap.set(t.id, t));
   }
+
   getTeacherProfileImage(teacher: HomeTeacher): string {
     return this.userService.getProfileImageUrl(teacher);
   }
 
   private prepareCourses(): void {
+     if (!this.allSubjects || this.allSubjects.length === 0) {
+      this.courses = [];
+      if (!this.coursesError) {
+        this.coursesError = 'لا توجد مواد دراسية متاحة للعرض.';
+      }
+      return;
+    }    
+    this.coursesError = '';
+
   const publishedSubjects = this.allSubjects
     .filter(subject => subject.status === 'published')
     .sort((a, b) => {
@@ -270,6 +297,14 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // ✅ NEW: View teacher profile
   viewTeacher(teacher: HomeTeacher): void {
+    if (!this.authService.isLoggedIn()) {
+      // Show login prompt for detailed teacher view
+      this.router.navigate(['/auth/login'], { 
+        queryParams: { returnUrl: '/home', message: 'يرجى تسجيل الدخول لعرض تفاصيل المعلم' } 
+      });
+      return;
+    }
+    
     this.selectedTeacher = teacher;
     this.showTeacherProfileModal = true;
   }

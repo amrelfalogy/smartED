@@ -15,61 +15,50 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   canActivate(
-    route: ActivatedRouteSnapshot, 
-    state: RouterStateSnapshot
-  ): Observable<boolean> {
+  route: ActivatedRouteSnapshot, 
+  state: RouterStateSnapshot
+): Observable<boolean> {
+  const requiresAuth = route.data['requiresAuth'];
+  
+  // ✅ Allow access to public routes immediately
+  if (requiresAuth === false) {
+    console.log('Public route, allowing access:', state.url);
+    return of(true);
+  }
 
-    const requiresAuth = route.data['requiresAuth'] || false; 
-    if (!requiresAuth) {
-      // Allow access to public routes
-      return of(true);
-    }
+  // ✅ For protected routes, check authentication
+  const hasToken = !!this.authService.getToken();
+  
+  if (!hasToken) {
+    this.router.navigate(['/auth/login'], { 
+      queryParams: { returnUrl: state.url }
+    });
+    return of(false);
+  }
 
-    // Check if user has token first (for immediate access)
-    const hasToken = !!this.authService.getToken();
-    
-    if (!hasToken) {
+  // ✅ Validate token for protected routes
+  return this.authService.validateCurrentToken().pipe(
+    map(user => {
+      // Check role-based access if needed
+      const requiredRole = route.data['role'];
+      if (requiredRole) {
+        const userRole = user.role;
+        if (!this.hasRequiredRole(userRole, requiredRole)) {
+          this.router.navigate(['/unauthorized']);
+          return false;
+        }
+      }
+      return true;
+    }),
+    catchError((error) => {
+      console.error('Auth guard token validation error:', error);
       this.router.navigate(['/auth/login'], { 
         queryParams: { returnUrl: state.url }
       });
       return of(false);
-    }
-
-    // If has token, check authentication status
-    return this.authService.isAuthenticated$.pipe(
-      take(1),
-      timeout(5000), // 5 second timeout
-      map(isAuthenticated => {
-        if (isAuthenticated) {
-          // Check role-based access if needed
-          const requiredRole = route.data['role'];
-          if (requiredRole) {
-            const userRole = this.authService.getUserRole();
-            if (userRole && !this.hasRequiredRole(userRole, requiredRole)) {
-              this.router.navigate(['/unauthorized']);
-              return false;
-            }
-            // If role is required but user role is not loaded yet, allow access
-            // The user role will be validated once profile loads
-          }
-          return true;
-        } else {
-          this.router.navigate(['/auth/login'], { 
-            queryParams: { returnUrl: state.url }
-          });
-          return false;
-        }
-      }),
-      catchError((error) => {
-        console.error('Auth guard error:', error);
-        this.router.navigate(['/auth/login'], { 
-          queryParams: { returnUrl: state.url }
-        });
-        return of(false);
-      })
-    );
-  }
-
+    })
+  );
+}
   // ✅ FIXED: auth.guard.ts - Better role checking
   private hasRequiredRole(userRole: string, requiredRole: string | string[]): boolean {
     console.log('🛡️ Role check:', { userRole, requiredRole });

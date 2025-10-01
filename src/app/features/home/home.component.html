@@ -65,40 +65,22 @@
     </section>
 
     <section class="home-section">
-        <!-- ✅ Newest Subjects Carousel with Real Data (unchanged) -->
+        <!-- ✅ UPDATED: Subjects/Courses Carousel -->
         <app-card-carousel
             [items]="courses"
+            [isLoading]="isLoadingCourses"
+            [error]="coursesError"
+            [onRetry]="reloadCourses.bind(this)"
+            loadingMessage="جاري تحميل المواد الدراسية..."
+            emptyMessage="لا توجد مواد دراسية متاحة في الوقت الحالي"
+            emptyIcon="pi-book"
             sectionTitle="أحدث المواد"
             sectionHint="مواد مضافة حديثًا"
             viewAllText="عرض الكل"
             viewAllLink="/courses">
             <ng-template #cardTemplate let-course>
-                <!-- ✅ Loading State -->
-                <div *ngIf="isLoadingCourses" class="course-card-loading">
-                    <div class="loading-placeholder">
-                        <div class="loading-image"></div>
-                        <div class="loading-content">
-                            <div class="loading-line"></div>
-                            <div class="loading-line short"></div>
-                            <div class="loading-line"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ✅ Error State -->
-                <div *ngIf="coursesError && !isLoadingCourses" class="course-card-error">
-                    <div class="error-content">
-                        <i class="pi pi-exclamation-triangle"></i>
-                        <p>{{ coursesError }}</p>
-                        <button class="btn btn-sm btn-primary" (click)="reloadCourses()">
-                            <i class="pi pi-refresh me-1"></i>
-                            إعادة المحاولة
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ✅ Course Card with Real Data -->
-                <div *ngIf="!isLoadingCourses && !coursesError" class="course-card-content" (click)="viewCourse(course)">
+                <!-- ✅ Only course card content now (remove loading/error states) -->
+                <div class="course-card-content" (click)="viewCourse(course)">
                     <img 
                         [src]="course.image || course.imageUrl || course.thumbnail || 'assets/imgs/bio.jpg'"
                         [alt]="course.name"
@@ -106,7 +88,6 @@
                         (error)="onImageError($event)"
                     />
                     <div class="card-info course-info">
-                        <!-- Instructor -->
                         <div class="d-flex align-items-center mb-2" style="justify-content: space-between;">
                             <div class="instructor-info me-2">
                                 <img
@@ -121,10 +102,7 @@
                                 {{ course.price | number }} ج.م
                             </span>
                         </div>
-                        <!-- Title -->
                         <h4 class="course-title">{{ course.name }}</h4>
-
-                        <!-- Academic Year + Tags + Price -->
                         <div class="meta-row">
                             <span class="meta-item academic-year">
                                 <i class="pi pi-graduation-cap"></i>
@@ -149,7 +127,6 @@
                                 {{ course.lessonType === 'center_recorded' ? 'الدروس المسجلة - المركز' : 'الدروس المنتجة - الاستوديو' }}
                             </span>
                         </div>              
-                        <!-- Actions -->
                         <div class="actions">
                             <button
                                 class="btn btn-primary details-btn"
@@ -164,40 +141,22 @@
             </ng-template>
         </app-card-carousel>
 
-        <!-- ✅ NEW: Real Teachers Carousel -->
+        <!-- ✅ UPDATED: Teachers Carousel -->
         <app-card-carousel
             [items]="teachers"
+            [isLoading]="isLoadingTeachers"
+            [error]="teachersError"
+            [onRetry]="retryLoadTeachers.bind(this)"
+            loadingMessage="جاري تحميل بيانات المعلمين..."
+            emptyMessage="لا يوجد معلمين متاحين في الوقت الحالي"
+            emptyIcon="pi-users"
             sectionTitle="فريق المعلمين المتميز"
             sectionHint="نخبة من أفضل المدرسين"
             viewAllText="عرض الكل"
             viewAllLink="/teachers">
             <ng-template #cardTemplate let-teacher>
-                <!-- Loading State -->
-                <div *ngIf="isLoadingTeachers" class="teacher-card-loading">
-                    <div class="loading-placeholder">
-                        <div class="loading-avatar"></div>
-                        <div class="loading-content">
-                            <div class="loading-line"></div>
-                            <div class="loading-line short"></div>
-                            <div class="loading-line medium"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Error State -->
-                <div *ngIf="teachersError && !isLoadingTeachers" class="teacher-card-error">
-                    <div class="error-content">
-                        <i class="pi pi-exclamation-triangle"></i>
-                        <p>{{ teachersError }}</p>
-                        <button class="btn btn-sm btn-primary" (click)="retryLoadTeachers()">
-                            <i class="pi pi-refresh me-1"></i>
-                            إعادة المحاولة
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ✅ UPDATED: Teacher Card with Fixed Image URLs -->
-                <div *ngIf="!isLoadingTeachers && !teachersError" class="teacher-card-content" (click)="viewTeacher(teacher)">
+                <!-- ✅ Only teacher card content now (remove loading/error states) -->
+                <div class="teacher-card-content" (click)="viewTeacher(teacher)">
                     <div class="teacher-photo-container">
                         <img 
                             *ngIf="getTeacherProfileImage(teacher)"
@@ -207,7 +166,6 @@
                             (error)="onImageError($event)"
                             loading="lazy" />
                         
-                        <!-- Teacher Placeholder -->
                         <div *ngIf="!getTeacherProfileImage(teacher)" class="teacher-placeholder">
                             <span class="teacher-initials">
                                 {{ (teacher.firstName?.charAt(0) || '') + (teacher.lastName?.charAt(0) || '') }}
@@ -254,7 +212,7 @@
                     </div>
                 </div>
             </ng-template>
-        </app-card-carousel>       
+        </app-card-carousel>   
     </section>
 </div>
 <!-- User Profile Modal -->

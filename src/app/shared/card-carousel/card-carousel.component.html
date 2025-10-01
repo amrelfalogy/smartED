@@ -4,30 +4,91 @@
       <h2 class="section-title">{{ sectionTitle }}</h2>
       <p class="section-hint">{{ sectionHint }}</p>
     </div>
-    <a [routerLink]="viewAllLink" class="btn section-btn">{{ viewAllText }}</a>
+    <!-- ✅ Only show "View All" button when there's actual data -->
+    <a *ngIf="shouldShowCarousel" [routerLink]="viewAllLink" class="btn section-btn">{{ viewAllText }}</a>
   </div>
 
-<div class="carousel-wrapper" style="padding: 0 5px;">
-  <p-carousel 
-    [value]="items"
-    [numVisible]="3"
-    [numScroll]="1"
-    [circular]="true"
-    [showNavigators]="false"
-    [autoplayInterval]="5000"
-    [responsiveOptions]="[
-      { breakpoint: '1200px', numVisible: 2, numScroll: 1 },
-      { breakpoint: '960px', numVisible: 1, numScroll: 1 }
-    ]"
-    [showIndicators]="true"
-    indicatorStyleClass="custom-indicator"
-    styleClass="carousel-container"
-    dir="ltr"
-  >
-    <ng-template pTemplate="item" let-item>
-      <div class="carousel-card">
-        <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: item }"></ng-container>
+  <!-- ✅ Loading State -->
+  <div *ngIf="isLoading" class="carousel-loading-state">
+    <div class="loading-container">
+      <div class="loading-cards">
+        <div class="loading-card" *ngFor="let placeholder of [1,2,3]">
+          <div class="loading-placeholder">
+            <div class="loading-image"></div>
+            <div class="loading-content">
+              <div class="loading-line"></div>
+              <div class="loading-line short"></div>
+              <div class="loading-line medium"></div>
+            </div>
+          </div>
+        </div>
       </div>
-    </ng-template>
-  </p-carousel>
-</div>
+      <div class="loading-text text-center mt-3">
+        <i class="pi pi-spin pi-spinner me-2"></i>
+        {{ loadingMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Error State -->
+  <div *ngIf="error && !isLoading" class="carousel-error-state">
+    <div class="error-container">
+      <div class="error-content text-center p-4">
+        <i class="pi pi-exclamation-triangle error-icon mb-3"></i>
+        <h5 class="error-title">خطأ في التحميل</h5>
+        <p class="error-message">{{ error }}</p>
+        <button 
+          *ngIf="onRetry" 
+          class="btn btn-primary btn-sm mt-2" 
+          (click)="handleRetry()">
+          <i class="pi pi-refresh me-1"></i>
+          {{ retryButtonText }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Empty State -->
+  <div *ngIf="shouldShowEmpty" class="carousel-empty-state">
+    <div class="empty-container">
+      <div class="empty-content text-center p-4">
+        <i class="pi empty-icon mb-3" [ngClass]="emptyIcon"></i>
+        <h5 class="empty-title">لا توجد عناصر</h5>
+        <p class="empty-message">{{ emptyMessage }}</p>
+        <button 
+          *ngIf="onRetry" 
+          class="btn btn-outline-primary btn-sm mt-2" 
+          (click)="handleRetry()">
+          <i class="pi pi-refresh me-1"></i>
+          تحديث
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Carousel with Real Data -->
+  <div *ngIf="shouldShowCarousel" class="carousel-wrapper" style="padding: 0 5px;">
+    <p-carousel 
+      [value]="items"
+      [numVisible]="3"
+      [numScroll]="1"
+      [circular]="true"
+      [showNavigators]="false"
+      [autoplayInterval]="5000"
+      [responsiveOptions]="[
+        { breakpoint: '1200px', numVisible: 2, numScroll: 1 },
+        { breakpoint: '960px', numVisible: 1, numScroll: 1 }
+      ]"
+      [showIndicators]="true"
+      indicatorStyleClass="custom-indicator"
+      styleClass="carousel-container"
+      dir="ltr"
+    >
+      <ng-template pTemplate="item" let-item>
+        <div class="carousel-card">
+          <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: item }"></ng-container>
+        </div>
+      </ng-template>
+    </p-carousel>
+  </div>
+</section>

@@ -133,8 +133,20 @@ export class AuthInterceptor implements HttpInterceptor {
       '/auth/register', 
       '/auth/refresh',
       '/auth/forgot-password',
-      '/auth/reset-password'
+      '/auth/reset-password',
+      '/public/',
+      '/home',
+      '/content/subjects',
+      '/academic/academic-years',
+      '/users?role=teacher',
+      '/users?limit=12&role=teacher'
+
     ];
+    
+    if (url.includes('/users') && url.includes('role=teacher')) {
+      return true;
+    }
+
     return skipUrls.some(skipUrl => url.includes(skipUrl));
   }
 
@@ -152,10 +164,15 @@ export class AuthInterceptor implements HttpInterceptor {
     // Notify other parts of the app about logout
     window.dispatchEvent(new CustomEvent('auth-logout'));
     
-    // Only redirect if not already on auth pages
-    if (!this.router.url.includes('/auth/')) {
+    // ✅ Only redirect if on a protected route
+    const currentUrl = this.router.url;
+    const isPublicRoute = currentUrl === '/' || currentUrl === '/home' || 
+                        currentUrl.startsWith('/about') || 
+                        currentUrl.startsWith('/auth/');
+    
+    if (!isPublicRoute && !currentUrl.includes('/auth/')) {
       this.router.navigate(['/auth/login'], { 
-        queryParams: { returnUrl: this.router.url }
+        queryParams: { returnUrl: currentUrl }
       });
     }
   }
