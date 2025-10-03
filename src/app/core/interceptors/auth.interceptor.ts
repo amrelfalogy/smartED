@@ -1,4 +1,3 @@
-// auth.interceptor.ts - Updated Version
 import { Injectable } from '@angular/core';
 import { 
   HttpInterceptor, 
@@ -20,8 +19,8 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     
-    // Skip auth for certain URLs
-    if (this.shouldSkipAuth(request.url)) {
+    // ✅ Use method-aware skip check
+    if (this.shouldSkipAuthForRequest(request)) {
       return next.handle(request);
     }
 
@@ -35,19 +34,61 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         
         // Handle 401 Unauthorized errors
-        if (error.status === 401 && !this.shouldSkipAuth(request.url)) {
+        if (error.status === 401 && !this.shouldSkipAuthForRequest(request)) {
           return this.handle401Error(request, next);
         }
         
         // Handle 403 Forbidden errors
         if (error.status === 403) {
           console.warn('Access forbidden:', error);
-          // Don't logout for 403, just show error
         }
         
         return throwError(() => error);
       })
     );
+  }
+
+  // ✅ UPDATED: Method-aware skip check
+  private shouldSkipAuthForRequest(request: HttpRequest<any>): boolean {
+    const url = request.url;
+    const method = request.method;
+
+    // ✅ Skip auth for specific GET requests only (public read access)
+    if (method === 'GET') {
+      const publicGetEndpoints = [
+        '/content/subjects',
+        '/academic/academic-years',
+      ];
+      
+      if (publicGetEndpoints.some(endpoint => url.includes(endpoint))) {
+        console.log(`Skipping auth for public GET: ${method} ${url}`);
+        return true;
+      }
+      
+      // ✅ Allow GET requests for teachers
+      if (url.includes('/users') && url.includes('role=teacher')) {
+        console.log(`Skipping auth for teacher list: ${method} ${url}`);
+        return true;
+      }
+    }
+
+    // ✅ Skip auth for all methods on these endpoints
+    const alwaysSkipUrls = [
+      '/auth/login',
+      '/auth/register', 
+      '/auth/refresh',
+      '/auth/forgot-password',
+      '/auth/reset-password',
+      '/public/',
+      '/home'
+    ];
+
+    const shouldSkip = alwaysSkipUrls.some(skipUrl => url.includes(skipUrl));
+    if (shouldSkip) {
+      console.log(`Skipping auth for always-public: ${method} ${url}`);
+    }
+
+    return shouldSkip;
   }
 
   private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -125,29 +166,6 @@ export class AuthInterceptor implements HttpInterceptor {
         Authorization: `Bearer ${token}`
       }
     });
-  }
-
-  private shouldSkipAuth(url: string): boolean {
-    const skipUrls = [
-      '/auth/login',
-      '/auth/register', 
-      '/auth/refresh',
-      '/auth/forgot-password',
-      '/auth/reset-password',
-      '/public/',
-      '/home',
-      '/content/subjects',
-      '/academic/academic-years',
-      '/users?role=teacher',
-      '/users?limit=12&role=teacher'
-
-    ];
-    
-    if (url.includes('/users') && url.includes('role=teacher')) {
-      return true;
-    }
-
-    return skipUrls.some(skipUrl => url.includes(skipUrl));
   }
 
   private getToken(): string | null {

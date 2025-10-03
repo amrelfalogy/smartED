@@ -12,6 +12,7 @@ import { HeaderLeftComponent } from '../admin-dashboard/layouts/admin-layouts/he
 import { HeaderRightComponent } from '../admin-dashboard/layouts/admin-layouts/header/header-right/header-right.component';
 import { CardComponent } from '../admin-dashboard/shared/components/card/card.component';
 import { ActivationCodeInputComponent } from './activation-code-input/activation-code-input.component';
+import { YoutubeSecurePlayerComponent } from './youtube-secure-player/youtube-secure-player.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import { ActivationCodeInputComponent } from './activation-code-input/activation
     HeaderComponent,
     HeaderLeftComponent,
     HeaderRightComponent,
-    ActivationCodeInputComponent
+    ActivationCodeInputComponent,
+    YoutubeSecurePlayerComponent
   ],
   imports: [
     CommonModule,
@@ -36,6 +38,7 @@ import { ActivationCodeInputComponent } from './activation-code-input/activation
     CardCarouselComponent,
     FileUploadComponent,
     VideoPlayerComponent,
+    YoutubeSecurePlayerComponent,
     DynamicFormArrayComponent,
     HeaderComponent,
     HeaderLeftComponent,

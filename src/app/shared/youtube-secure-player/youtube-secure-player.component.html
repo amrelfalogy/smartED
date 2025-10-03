@@ -1,0 +1,121 @@
+<div
+  #wrapper
+  class="secure-yt-wrapper"
+  [class.loading]="loading"
+  [class.error]="!!error"
+  [class.ready]="ready"
+  (mouseenter)="hover = true"
+  (mouseleave)="hover = false"
+>
+  <!-- Aspect-ratio container -->
+  <div class="player-shell">
+    <!-- Player host -->
+    <div #playerHost class="player-host"></div>
+
+    <!-- Overlays -->
+    <div *ngIf="enableSecurity && overlayHeader" class="overlay overlay-header">
+      <div class="overlay-badge"><i class="pi pi-shield"></i> محمي</div>
+    </div>
+
+    <div *ngIf="enableSecurity && overlayFull" class="overlay overlay-full">
+      <div class="overlay-center">
+        <i class="pi pi-shield"></i>
+        <span>محتوى محمي</span>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading && !error" class="state state-loading">
+      <div class="spinner">
+        <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+      </div>
+      <p>جاري التحميل...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="state state-error">
+      <i class="pi pi-exclamation-triangle"></i>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" (click)="retry()">
+        <i class="pi pi-refresh me-1"></i> إعادة المحاولة
+      </button>
+    </div>
+
+    <!-- Custom Controls -->
+    <div
+      class="controls"
+      *ngIf="ready && !error"
+      [class.visible]="hover || !isPlaying"
+    >
+      <!-- Progress -->
+      <div class="progress-bar" (click)="seek($event)">
+        <div class="buffered" [style.width.%]="bufferedPercent"></div>
+        <div class="played" [style.width.%]="progressPercent"></div>
+        <div class="handle" [style.left.%]="progressPercent"></div>
+      </div>
+
+      <div class="bar-row">
+        <div class="group left">
+          <button class="icon-btn play" (click)="playPause()" [attr.aria-label]="isPlaying ? 'إيقاف مؤقت' : 'تشغيل'">
+            <i class="pi" [ngClass]="isPlaying ? 'pi-pause' : 'pi-play'"></i>
+          </button>
+
+            <div class="volume-wrapper">
+              <button class="icon-btn" (click)="toggleMute()" aria-label="كتم">
+                <i class="pi" [ngClass]="volumeIcon"></i>
+              </button>
+              <div class="volume-slider-wrap">
+                <input
+                  #volSlider
+                  type="range"
+                  min="0"
+                  max="100"
+                  [value]="volume"
+                  (input)="setVol(+volSlider.value)"
+                />
+              </div>
+            </div>
+
+          <div class="time">
+            {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+          </div>
+        </div>
+
+        <div class="group right">
+          <div class="quality" *ngIf="availableQualities.length">
+            <button class="icon-btn" (click)="toggleQualityMenu()" aria-label="الجودة">
+              <i class="pi pi-cog"></i>
+              <span class="qlabel">{{ currentQuality }}</span>
+            </button>
+            <div class="quality-menu" *ngIf="qualityMenu">
+              <div
+                class="quality-item"
+                *ngFor="let q of availableQualities"
+                [class.active]="q === currentQuality"
+                (click)="chooseQuality(q)"
+              >
+                {{ q }}
+              </div>
+              <div class="quality-item" (click)="chooseQuality('auto')" [class.active]="currentQuality === 'auto'">
+                تلقائي
+              </div>
+            </div>
+          </div>
+
+          <button class="icon-btn" (click)="toggleFullscreen()" aria-label="ملء الشاشة">
+            <i class="pi" [ngClass]="isFullscreen ? 'pi-compress' : 'pi-expand'"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Title / Meta (outside aspect box) -->
+  <div class="meta" *ngIf="title">
+    <h4>{{ title }}</h4>
+    <div class="tags">
+      <span class="tag"><i class="pi pi-shield"></i> آمن</span>
+      <span class="tag" *ngIf="currentQuality !== 'auto'"><i class="pi pi-video"></i> {{ currentQuality }}</span>
+    </div>
+  </div>
+</div>

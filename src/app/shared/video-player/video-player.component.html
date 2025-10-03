@@ -1,1 +1,103 @@
-<p>video-player works!</p>
+<div 
+  #videoContainer 
+  class="secure-video-player"
+  [class.loading]="isLoading"
+  [class.error]="hasError"
+>
+  
+  <!-- Loading State -->
+  <div class="video-loading" *ngIf="isLoading && !hasError">
+    <div class="loading-spinner">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">جاري تحميل الفيديو...</span>
+      </div>
+    </div>
+    <p class="loading-text">جاري تحميل الفيديو...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="video-error" *ngIf="hasError">
+    <div class="error-content">
+      <div class="error-icon">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <h4 class="error-title">خطأ في تحميل الفيديو</h4>
+      <p class="error-message">{{ errorMessage }}</p>
+      <button class="btn btn-primary" (click)="retryLoad()">
+        <i class="pi pi-refresh me-2"></i>
+        إعادة المحاولة
+      </button>
+    </div>
+  </div>
+
+  <!-- Video Player -->
+  <div class="video-player-wrapper" *ngIf="!isLoading && !hasError && embedUrl">
+    
+    <!-- Security Notice -->
+    <div class="security-notice" *ngIf="enableSecurity">
+      <small class="text">
+        <i class="pi pi-shield me-1"></i>
+        هذا المحتوى محمي وغير قابل للنسخ أو المشاركة
+      </small>
+    </div>
+
+    <!-- Video Iframe Container -->
+    <div class="video-iframe-container">
+      <!-- YouTube Iframe -->
+      <iframe
+        #videoIframe
+        [src]="embedUrl"
+        [width]="width"
+        [height]="height"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"        
+        class="video-iframe"
+        [title]="title || 'درس فيديو'"
+        (load)="onIframeLoad()"
+        (error)="onIframeError()"
+      ></iframe>
+      
+      <!--Header SEcurity overlay -->
+      <div class="header-security-overlay" *ngIf="enableSecurity">        
+      </div>      
+
+      <!-- ✅ UPDATED: Username Security Overlay with User Name -->
+      <div class="username-security-overlay" *ngIf="enableSecurity">
+        <div class="watermark-container">                    
+          
+          <!-- ✅ Secondary watermark for extra protection -->
+          <div class="watermark-text secondary-watermark">
+            {{ currentUserName }}
+          </div>
+          
+          <!-- ✅ Email watermark (smaller) -->
+          <div class="watermark-text email-watermark" *ngIf="userEmail">
+            {{ userEmail }}
+          </div>
+
+          <!-- ✅ Multiple floating watermarks for better coverage -->
+          <div class="floating-watermark watermark-1">{{ currentUserName }}</div>
+          <div class="floating-watermark watermark-2">{{ securityWatermark }}</div>
+          <div class="floating-watermark watermark-3">{{ currentUserName }}</div>
+          <div class="floating-watermark watermark-4">{{ userEmail }}</div>
+        </div>
+      </div>           
+
+        <!-- Middle Security Overlay  -->
+      <div class="middle-security-overlay" *ngIf="enableSecurity">        
+      </div> 
+      <!--  YouTube Logo Blocker -->
+      <div class="youtube-logo-blocker" *ngIf="enableSecurity">       
+      </div>
+    </div>    
+  </div>
+
+  <!-- No Video State -->
+  <div class="no-video" *ngIf="!videoUrl && !isLoading">
+    <div class="no-video-content">
+      <i class="pi pi-video"></i>
+      <p>لا يوجد فيديو متاح لهذا الدرس</p>
+    </div>
+  </div>
+
+</div>

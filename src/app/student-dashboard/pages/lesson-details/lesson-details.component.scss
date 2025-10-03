@@ -150,11 +150,56 @@
 }
 
 // Video Section
-.video-section {
-  .video-player-container {
-    position: relative;
+// ✅ NEW: Secure video container styles
+.secure-video-container {
+  position: relative;
+  
+  // Ensure security is maintained
+  &.security-protected {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
   }
+}
 
+.video-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  
+  h3 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  
+  .video-info {
+    color: #64748b;
+    font-size: 0.875rem;
+    
+    .video-counter {
+      font-weight: 600;
+    }
+  }
+}
+
+// ✅ Enhanced security badge
+.badge-security {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  
+  i {
+    color: #dc2626;
+  }
+}
+
+// ✅ Regular video container for non-YouTube videos
+.regular-video-container {
   .video-player {
     position: relative;
     width: 100%;
@@ -186,17 +231,17 @@
       color: white;
     }
   }
+}
 
-  .video-controls {
-    padding: 1.5rem;
-    background: #f8fafc;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .video-counter {
-      font-weight: 600;
-      color: #1e293b;
+// ✅ Responsive updates
+@media (max-width: 768px) {
+  .video-section-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+    
+    .video-info {
+      align-self: flex-end;
     }
   }
 }

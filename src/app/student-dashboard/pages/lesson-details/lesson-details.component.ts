@@ -10,6 +10,11 @@ import { ActivationCodeService } from 'src/app/core/services/activation-code.ser
 import { CodeActivateResponse } from 'src/app/core/models/activation-code.model';
 import { environment } from 'src/environments/environment';
 
+// ✅ NEW: Import our security and video services
+import { PageSecurityService } from 'src/app/core/services/page-security.service';
+import { VideoIdExtractorService } from 'src/app/core/services/video-id-extractor.service';
+import { VideoPlayerEvent, VideoPlayerConfig } from 'src/app/shared/video-player/video-player.component';
+
 @Component({
   selector: 'app-lesson-details',
   templateUrl: './lesson-details.component.html',
@@ -45,13 +50,27 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
   videoUrls: string[] = [];
   docUrls: string[] = [];
 
+  // ✅ NEW: Video player configuration
+  videoPlayerConfig: VideoPlayerConfig = {
+    autoplay: false,
+    controls: true,
+    showInfo: false,
+    modestBranding: true,
+    relatedVideos: false,
+    keyboardDisabled: true
+  };
+
   // UI state
   activeTab: 'video' | 'document' | 'quiz' = 'video';
   isVideoLoading = false;
   currentVideoIndex = 0;
   isVideoPlaying = false;
 
-  // ✅ NEW: Activation modal
+  // ✅ NEW: Security state
+  securityEnabled = true;
+  securityViolations: string[] = [];
+
+  // Activation modal
   showActivationModal = false;
 
   constructor(
@@ -61,13 +80,21 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     private paymentService: PaymentService,
     private authService: AuthService,
     private subjectService: SubjectService,
-    private activationService: ActivationCodeService
+    private activationService: ActivationCodeService,
+    // ✅ NEW: Inject security services
+    private pageSecurity: PageSecurityService,
+    private videoIdExtractor: VideoIdExtractorService
   ) {}
 
   ngOnInit(): void {
     const userRole = this.authService.getUserRole() || '';
     this.isAdminOrSupport = ['admin', 'support'].includes(userRole);
     this.isAdminMode = userRole === 'admin';
+
+    // ✅ NEW: Enable page security for non-admin users
+    if (!this.isAdminMode) {
+      this.enablePageSecurity();
+    }
 
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe(async params => {
       this.lessonId = params['id'];
@@ -82,11 +109,86 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // ✅ NEW: Disable security when leaving page
+    this.disablePageSecurity();
+    
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  // ✅ Update the loadLessonAndAccess method to properly handle PDF URLs
+  // ✅ NEW: Security management methods
+  private enablePageSecurity(): void {
+    console.log('🔒 Enabling page security for lesson content');
+    this.securityEnabled = true;
+    this.pageSecurity.enableSecurity();
+
+    // Subscribe to security events
+    this.pageSecurity.getSecurityEvents()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(events => {
+        const newViolations = events
+          .filter(event => !this.securityViolations.includes(event.type))
+          .map(event => event.type);
+        
+        if (newViolations.length > 0) {
+          this.securityViolations.push(...newViolations);
+          this.onSecurityViolation(newViolations.join(', '));
+        }
+      });
+  }
+
+  private disablePageSecurity(): void {
+    if (this.securityEnabled) {
+      console.log('🔓 Disabling page security');
+      this.pageSecurity.disableSecurity();
+      this.securityEnabled = false;
+    }
+  }
+
+  // ✅ NEW: Handle security violations
+  onSecurityViolation(violation: string): void {
+    console.warn('🚨 Security violation detected:', violation);
+    
+    // Show warning message
+    this.successMessage = '⚠️ تم اكتشاف محاولة نسخ أو مشاركة المحتوى. يرجى احترام حقوق الطبع والنشر.';
+    setTimeout(() => this.successMessage = '', 5000);
+
+    // Optional: You can add more actions here
+    // - Log to analytics
+    // - Notify server
+    // - Pause video
+    // - Show blocking modal
+  }
+
+  // ✅ NEW: Video player event handlers
+  onVideoPlayerEvent(event: VideoPlayerEvent): void {
+    console.log('🎬 Video player event:', event);
+    
+    switch (event.type) {
+      case 'play':
+        this.isVideoPlaying = true;
+        this.isVideoLoading = false;
+        break;
+      case 'pause':
+        this.isVideoPlaying = false;
+        break;
+      case 'ended':
+        this.isVideoPlaying = false;
+        // Auto-advance to next video if available
+        if (this.currentVideoIndex < this.videoUrls.length - 1) {
+          this.nextVideo();
+        }
+        break;
+      case 'loaded':
+        this.isVideoLoading = false;
+        break;
+      case 'error':
+        this.isVideoLoading = false;
+        this.errorMessage = 'حدث خطأ أثناء تحميل الفيديو';
+        break;
+    }
+  }
+
   private async loadLessonAndAccess(): Promise<void> {
     this.isLoading = true;
     this.errorMessage = '';
@@ -130,27 +232,19 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
         accessReason: lessonData?.accessReason ?? null
       };
 
-      // ✅ Set content URLs properly
-      this.videoUrls = this.lesson.videoUrl ? [this.lesson.videoUrl] : [];
+      // ✅ UPDATED: Process video URLs for secure player
+      this.processVideoUrls();
 
-      // ✅ FIX: Set document URLs from both pdfUrl and document fields
-      this.docUrls = [];
-      if (this.lesson.pdfUrl) {
-        this.docUrls.push(this.getFullUrl(this.lesson.pdfUrl));
-      } else if (this.lesson.document) {
-        this.docUrls.push(this.getFullUrl(this.lesson.document));
-      }
+      // Process document URLs
+      this.processDocumentUrls();
 
       console.log('📄 Lesson loaded:', {
         id: this.lesson.id,
         title: this.lesson.title,
         lessonType: this.lesson.lessonType,
-        pdfUrl: this.lesson.pdfUrl,
-        document: this.lesson.document,
-        pdfFileName: this.lesson.pdfFileName,
-        pdfFileSize: this.lesson.pdfFileSize,
-        docUrls: this.docUrls,
-        videoUrls: this.videoUrls
+        videoUrl: this.lesson.videoUrl,
+        docUrls: this.docUrls.length,
+        hasVideo: this.videoUrls.length > 0
       });
 
       await this.loadCourseInfo();
@@ -169,7 +263,42 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ Helper method to construct full URLs
+  // ✅ NEW: Process video URLs for secure player
+  private processVideoUrls(): void {
+    this.videoUrls = [];
+    
+    if (this.lesson?.videoUrl) {
+      // Check if it's a YouTube URL and validate it
+      const videoResult = this.videoIdExtractor.extractVideoId(this.lesson.videoUrl);
+      
+      if (videoResult.isValid && videoResult.platform === 'youtube') {
+        console.log('✅ Valid YouTube video detected:', {
+          originalUrl: this.lesson.videoUrl,
+          videoId: videoResult.videoId,
+          platform: videoResult.platform
+        });
+        this.videoUrls = [this.lesson.videoUrl];
+      } else if (this.lesson.videoUrl.startsWith('http')) {
+        // Keep non-YouTube URLs as-is (for backward compatibility)
+        console.log('📹 Non-YouTube video URL:', this.lesson.videoUrl);
+        this.videoUrls = [this.lesson.videoUrl];
+      }
+    }
+
+    console.log('🎬 Processed video URLs:', this.videoUrls);
+  }
+
+  // ✅ UPDATED: Process document URLs
+  private processDocumentUrls(): void {
+    this.docUrls = [];
+    
+    if (this.lesson?.pdfUrl) {
+      this.docUrls.push(this.getFullUrl(this.lesson.pdfUrl));
+    } else if (this.lesson?.document) {
+      this.docUrls.push(this.getFullUrl(this.lesson.document));
+    }
+  }
+
   private getFullUrl(relativeUrl: string): string {
     if (!relativeUrl.startsWith('http')) {
       return `${environment.uploadsBaseUrl}${relativeUrl}`;
@@ -177,26 +306,27 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     return relativeUrl;
   }
 
-  // ✅ Update hasAnyContent getter to include PDF content
+  // ✅ UPDATED: Check if YouTube video
+  get hasYouTubeVideo(): boolean {
+    if (this.videoUrls.length === 0) return false;
+    
+    const firstVideoUrl = this.videoUrls[0];
+    return this.videoIdExtractor.isYouTubeUrl(firstVideoUrl);
+  }
+
+  // ✅ UPDATED: Get current video URL for secure player
+  get currentVideoUrl(): string {
+    return this.videoUrls[this.currentVideoIndex] || '';
+  }
+
   get hasAnyContent(): boolean {
     const hasVideo = this.videoUrls.length > 0;
     const hasDoc = this.docUrls.length > 0;
     const hasText = !!this.lesson?.content;
     const hasZoom = !!this.lesson?.zoomUrl;
     
-    console.log('📋 Content check:', {
-      hasVideo,
-      hasDoc,
-      hasText,
-      hasZoom,
-      lessonType: this.lesson?.lessonType,
-      pdfUrl: this.lesson?.pdfUrl,
-      document: this.lesson?.document
-    });
-    
     return hasVideo || hasDoc || hasText || hasZoom;
   }
-
 
   private async loadCourseInfo(): Promise<void> {
     try {
@@ -232,7 +362,7 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ NEW: Video event handlers
+  // Video control methods (for backward compatibility)
   onVideoLoaded(): void {
     this.isVideoLoading = false;
   }
@@ -267,7 +397,16 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ NEW: Utility methods
+  // ✅ NEW: Toggle security for admin testing
+  toggleSecurity(): void {
+    if (this.securityEnabled) {
+      this.disablePageSecurity();
+    } else {
+      this.enablePageSecurity();
+    }
+  }
+
+  // Utility methods
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -283,7 +422,7 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ✅ NEW: Activation modal methods
+  // Activation modal methods
   openActivationModal(): void {
     this.showActivationModal = true;
   }
@@ -295,7 +434,6 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
   onActivationSuccess(response: CodeActivateResponse): void {
     this.successMessage = 'تم تفعيل الدرس بنجاح!';
     this.closeActivationModal();
-    // Reload lesson access
     this.checkLessonAccess();
   }
 
@@ -337,7 +475,6 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ NEW: Generate activation code (admin only)
   generateActivationCode(): void {
     this.router.navigate(['/admin/activation-codes'], {
       queryParams: { 
@@ -347,7 +484,6 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Utility methods
   formatDuration(seconds?: number): string {
     if (!seconds || seconds === 0) return 'غير محدد';
     const hours = Math.floor(seconds / 3600);
@@ -377,8 +513,6 @@ export class LessonDetailsComponent implements OnInit, OnDestroy {
       default: return 'غير محدد';
     }
   }
-
- 
 
   retryLoading(): void {
     this.loadLessonAndAccess();
